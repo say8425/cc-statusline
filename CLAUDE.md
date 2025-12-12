@@ -1,24 +1,28 @@
 # cc-statusline
 
-Claude Code용 커스텀 statusline 스크립트.
+Claude Code용 커스텀 statusline (Bun/TypeScript).
 
 ## WHAT
 
 ```
 cc-statusline/
-├── statusline.sh    # 메인 스크립트 (Claude Code statusLine command로 실행)
+├── src/
+│   └── index.ts       # 메인 스크립트
+├── package.json
+├── tsconfig.json
+├── statusline.sh      # (deprecated, bash 버전)
 └── CLAUDE.md
 ```
 
-**기술 스택**: Bash, jq, ccusage, gh CLI
+**기술 스택**: Bun, TypeScript, ccusage/data-loader, gh CLI
 
 **데이터 소스** (5개):
 | 데이터 | 출처 |
 |--------|------|
 | 세션 시간 | Claude Code JSON (stdin) |
-| 세션 토큰 | ccusage session |
-| 블록 타이머 | ccusage blocks |
-| Context % | transcript JSONL 파일 |
+| 세션 토큰 | `ccusage/data-loader` - loadSessionData() |
+| 블록 타이머 | `ccusage/data-loader` - loadSessionBlockData() |
+| Context % | `ccusage/data-loader` - calculateContextTokens() |
 | Git/PR | git, gh CLI |
 
 ## WHY
@@ -35,11 +39,15 @@ Claude Code 기본 statusbar에 다음 정보를 추가로 표시:
 ### 설치
 
 ```bash
+# 의존성 설치
+cd ~/dev/cc-statusline
+bun install
+
 # ~/.claude/settings.json
 {
   "statusLine": {
     "type": "command",
-    "command": "~/dev/cc-statusline/statusline.sh",
+    "command": "bun ~/dev/cc-statusline/src/index.ts",
     "padding": 0
   }
 }
@@ -47,18 +55,18 @@ Claude Code 기본 statusbar에 다음 정보를 추가로 표시:
 
 ### 의존성
 
-- `jq`: JSON 파싱
-- `ccusage`: `bunx ccusage@latest` (블록 타이머, 세션 토큰)
+- `bun`: JavaScript 런타임
+- `ccusage`: data-loader API 사용
 - `gh`: GitHub CLI (PR URL)
 
 ### 테스트
 
 ```bash
-echo '{"transcript_path":"","cost":{"total_duration_ms":3600000}}' | ./statusline.sh
+echo '{"transcript_path":"","cost":{"total_duration_ms":3600000}}' | bun src/index.ts
 ```
 
 ### 수정 시 주의사항
 
-- 300ms마다 실행되므로 외부 명령어 최소화
-- macOS/Linux 호환성 유지 (`tail -r` || `tac`)
-- sessionId 변환: `pwd | tr '/.' '-'` (ccusage 방식)
+- 300ms마다 실행되므로 성능 중요
+- ccusage data-loader는 offline 모드로 사용 (캐시된 가격 데이터)
+- sessionId 변환: `cwd.replace(/[/.]/g, '-')` (ccusage 방식)

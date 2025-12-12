@@ -1,0 +1,14 @@
+{
+  "name": "cc-statusline",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "start": "bun src/index.ts"
+  },
+  "dependencies": {
+    "ccusage": "latest"
+  },
+  "devDependencies": {
+    "@types/bun": "latest"
+  }
+}
