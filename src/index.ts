@@ -1,6 +1,8 @@
 #!/usr/bin/env bun
 
 import { $ } from "bun";
+import { readdir, stat } from "fs/promises";
+import { join } from "path";
 import {
   calculateContextTokens,
   loadSessionData,
@@ -52,6 +54,34 @@ async function readStdin(): Promise<string> {
   return Buffer.concat(chunks).toString("utf-8");
 }
 
+// 가장 최근 수정된 transcript 파일 찾기
+async function findLatestTranscript(projectDir: string): Promise<string | null> {
+  try {
+    const files = await readdir(projectDir);
+    const jsonlFiles = files.filter(
+      (f) => f.endsWith(".jsonl") && !f.startsWith("agent-")
+    );
+
+    if (jsonlFiles.length === 0) return null;
+
+    let latestFile = "";
+    let latestMtime = 0;
+
+    for (const file of jsonlFiles) {
+      const filePath = join(projectDir, file);
+      const fileStat = await stat(filePath);
+      if (fileStat.mtimeMs > latestMtime) {
+        latestMtime = fileStat.mtimeMs;
+        latestFile = filePath;
+      }
+    }
+
+    return latestFile || null;
+  } catch {
+    return null;
+  }
+}
+
 // Git 변경사항 가져오기
 async function getGitChanges(): Promise<{ insertions: number; deletions: number }> {
   try {
@@ -89,20 +119,28 @@ async function getPrUrl(): Promise<string | null> {
 async function main() {
   // 1. stdin에서 Claude Code JSON 읽기
   const claudeJson = JSON.parse(await readStdin());
-  const transcriptPath = claudeJson.transcript_path || "";
 
   // 2. 기본 정보
   const cwd = process.cwd();
   const folder = cwd.split("/").pop() || "";
   const sessionId = cwd.replace(/[/.]/g, "-");
 
-  // 3. 세션 시간 계산
+  // 3. 가장 최근 transcript 파일 찾기 (compact/clear 후 즉시 반영)
+  const projectDir = join(
+    process.env.HOME || "",
+    ".claude",
+    "projects",
+    sessionId
+  );
+  const transcriptPath = await findLatestTranscript(projectDir);
+
+  // 4. 세션 시간 계산
   const sessionMs = claudeJson.cost?.total_duration_ms || 0;
   const sessionSec = Math.floor(sessionMs / 1000);
   const sessionHrs = Math.floor(sessionSec / 3600);
   const sessionMins = Math.floor((sessionSec % 3600) / 60);
 
-  // 4. 병렬로 데이터 수집
+  // 5. 병렬로 데이터 수집
   const [contextResult, sessions, blocks, gitChanges, branch, prUrl] =
     await Promise.all([
       transcriptPath
@@ -115,7 +153,7 @@ async function main() {
       getPrUrl(),
     ]);
 
-  // 5. 현재 세션 토큰 찾기
+  // 6. 현재 세션 토큰 찾기
   const currentSession = Array.isArray(sessions)
     ? sessions.find((s: any) => s.sessionId === sessionId)
     : null;
@@ -125,7 +163,7 @@ async function main() {
     (currentSession?.cacheCreationTokens || 0) +
     (currentSession?.cacheReadTokens || 0);
 
-  // 6. 활성 블록에서 남은 시간 계산
+  // 7. 활성 블록에서 남은 시간 계산
   const activeBlock = Array.isArray(blocks)
     ? blocks.find((b: any) => b.isActive)
     : null;
@@ -140,15 +178,15 @@ async function main() {
   const remHours = Math.floor(remainingMins / 60);
   const remMins = remainingMins % 60;
 
-  // 7. Context 정보
+  // 8. Context 정보
   const contextTokens = contextResult?.inputTokens || 0;
   const contextPct = contextResult?.percentage || 0;
 
-  // 8. 색상 결정
+  // 9. 색상 결정
   const timerColor = getTimerColor(remainingMins);
   const ctxColor = getContextColor(contextPct);
 
-  // 9. 출력
+  // 10. 출력
   // 1번째 줄: 폴더 | 브랜치 | git 변경사항
   let line1 = `${C.WHITE}📁 ${folder}${C.RESET} | ${C.WHITE}🌿 ${branch.trim()}${C.RESET}`;
   if (gitChanges.insertions > 0 || gitChanges.deletions > 0) {
