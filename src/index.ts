@@ -4,7 +4,6 @@ import { $ } from "bun";
 import { readdir, stat } from "fs/promises";
 import { join } from "path";
 import {
-  calculateContextTokens,
   loadSessionData,
   loadSessionBlockData,
 } from "ccusage/data-loader";
@@ -82,6 +81,41 @@ async function findLatestTranscript(projectDir: string): Promise<string | null> 
   }
 }
 
+// 직접 transcript 파싱하여 context 계산 (캐싱 없이 즉시 반영)
+async function parseContextFromTranscript(
+  transcriptPath: string
+): Promise<{ inputTokens: number; percentage: number } | null> {
+  try {
+    const file = Bun.file(transcriptPath);
+    const content = await file.text();
+    const lines = content.trim().split("\n").reverse();
+
+    for (const line of lines) {
+      if (!line.trim()) continue;
+      try {
+        const entry = JSON.parse(line);
+        // assistant 메시지의 usage 찾기
+        if (entry.type === "assistant" && entry.message?.usage) {
+          const usage = entry.message.usage;
+          const inputTokens =
+            (usage.input_tokens || 0) +
+            (usage.cache_read_input_tokens || 0) +
+            (usage.cache_creation_input_tokens || 0);
+          // 200k context window, 80% usable
+          const contextLimit = 160000;
+          const percentage = Math.round((inputTokens / contextLimit) * 100);
+          return { inputTokens, percentage };
+        }
+      } catch {
+        continue;
+      }
+    }
+    return { inputTokens: 0, percentage: 0 };
+  } catch {
+    return null;
+  }
+}
+
 // Git 변경사항 가져오기
 async function getGitChanges(): Promise<{ insertions: number; deletions: number }> {
   try {
@@ -144,7 +178,7 @@ async function main() {
   const [contextResult, sessions, blocks, gitChanges, branch, prUrl] =
     await Promise.all([
       transcriptPath
-        ? calculateContextTokens(transcriptPath, null, true)
+        ? parseContextFromTranscript(transcriptPath)
         : Promise.resolve(null),
       loadSessionData({ offline: true }),
       loadSessionBlockData({ offline: true }),
