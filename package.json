@@ -9,6 +9,7 @@
     "ccusage": "latest"
   },
   "devDependencies": {
+    "@biomejs/biome": "^2.3.9",
     "@types/bun": "latest"
   }
 }
