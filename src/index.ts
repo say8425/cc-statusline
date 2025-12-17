@@ -16,7 +16,7 @@ interface SessionData {
 
 interface BlockData {
 	isActive: boolean;
-	endTime?: string;
+	endTime?: Date;
 }
 
 // TrueColor 색상 정의
@@ -219,7 +219,7 @@ async function main() {
 
 	let remainingMins = 0;
 	if (activeBlock?.endTime) {
-		const endTime = new Date(activeBlock.endTime).getTime();
+		const endTime = activeBlock.endTime.getTime();
 		const now = Date.now();
 		remainingMins = Math.max(0, Math.floor((endTime - now) / 60000));
 	}

@@ -1,15 +1,26 @@
 {
-  "name": "cc-statusline",
+  "name": "@say8425/cc-statusline",
   "version": "1.0.0",
   "type": "module",
+  "description": "Custom statusline for Claude Code",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/say8425/cc-statusline.git"
+  },
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com"
+  },
   "scripts": {
-    "start": "bun src/index.ts"
+    "start": "bun src/index.ts",
+    "lint": "biome check src/",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "ccusage": "latest"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.3.9",
-    "@types/bun": "latest"
+    "@types/bun": "latest",
+    "typescript": "^5.9.3"
   }
 }
