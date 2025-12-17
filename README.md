@@ -1,6 +1,6 @@
 # cc-statusline
 
-Claude Code용 커스텀 statusline.
+Custom statusline for Claude Code.
 
 ![Bun](https://img.shields.io/badge/Bun-black?style=flat&logo=bun)
 ![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=flat&logo=typescript&logoColor=white)
@@ -13,19 +13,19 @@ Claude Code용 커스텀 statusline.
 
 ## Features
 
-- **세션 시간**: 현재 세션 경과 시간
-- **블록 타이머**: 5시간 블록 남은 시간 (ccusage 연동)
-- **Context %**: 현재 context window 사용률 (즉시 반영)
-- **세션 토큰**: 누적 토큰 사용량
-- **Git 변경사항**: staged/unstaged 라인 수
-- **PR URL**: 클릭 가능한 OSC 8 하이퍼링크
-- **TrueColor**: 임계값 기반 동적 색상
+- **Session Time**: Current session elapsed time
+- **Block Timer**: Time remaining in 5-hour block (via ccusage)
+- **Context %**: Current context window usage (updates immediately)
+- **Session Tokens**: Cumulative token usage
+- **Git Changes**: Staged/unstaged line counts
+- **PR URL**: Clickable OSC 8 hyperlink
+- **TrueColor**: Dynamic colors based on thresholds
 
 ## Installation
 
 ```bash
 # 1. Clone
-git clone https://github.com/user/cc-statusline.git ~/dev/cc-statusline
+git clone https://github.com/say8425/cc-statusline.git ~/dev/cc-statusline
 cd ~/dev/cc-statusline
 
 # 2. Install dependencies
@@ -48,14 +48,12 @@ bun install
 - [ccusage](https://github.com/ryoppippi/ccusage) - Claude Code usage tracking
 - [gh](https://cli.github.com) - GitHub CLI (optional, for PR URL)
 
-## Configuration
+## Color Thresholds
 
-색상 임계값:
-
-| 항목 | 정상 (흰색) | 주의 (노란색) | 경고 (빨간색) |
-|------|-------------|---------------|---------------|
+| Metric | Normal (white) | Warning (yellow) | Critical (red) |
+|--------|----------------|------------------|----------------|
 | Context % | < 50% | 50-80% | > 80% |
-| 블록 타이머 | > 10분 | 1-10분 | < 1분 |
+| Block Timer | > 10 min | 1-10 min | < 1 min |
 
 ## License
 
