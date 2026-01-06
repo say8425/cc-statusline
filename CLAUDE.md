@@ -10,26 +10,26 @@ cc-statusline/
 │   └── index.ts       # 메인 스크립트
 ├── package.json
 ├── tsconfig.json
-├── statusline.sh      # (deprecated, bash 버전)
 └── CLAUDE.md
 ```
 
-**기술 스택**: Bun, TypeScript, ccusage/data-loader, gh CLI
+**기술 스택**: Bun, TypeScript, gh CLI
 
-**데이터 소스** (5개):
+**데이터 소스**:
 | 데이터 | 출처 |
 |--------|------|
-| 세션 시간 | Claude Code JSON (stdin) |
-| 세션 토큰 | `ccusage/data-loader` - loadSessionData() |
-| 블록 타이머 | `ccusage/data-loader` - loadSessionBlockData() |
-| Context % | `ccusage/data-loader` - calculateContextTokens() |
-| Git/PR | git, gh CLI |
+| 프로젝트 폴더 | `workspace.project_dir` |
+| 세션 시간 | `cost.total_duration_ms` |
+| Context 토큰 | `context_window.current_usage.*` |
+| Context % | `current_usage / context_window_size` |
+| Git 변경 | `git diff --shortstat` |
+| Git 브랜치 | `git branch --show-current` |
+| PR URL | `gh pr view` |
 
 ## WHY
 
 Claude Code 기본 statusbar에 다음 정보를 추가로 표시:
 - 세션 누적 토큰 및 현재 context window 사용률 (%)
-- 5시간 블록 남은 시간 (ccusage 연동)
 - Git 변경사항 (+/- 라인)
 - PR URL (클릭 가능한 OSC 8 하이퍼링크)
 - TrueColor 동적 색상 (임계값 기반 경고)
@@ -39,7 +39,6 @@ Claude Code 기본 statusbar에 다음 정보를 추가로 표시:
 ### 설치
 
 ```bash
-# 의존성 설치
 cd ~/dev/cc-statusline
 bun install
 
@@ -56,17 +55,22 @@ bun install
 ### 의존성
 
 - `bun`: JavaScript 런타임
-- `ccusage`: data-loader API 사용
 - `gh`: GitHub CLI (PR URL)
 
 ### 테스트
 
 ```bash
-echo '{"transcript_path":"","cost":{"total_duration_ms":3600000}}' | bun src/index.ts
+echo '{
+  "cost":{"total_duration_ms":3600000,"total_lines_added":100,"total_lines_removed":20},
+  "context_window":{
+    "context_window_size":200000,
+    "current_usage":{"input_tokens":50000,"output_tokens":10000,"cache_creation_input_tokens":5000,"cache_read_input_tokens":2000}
+  },
+  "workspace":{"project_dir":"/Users/penguin/dev/cc-statusline"}
+}' | bun src/index.ts
 ```
 
 ### 수정 시 주의사항
 
 - 300ms마다 실행되므로 성능 중요
-- ccusage data-loader는 offline 모드로 사용 (캐시된 가격 데이터)
-- sessionId 변환: `cwd.replace(/[/.]/g, '-')` (ccusage 방식)
+- 공식 JSON input structure 참조: https://code.claude.com/docs/en/statusline
