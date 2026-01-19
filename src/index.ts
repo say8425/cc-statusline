@@ -26,14 +26,12 @@ interface ClaudeStatusInput {
 // 캐시 구조
 const cache = {
 	branch: { value: "", timestamp: 0 },
-	gitChanges: { insertions: 0, deletions: 0, timestamp: 0 },
 	prUrl: { value: null as string | null, timestamp: 0 },
 };
 
 // 캐시 TTL (ms)
 const CACHE_TTL = {
 	branch: 5000, // 5초
-	gitChanges: 3000, // 3초
 	prUrl: 30000, // 30초
 };
 
@@ -90,35 +88,6 @@ async function getBranchCached(): Promise<string> {
 	}
 }
 
-// Git 변경사항 가져오기 (캐싱)
-async function getGitChangesCached(): Promise<{
-	insertions: number;
-	deletions: number;
-}> {
-	if (Date.now() - cache.gitChanges.timestamp < CACHE_TTL.gitChanges) {
-		return cache.gitChanges;
-	}
-	try {
-		const [diff, staged] = await Promise.all([
-			$`git diff --shortstat 2>/dev/null`.text(),
-			$`git diff --cached --shortstat 2>/dev/null`.text(),
-		]);
-		const combined = `${diff} ${staged}`;
-		const insertions = (combined.match(/(\d+) insertion/g) || []).reduce(
-			(sum, m) => sum + Number.parseInt(m, 10),
-			0,
-		);
-		const deletions = (combined.match(/(\d+) deletion/g) || []).reduce(
-			(sum, m) => sum + Number.parseInt(m, 10),
-			0,
-		);
-		cache.gitChanges = { insertions, deletions, timestamp: Date.now() };
-		return cache.gitChanges;
-	} catch {
-		return cache.gitChanges;
-	}
-}
-
 // PR URL 가져오기 (캐싱)
 async function getPrUrlCached(): Promise<string | null> {
 	if (Date.now() - cache.prUrl.timestamp < CACHE_TTL.prUrl) {
@@ -165,20 +134,16 @@ async function main() {
 	const ctxColor = getContextColor(contextPct);
 
 	// 6. Git 정보 (캐싱, 병렬 실행)
-	const [branch, gitChanges, prUrl] = await Promise.all([
+	const [branch, prUrl] = await Promise.all([
 		getBranchCached(),
-		getGitChangesCached(),
 		getPrUrlCached(),
 	]);
 
 	// 7. 출력
-	// 1번째 줄: 폴더 | 브랜치 | git 변경사항
+	// 1번째 줄: 폴더 | 브랜치
 	let line1 = `${C.WHITE}📁 ${folder}${C.RESET}`;
 	if (branch) {
 		line1 += ` | ${C.WHITE}🌿 ${branch}${C.RESET}`;
-	}
-	if (gitChanges.insertions > 0 || gitChanges.deletions > 0) {
-		line1 += ` | ✏️ ${C.GREEN}+${gitChanges.insertions}${C.RESET} ${C.RED}-${gitChanges.deletions}${C.RESET}`;
 	}
 	console.log(line1);
 
