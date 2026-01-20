@@ -22,7 +22,6 @@ cc-statusline/
 | 세션 시간 | `cost.total_duration_ms` |
 | Context 토큰 | `context_window.current_usage.*` |
 | Context % | `current_usage / context_window_size` |
-| Git 변경 | `git diff --shortstat` |
 | Git 브랜치 | `git branch --show-current` |
 | PR URL | `gh pr view` |
 
@@ -30,7 +29,6 @@ cc-statusline/
 
 Claude Code 기본 statusbar에 다음 정보를 추가로 표시:
 - 세션 누적 토큰 및 현재 context window 사용률 (%)
-- Git 변경사항 (+/- 라인)
 - PR URL (클릭 가능한 OSC 8 하이퍼링크)
 - TrueColor 동적 색상 (임계값 기반 경고)
 
@@ -61,7 +59,7 @@ bun install
 
 ```bash
 echo '{
-  "cost":{"total_duration_ms":3600000,"total_lines_added":100,"total_lines_removed":20},
+  "cost":{"total_duration_ms":3600000,"total_cost_usd":0.50},
   "context_window":{
     "context_window_size":200000,
     "current_usage":{"input_tokens":50000,"output_tokens":10000,"cache_creation_input_tokens":5000,"cache_read_input_tokens":2000}

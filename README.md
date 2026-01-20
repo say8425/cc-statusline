@@ -14,10 +14,8 @@ Custom statusline for Claude Code.
 ## Features
 
 - **Session Time**: Current session elapsed time
-- **Block Timer**: Time remaining in 5-hour block (via ccusage)
 - **Context %**: Current context window usage (updates immediately)
 - **Session Tokens**: Cumulative token usage
-- **Git Changes**: Staged/unstaged line counts
 - **PR URL**: Clickable OSC 8 hyperlink
 - **TrueColor**: Dynamic colors based on thresholds
 
@@ -45,7 +43,6 @@ bun install
 ## Dependencies
 
 - [Bun](https://bun.sh) - JavaScript runtime
-- [ccusage](https://github.com/ryoppippi/ccusage) - Claude Code usage tracking
 - [gh](https://cli.github.com) - GitHub CLI (optional, for PR URL)
 
 ## Color Thresholds
@@ -53,7 +50,6 @@ bun install
 | Metric | Normal (white) | Warning (yellow) | Critical (red) |
 |--------|----------------|------------------|----------------|
 | Context % | < 50% | 50-80% | > 80% |
-| Block Timer | > 10 min | 1-10 min | < 1 min |
 
 ## License
 
