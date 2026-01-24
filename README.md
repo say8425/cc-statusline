@@ -2,6 +2,7 @@
 
 Custom statusline for Claude Code.
 
+[![npm](https://img.shields.io/npm/v/@say8425/cc-statusline)](https://www.npmjs.com/package/@say8425/cc-statusline)
 ![Bun](https://img.shields.io/badge/Bun-black?style=flat&logo=bun)
 ![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=flat&logo=typescript&logoColor=white)
 
