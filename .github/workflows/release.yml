@@ -19,11 +19,14 @@ jobs:
           release-type: node
       - if: ${{ steps.release.outputs.prs_created }}
         run: |
-          PR_NUMBER=${{ fromJSON(steps.release.outputs.pr || '{"number":0}').number }}
-          gh pr edit $PR_NUMBER --add-assignee say8425
-          gh pr merge $PR_NUMBER --auto --squash
+          PR_NUMBER=$(gh pr list --label "autorelease: pending" --json number --jq '.[0].number')
+          if [ -n "$PR_NUMBER" ]; then
+            gh pr edit $PR_NUMBER --add-assignee say8425
+            gh pr merge $PR_NUMBER --auto --squash
+          fi
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
 
   publish:
     needs: release-please
