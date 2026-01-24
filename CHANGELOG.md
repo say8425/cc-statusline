@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.1.1](https://github.com/say8425/cc-statusline/compare/v1.1.0...v1.1.1) (2026-01-24)
+
+
+### Bug Fixes
+
+* **ci:** handle empty pr output in release workflow ([dd4cf9f](https://github.com/say8425/cc-statusline/commit/dd4cf9f3ff0d552695231ee8711834ecdf037d96))
+* **ci:** use gh pr list for reliable PR number lookup ([6d48fc2](https://github.com/say8425/cc-statusline/commit/6d48fc25cac24316fab5e359d415452871275e11))
+* **ci:** use merge commit instead of squash ([eb7837f](https://github.com/say8425/cc-statusline/commit/eb7837f34c8429956759a8e27cc839ca75b48a84))
+* **ci:** use rebase merge strategy ([702bb0d](https://github.com/say8425/cc-statusline/commit/702bb0d8a72d0a3a5644d541f9d63538a9f24b25))
+
 ## [1.1.0](https://github.com/say8425/cc-statusline/compare/v1.0.0...v1.1.0) (2026-01-24)
 
 
