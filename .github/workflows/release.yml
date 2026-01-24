@@ -17,6 +17,10 @@ jobs:
         id: release
         with:
           release-type: node
+      - if: ${{ steps.release.outputs.prs_created }}
+        run: gh pr merge ${{ fromJSON(steps.release.outputs.pr).number }} --auto --squash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   publish:
     needs: release-please
