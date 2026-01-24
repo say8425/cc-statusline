@@ -21,20 +21,13 @@ Custom statusline for Claude Code.
 
 ## Installation
 
-```bash
-# 1. Clone
-git clone https://github.com/say8425/cc-statusline.git ~/dev/cc-statusline
-cd ~/dev/cc-statusline
+Add the following to `~/.claude/settings.json`:
 
-# 2. Install dependencies
-bun install
-
-# 3. Configure Claude Code
-# ~/.claude/settings.json
+```json
 {
   "statusLine": {
     "type": "command",
-    "command": "bun ~/dev/cc-statusline/src/index.ts",
+    "command": "bunx @say8425/cc-statusline",
     "padding": 0
   }
 }

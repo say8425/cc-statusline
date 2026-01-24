@@ -36,15 +36,13 @@ Claude Code 기본 statusbar에 다음 정보를 추가로 표시:
 
 ### 설치
 
-```bash
-cd ~/dev/cc-statusline
-bun install
+`~/.claude/settings.json`에 추가:
 
-# ~/.claude/settings.json
+```json
 {
   "statusLine": {
     "type": "command",
-    "command": "bun ~/dev/cc-statusline/src/index.ts",
+    "command": "bunx @say8425/cc-statusline",
     "padding": 0
   }
 }
