@@ -22,7 +22,7 @@ jobs:
           PR_NUMBER=$(gh pr list --label "autorelease: pending" --json number --jq '.[0].number')
           if [ -n "$PR_NUMBER" ]; then
             gh pr edit $PR_NUMBER --add-assignee say8425
-            gh pr merge $PR_NUMBER --auto --squash
+            gh pr merge $PR_NUMBER --auto --merge
           fi
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
