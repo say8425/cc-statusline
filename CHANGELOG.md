@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.0](https://github.com/say8425/cc-statusline/compare/v1.0.0...v1.1.0) (2026-01-24)
+
+
+### Features
+
+* switch to npmjs.org and support bunx execution ([4ca6cde](https://github.com/say8425/cc-statusline/commit/4ca6cdef2dda1fc1d61cc4eaff98e65369c085f1))
+
 ## 1.0.0 (2026-01-20)
 
 
