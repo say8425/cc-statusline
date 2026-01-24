@@ -19,8 +19,9 @@ jobs:
           release-type: node
       - if: ${{ steps.release.outputs.prs_created }}
         run: |
-          gh pr edit ${{ fromJSON(steps.release.outputs.pr).number }} --add-assignee say8425
-          gh pr merge ${{ fromJSON(steps.release.outputs.pr).number }} --auto --squash
+          PR_NUMBER=${{ fromJSON(steps.release.outputs.pr || '{"number":0}').number }}
+          gh pr edit $PR_NUMBER --add-assignee say8425
+          gh pr merge $PR_NUMBER --auto --squash
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
