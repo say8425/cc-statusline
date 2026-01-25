@@ -1,6 +1,6 @@
 {
   "name": "@say8425/cc-statusline",
-  "version": "1.1.1",
+  "version": "1.1.0",
   "type": "module",
   "description": "Custom statusline for Claude Code",
   "repository": {
