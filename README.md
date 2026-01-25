@@ -2,9 +2,10 @@
 
 Custom statusline for Claude Code.
 
-[![npm](https://img.shields.io/npm/v/@say8425/cc-statusline)](https://www.npmjs.com/package/@say8425/cc-statusline)
-![Bun](https://img.shields.io/badge/Bun-black?style=flat&logo=bun)
+![Claude Code](https://img.shields.io/badge/Claude_Code-D97757?style=flat&logo=claude&logoColor=white)
+[![npm](https://img.shields.io/npm/v/%40say8425%2Fcc-statusline?logo=npm&logoColor=%23CC3534&color=%23CC3534)](https://www.npmjs.com/package/@say8425/cc-statusline)
 ![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=flat&logo=typescript&logoColor=white)
+![Bun](https://img.shields.io/badge/Bun-black?style=flat&logo=bun)
 
 ## Preview
 
@@ -41,9 +42,9 @@ Add the following to `~/.claude/settings.json`:
 
 ## Color Thresholds
 
-| Metric | Normal (white) | Warning (yellow) | Critical (red) |
-|--------|----------------|------------------|----------------|
-| Context % | < 50% | 50-80% | > 80% |
+| Metric    | Normal (white) | Warning (yellow) | Critical (red) |
+| --------- | -------------- | ---------------- | -------------- |
+| Context % | < 50%          | 50-80%           | > 80%          |
 
 ## License
 
