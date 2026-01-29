@@ -20,15 +20,19 @@ cc-statusline/
 |--------|------|
 | 프로젝트 폴더 | `workspace.project_dir` |
 | 세션 시간 | `cost.total_duration_ms` |
+| 세션 비용 | `cost.total_cost_usd` |
 | Context 토큰 | `context_window.current_usage.*` |
 | Context % | `current_usage / context_window_size` |
 | Git 브랜치 | `git branch --show-current` |
+| Git diff | `git diff --shortstat` |
 | PR URL | `gh pr view` |
 
 ## WHY
 
 Claude Code 기본 statusbar에 다음 정보를 추가로 표시:
+- 세션 시간 및 비용
 - 세션 누적 토큰 및 현재 context window 사용률 (%)
+- Git diff 통계 (파일 수, +insertions, -deletions)
 - PR URL (클릭 가능한 OSC 8 하이퍼링크)
 - TrueColor 동적 색상 (임계값 기반 경고)
 

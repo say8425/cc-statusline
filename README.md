@@ -9,15 +9,21 @@ Custom statusline for Claude Code.
 
 ## Preview
 
-![preview-1](docs/preview-1.png)
+### Git diff only
+![scenario1_diff_only](docs/scenario1_diff_only.png)
 
-![preview-2](docs/preview-2.png)
+### PR only
+![scenario2_pr_only](docs/scenario2_pr_only.png)
+
+### Git diff + PR
+![scenario3_diff_pr](docs/scenario3_diff_pr.png)
 
 ## Features
 
 - **Session Time**: Current session elapsed time
-- **Context %**: Current context window usage (updates immediately)
-- **Session Tokens**: Cumulative token usage
+- **Cost**: Session cost in USD
+- **Context**: Token usage with percentage (color-coded)
+- **Git Diff**: File count, insertions, deletions
 - **PR URL**: Clickable OSC 8 hyperlink
 - **TrueColor**: Dynamic colors based on thresholds
 
