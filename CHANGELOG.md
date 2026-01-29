@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.0](https://github.com/say8425/cc-statusline/compare/v1.2.0...v1.3.0) (2026-01-29)
+
+
+### Features
+
+* restore git diff display with file count ([461a8eb](https://github.com/say8425/cc-statusline/commit/461a8eb4c0f0c95531771d1f1fab52bb00c2a8e7)), closes [#5](https://github.com/say8425/cc-statusline/issues/5)
+
 ## [1.2.0](https://github.com/say8425/cc-statusline/compare/v1.1.1...v1.2.0) (2026-01-25)
 
 
