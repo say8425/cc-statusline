@@ -1,5 +1,7 @@
 # cc-statusline
 
+[English](README.md) | [한국어](docs/README.ko.md) | [日本語](docs/README.ja.md) | [中文](docs/README.zh.md) | [Español](docs/README.es.md)
+
 Custom statusline for Claude Code.
 
 [![Claude Code](https://img.shields.io/badge/Claude_Code-D97757?style=flat&logo=claude&logoColor=white)](https://code.claude.com/docs/en/statusline)
@@ -26,6 +28,18 @@ Custom statusline for Claude Code.
 - **Git Diff**: File count, insertions, deletions
 - **PR URL**: Clickable OSC 8 hyperlink
 - **TrueColor**: Dynamic colors based on thresholds
+
+## Emoji Guide
+
+| Emoji | Description |
+|-------|-------------|
+| 📁 | Project folder name |
+| 🌿 | Current Git branch |
+| ⏱️ | Session elapsed time |
+| 💰 | Session cost in USD |
+| 🧠 | Context window usage |
+| ✏️ | Uncommitted changes |
+| 📎 | Pull request link |
 
 ## Installation
 
