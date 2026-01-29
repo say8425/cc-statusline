@@ -26,12 +26,14 @@ interface ClaudeStatusInput {
 // 캐시 구조
 const cache = {
 	branch: { value: "", timestamp: 0 },
+	gitChanges: { files: 0, insertions: 0, deletions: 0, timestamp: 0 },
 	prUrl: { value: null as string | null, timestamp: 0 },
 };
 
 // 캐시 TTL (ms)
 const CACHE_TTL = {
 	branch: 5000, // 5초
+	gitChanges: 3000, // 3초
 	prUrl: 30000, // 30초
 };
 
@@ -88,6 +90,42 @@ async function getBranchCached(): Promise<string> {
 	}
 }
 
+// Git 변경사항 가져오기 (캐싱)
+async function getGitChangesCached(): Promise<{
+	files: number;
+	insertions: number;
+	deletions: number;
+}> {
+	if (Date.now() - cache.gitChanges.timestamp < CACHE_TTL.gitChanges) {
+		return cache.gitChanges;
+	}
+	try {
+		const [diff, staged] = await Promise.all([
+			$`git diff --shortstat 2>/dev/null`.text(),
+			$`git diff --cached --shortstat 2>/dev/null`.text(),
+		]);
+		const combined = `${diff}\n${staged}`;
+
+		// 파일 수, insertions, deletions 추출
+		const files = (combined.match(/(\d+) file/g) || []).reduce(
+			(sum, m) => sum + Number.parseInt(m, 10),
+			0,
+		);
+		const insertions = (combined.match(/(\d+) insertion/g) || []).reduce(
+			(sum, m) => sum + Number.parseInt(m, 10),
+			0,
+		);
+		const deletions = (combined.match(/(\d+) deletion/g) || []).reduce(
+			(sum, m) => sum + Number.parseInt(m, 10),
+			0,
+		);
+		cache.gitChanges = { files, insertions, deletions, timestamp: Date.now() };
+		return cache.gitChanges;
+	} catch {
+		return cache.gitChanges;
+	}
+}
+
 // PR URL 가져오기 (캐싱)
 async function getPrUrlCached(): Promise<string | null> {
 	if (Date.now() - cache.prUrl.timestamp < CACHE_TTL.prUrl) {
@@ -134,8 +172,9 @@ async function main() {
 	const ctxColor = getContextColor(contextPct);
 
 	// 6. Git 정보 (캐싱, 병렬 실행)
-	const [branch, prUrl] = await Promise.all([
+	const [branch, gitChanges, prUrl] = await Promise.all([
 		getBranchCached(),
+		getGitChangesCached(),
 		getPrUrlCached(),
 	]);
 
@@ -154,15 +193,22 @@ async function main() {
 			`${ctxColor}🧠 ${formatNumber(totalTokens)} (${contextPct}%)${C.RESET}`,
 	);
 
-	// 3번째 줄: PR URL (있을 경우만)
-	if (prUrl) {
-		const prLabel = prUrl
-			.replace("https://github.com/", "")
-			.replace("/pull/", "#");
-		// OSC 8 하이퍼링크
-		console.log(
-			`📎 ${C.WHITE}${C.UNDERLINE}\x1b]8;;${prUrl}\x07${prLabel}\x1b]8;;\x07${C.RESET}`,
-		);
+	// 3번째 줄: git changes | PR URL
+	const hasGitChanges = gitChanges.files > 0 || gitChanges.insertions > 0 || gitChanges.deletions > 0;
+	if (hasGitChanges || prUrl) {
+		let line3 = "";
+		if (hasGitChanges) {
+			line3 += `✏️ ${C.WHITE}${gitChanges.files} files${C.RESET} ${C.GREEN}+${gitChanges.insertions}${C.RESET} ${C.RED}-${gitChanges.deletions}${C.RESET}`;
+		}
+		if (prUrl) {
+			const prLabel = prUrl
+				.replace("https://github.com/", "")
+				.replace("/pull/", "#");
+			if (line3) line3 += " | ";
+			// OSC 8 하이퍼링크
+			line3 += `📎 ${C.WHITE}${C.UNDERLINE}\x1b]8;;${prUrl}\x07${prLabel}\x1b]8;;\x07${C.RESET}`;
+		}
+		console.log(line3);
 	}
 }
 
