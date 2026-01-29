@@ -107,17 +107,15 @@ async function getGitChangesCached(): Promise<{
 		const combined = `${diff}\n${staged}`;
 
 		// 파일 수, insertions, deletions 추출
-		const files = (combined.match(/(\d+) file/g) || []).reduce(
-			(sum, m) => sum + Number.parseInt(m, 10),
-			0,
-		);
-		const insertions = (combined.match(/(\d+) insertion/g) || []).reduce(
-			(sum, m) => sum + Number.parseInt(m, 10),
-			0,
-		);
-		const deletions = (combined.match(/(\d+) deletion/g) || []).reduce(
-			(sum, m) => sum + Number.parseInt(m, 10),
-			0,
+		const [files, insertions, deletions] = [
+			/(\d+) file/g,
+			/(\d+) insertion/g,
+			/(\d+) deletion/g,
+		].map((regex) =>
+			(combined.match(regex) || []).reduce(
+				(sum, m) => sum + Number.parseInt(m, 10),
+				0,
+			),
 		);
 		cache.gitChanges = { files, insertions, deletions, timestamp: Date.now() };
 		return cache.gitChanges;
@@ -194,7 +192,10 @@ async function main() {
 	);
 
 	// 3번째 줄: git changes | PR URL
-	const hasGitChanges = gitChanges.files > 0 || gitChanges.insertions > 0 || gitChanges.deletions > 0;
+	const hasGitChanges =
+		gitChanges.files > 0 ||
+		gitChanges.insertions > 0 ||
+		gitChanges.deletions > 0;
 	if (hasGitChanges || prUrl) {
 		let line3 = "";
 		if (hasGitChanges) {
