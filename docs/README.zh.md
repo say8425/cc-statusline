@@ -1,6 +1,6 @@
 # cc-statusline
 
-[English](../README.md) | [한국어](README.ko.md) | [日本語](README.ja.md) | [中文](README.zh.md) | [Español](README.es.md)
+[English](../README.md) | [한국어](README.ko.md) | [日本語](README.ja.md) | 中文 | [Español](README.es.md)
 
 Claude Code 自定义状态栏。
 
