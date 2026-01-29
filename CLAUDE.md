@@ -31,7 +31,7 @@ cc-statusline/
 
 Claude Code 기본 statusbar에 다음 정보를 추가로 표시:
 - 세션 시간 및 비용
-- 세션 누적 토큰 및 현재 context window 사용률 (%)
+- Context window 토큰 사용량 및 사용률 (%)
 - Git diff 통계 (파일 수, +insertions, -deletions)
 - PR URL (클릭 가능한 OSC 8 하이퍼링크)
 - TrueColor 동적 색상 (임계값 기반 경고)
