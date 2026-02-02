@@ -23,6 +23,18 @@ Línea de estado personalizada para Claude Code.
 
 ![scenario3_diff_pr](scenario3_diff_pr.png)
 
+### Context Normal (< 50%)
+
+![context_normal](context_normal.png)
+
+### Context Advertencia (50-80%)
+
+![context_warning](context_warning.png)
+
+### Context Crítico (> 80%)
+
+![context_critical](context_critical.png)
+
 ## Instalación
 
 Agrega lo siguiente a `~/.claude/settings.json`:
