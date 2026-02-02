@@ -62,23 +62,27 @@ Add the following to `~/.claude/settings.json`:
 - **PR URL**: Clickable OSC 8 hyperlink
 - **TrueColor**: Dynamic colors based on thresholds
 - **Limit Reset Timer**: Countdown to usage limit reset
+- **Block Usage**: 5-hour block token usage with percentage
+- **Burn Rate**: Token consumption rate per minute
 
 ## Emoji Guide
 
-| Emoji | Description          |
-| ----- | -------------------- |
-| 📁    | Project folder name  |
-| 🌿    | Current Git branch   |
-| ⏱️    | Session elapsed time |
-| 💰    | Session cost in USD  |
-| 🧠    | Context window usage |
-| ✏️    | Uncommitted changes  |
-| 📎    | Pull request link    |
-| ⏳    | Limit reset countdown |
+| Emoji | Description              |
+| ----- | ------------------------ |
+| 📁    | Project folder name      |
+| 🌿    | Current Git branch       |
+| ⏱️    | Session elapsed time     |
+| 💰    | Session cost in USD      |
+| 🧠    | Context window usage     |
+| ⏳    | Limit reset countdown    |
+| 📊    | 5-hour block token usage |
+| 🔥    | Token burn rate (per min)|
+| ✏️    | Uncommitted changes      |
+| 📎    | Pull request link        |
 
-## Limit Reset Timer
+## Usage Metrics
 
-Shows time remaining until your Claude Code usage limit resets.
+Shows usage information for the 5-hour billing block.
 
 ### How It Works
 
@@ -86,18 +90,20 @@ Automatically parses JSONL files from `~/.claude/projects/` to detect:
 
 1. **Usage limit error messages** - Extracts exact reset time from "Claude AI usage limit reached" errors
 2. **5-hour billing blocks** - Calculates block end time based on latest activity (like [ccusage](https://github.com/ryoppippi/ccusage))
+3. **Token usage** - Sums input and output tokens within the current 5-hour block
+4. **Burn rate** - Calculates average token consumption per minute
 
 No manual configuration required.
 
 ### Disable
 
-To hide the limit reset timer, use the `--no-limit` flag:
+To hide the usage metrics line (reset timer, block usage, burn rate), use the `--no-usage` flag:
 
 ```json
 {
   "statusLine": {
     "type": "command",
-    "command": "bunx @say8425/cc-statusline --no-limit",
+    "command": "bunx @say8425/cc-statusline --no-usage",
     "padding": 0
   }
 }
@@ -110,9 +116,10 @@ To hide the limit reset timer, use the `--no-limit` flag:
 
 ## Color Thresholds
 
-| Metric    | Normal (white) | Warning (yellow) | Critical (red) |
-| --------- | -------------- | ---------------- | -------------- |
-| Context % | < 50%          | 50-80%           | > 80%          |
+| Metric        | Normal (white) | Warning (yellow) | Critical (red) |
+| ------------- | -------------- | ---------------- | -------------- |
+| Context %     | < 50%          | 50-80%           | > 80%          |
+| Block Usage % | < 50%          | 50-80%           | > 80%          |
 
 ## License
 
