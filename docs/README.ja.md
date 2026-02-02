@@ -39,15 +39,15 @@ Claude Code用カスタムステータスライン。
 
 ### Context 正常 (< 50%)
 
-![context_normal](context_normal.png)
+![正常なコンテキスト使用量（50%未満）のステータスラインのスクリーンショット](context_normal.png)
 
 ### Context 警告 (50-80%)
 
-![context_warning](context_warning.png)
+![警告コンテキスト使用量（50%-80%）のステータスラインのスクリーンショット](context_warning.png)
 
 ### Context 危険 (> 80%)
 
-![context_critical](context_critical.png)
+![危険なコンテキスト使用量（80%超）のステータスラインのスクリーンショット](context_critical.png)
 
 ## 機能
 

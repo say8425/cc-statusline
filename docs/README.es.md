@@ -39,15 +39,15 @@ Agrega lo siguiente a `~/.claude/settings.json`:
 
 ### Context Normal (< 50%)
 
-![context_normal](context_normal.png)
+![Captura de pantalla de la línea de estado con uso de contexto normal, menos del 50%](context_normal.png)
 
 ### Context Advertencia (50-80%)
 
-![context_warning](context_warning.png)
+![Captura de pantalla de la línea de estado con uso de contexto en advertencia, entre 50% y 80%](context_warning.png)
 
 ### Context Crítico (> 80%)
 
-![context_critical](context_critical.png)
+![Captura de pantalla de la línea de estado con uso de contexto crítico, más del 80%](context_critical.png)
 
 ## Características
 

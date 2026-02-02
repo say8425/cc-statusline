@@ -39,15 +39,15 @@ Claude Code 自定义状态栏。
 
 ### Context 正常 (< 50%)
 
-![context_normal](context_normal.png)
+![正常上下文使用量（低于50%）的状态栏截图](context_normal.png)
 
 ### Context 警告 (50-80%)
 
-![context_warning](context_warning.png)
+![警告上下文使用量（50%-80%）的状态栏截图](context_warning.png)
 
 ### Context 危险 (> 80%)
 
-![context_critical](context_critical.png)
+![危险上下文使用量（超过80%）的状态栏截图](context_critical.png)
 
 ## 功能
 
