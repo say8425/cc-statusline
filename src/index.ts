@@ -28,12 +28,22 @@ interface ClaudeStatusInput {
 	};
 }
 
+// 블록 사용량 정보 타입
+interface BlockUsageInfo {
+	resetTime: Date | null;
+	blockTokens: number;
+	blockStartTime: number | null;
+}
+
 // 캐시 구조
 const cache = {
 	branch: { value: "", timestamp: 0 },
 	gitChanges: { files: 0, insertions: 0, deletions: 0, timestamp: 0 },
 	prUrl: { value: null as string | null, timestamp: 0 },
-	limitReset: { value: null as Date | null, timestamp: 0 },
+	blockUsage: {
+		value: null as BlockUsageInfo | null,
+		timestamp: 0,
+	},
 };
 
 // 캐시 TTL (ms)
@@ -41,7 +51,7 @@ const CACHE_TTL = {
 	branch: 5000, // 5초
 	gitChanges: 3000, // 3초
 	prUrl: 30000, // 30초
-	limitReset: 60000, // 60초 (JSONL 파싱은 비용이 크므로 긴 TTL)
+	blockUsage: 60000, // 60초 (JSONL 파싱은 비용이 크므로 긴 TTL)
 };
 
 // 5시간 블록 상수
@@ -60,8 +70,8 @@ const C = {
 	UNDERLINE: "\x1b[4m",
 };
 
-// Context 사용률에 따른 색상
-function getContextColor(pct: number): string {
+// 사용률에 따른 색상 (Context 및 Block Usage 공통)
+function getUsageColor(pct: number): string {
 	if (pct < 50) return C.WHITE;
 	if (pct < 80) return C.YELLOW;
 	return C.RED;
@@ -150,7 +160,7 @@ async function getPrUrlCached(): Promise<string | null> {
 
 // CLI 인자 파싱
 const args = process.argv.slice(2);
-const noLimit = args.includes("--no-limit");
+const noUsage = args.includes("--no-usage");
 
 // 시간을 정각으로 내림
 function floorToHour(timestamp: number): number {
@@ -159,16 +169,22 @@ function floorToHour(timestamp: number): number {
 	return date.getTime();
 }
 
-// JSONL 파일에서 리셋 시간 추출
-async function parseLimitResetFromJsonl(
+// JSONL 파일에서 블록 사용량 정보 추출
+async function parseBlockUsageFromJsonl(
 	projectDir: string,
-): Promise<Date | null> {
+): Promise<BlockUsageInfo> {
 	const homeDir = process.env.HOME || "";
 	const claudeDir = `${homeDir}/.claude/projects`;
 
 	// projectDir를 키로 변환 (/ -> -)
 	const projectKey = projectDir.replace(/\//g, "-");
 	const jsonlDir = `${claudeDir}/${projectKey}`;
+
+	const result: BlockUsageInfo = {
+		resetTime: null,
+		blockTokens: 0,
+		blockStartTime: null,
+	};
 
 	try {
 		const glob = new Bun.Glob("*.jsonl");
@@ -178,14 +194,51 @@ async function parseLimitResetFromJsonl(
 			files.push(file);
 		}
 
-		if (files.length === 0) return null;
+		if (files.length === 0) return result;
 
 		// 가장 최근 파일부터 역순으로 처리
 		files.sort().reverse();
 
 		let latestResetTime: Date | null = null;
 		let latestActivityTime: number | null = null;
+		let blockStartTime: number | null = null;
 
+		// 모든 파일에서 최신 활동 시간을 먼저 찾아 블록 시작 시간 계산
+		for (const filePath of files) {
+			const file = Bun.file(filePath);
+			const text = await file.text();
+			const lines = text.split("\n").filter((line) => line.trim());
+
+			for (const line of lines) {
+				try {
+					const data = simdjson.lazyParse(line);
+					const timestamp = data.valueForKeyPath("timestamp") as
+						| string
+						| number
+						| undefined;
+					if (timestamp) {
+						const ts =
+							typeof timestamp === "string"
+								? new Date(timestamp).getTime()
+								: timestamp;
+						if (!latestActivityTime || ts > latestActivityTime) {
+							latestActivityTime = ts;
+						}
+					}
+				} catch {
+					// JSON 파싱 에러 무시
+				}
+			}
+		}
+
+		// 블록 시작 시간 계산
+		if (latestActivityTime) {
+			blockStartTime = floorToHour(latestActivityTime);
+			result.blockStartTime = blockStartTime;
+		}
+
+		// 블록 내 토큰 사용량 및 리셋 시간 추출
+		let blockTokens = 0;
 		for (const filePath of files) {
 			const file = Bun.file(filePath);
 			const text = await file.text();
@@ -219,18 +272,26 @@ async function parseLimitResetFromJsonl(
 						}
 					}
 
-					// 2. 최신 활동 시간 추적 (5시간 블록 계산용)
+					// 2. 블록 내 토큰 사용량 합산
 					const timestamp = data.valueForKeyPath("timestamp") as
 						| string
 						| number
 						| undefined;
-					if (timestamp) {
+					if (timestamp && blockStartTime) {
 						const ts =
 							typeof timestamp === "string"
 								? new Date(timestamp).getTime()
 								: timestamp;
-						if (!latestActivityTime || ts > latestActivityTime) {
-							latestActivityTime = ts;
+
+						// 블록 시작 시간 이후의 메시지만 포함
+						if (ts >= blockStartTime) {
+							const usage = data.valueForKeyPath("message.usage") as
+								| { input_tokens?: number; output_tokens?: number }
+								| undefined;
+							if (usage) {
+								blockTokens +=
+									(usage.input_tokens || 0) + (usage.output_tokens || 0);
+							}
 						}
 					}
 				} catch {
@@ -239,35 +300,36 @@ async function parseLimitResetFromJsonl(
 			}
 		}
 
-		// 에러 메시지에서 리셋 시간을 찾았으면 반환
-		if (latestResetTime && latestResetTime > new Date()) {
-			return latestResetTime;
-		}
+		result.blockTokens = blockTokens;
 
-		// 없으면 5시간 블록 기반으로 계산
-		if (latestActivityTime) {
-			const blockStart = floorToHour(latestActivityTime);
-			const blockEnd = new Date(blockStart + SESSION_DURATION_MS);
+		// 에러 메시지에서 리셋 시간을 찾았으면 사용
+		if (latestResetTime && latestResetTime > new Date()) {
+			result.resetTime = latestResetTime;
+		} else if (latestActivityTime && blockStartTime) {
+			// 없으면 5시간 블록 기반으로 계산
+			const blockEnd = new Date(blockStartTime + SESSION_DURATION_MS);
 			if (blockEnd > new Date()) {
-				return blockEnd;
+				result.resetTime = blockEnd;
 			}
 		}
 
-		return null;
+		return result;
 	} catch {
-		return null;
+		return result;
 	}
 }
 
-// 리셋 시간 가져오기 (캐싱)
-async function getLimitResetCached(projectDir: string): Promise<Date | null> {
-	if (Date.now() - cache.limitReset.timestamp < CACHE_TTL.limitReset) {
-		return cache.limitReset.value;
+// 블록 사용량 가져오기 (캐싱)
+async function getBlockUsageCached(
+	projectDir: string,
+): Promise<BlockUsageInfo | null> {
+	if (Date.now() - cache.blockUsage.timestamp < CACHE_TTL.blockUsage) {
+		return cache.blockUsage.value;
 	}
 
-	const resetTime = await parseLimitResetFromJsonl(projectDir);
-	cache.limitReset = { value: resetTime, timestamp: Date.now() };
-	return resetTime;
+	const blockUsage = await parseBlockUsageFromJsonl(projectDir);
+	cache.blockUsage = { value: blockUsage, timestamp: Date.now() };
+	return blockUsage;
 }
 
 // 리셋까지 남은 시간 계산
@@ -287,6 +349,32 @@ function getTimeUntilReset(resetTime: Date): {
 
 	return { hours, minutes };
 }
+
+// 토큰 수를 K 단위로 포맷팅
+function formatTokensK(tokens: number): string {
+	if (tokens >= 1000) {
+		return `${Math.round(tokens / 1000)}K`;
+	}
+	return tokens.toString();
+}
+
+// 분당 번레이트 계산 (tokens/min)
+function calculateBurnRate(
+	blockTokens: number,
+	blockStartTime: number | null,
+): number {
+	if (!blockStartTime || blockTokens === 0) return 0;
+
+	const now = Date.now();
+	const elapsedMinutes = (now - blockStartTime) / (1000 * 60);
+
+	if (elapsedMinutes < 1) return blockTokens; // 1분 미만이면 현재 토큰 수 반환
+
+	return Math.round(blockTokens / elapsedMinutes);
+}
+
+// Pro plan 5시간 토큰 한도 (약 450K)
+const BLOCK_TOKEN_LIMIT = 450000;
 
 // 메인 함수
 async function main() {
@@ -317,16 +405,16 @@ async function main() {
 		: 0;
 
 	const contextPct = Math.round((totalTokens / contextSize) * 100);
-	const ctxColor = getContextColor(contextPct);
+	const ctxColor = getUsageColor(contextPct);
 
-	// 6. Git 정보 + 리셋 시간 (캐싱, 병렬 실행)
-	const [branch, gitChanges, prUrl, limitReset] = await Promise.all([
+	// 6. Git 정보 + 블록 사용량 (캐싱, 병렬 실행)
+	const [branch, gitChanges, prUrl, blockUsage] = await Promise.all([
 		getBranchCached(),
 		getGitChangesCached(),
 		getPrUrlCached(),
-		noLimit
+		noUsage
 			? Promise.resolve(null)
-			: getLimitResetCached(claudeJson.workspace?.project_dir || ""),
+			: getBlockUsageCached(claudeJson.workspace?.project_dir || ""),
 	]);
 
 	// 7. 출력
@@ -337,39 +425,68 @@ async function main() {
 	}
 	console.log(line1);
 
-	// 2번째 줄: 세션 시간 | 리셋 타이머 | 비용 | 컨텍스트
-	let line2 = `${C.WHITE}⏱️ ${formatTime(sessionHrs, sessionMins)}${C.RESET}`;
-
-	if (!noLimit && limitReset) {
-		const resetTime = getTimeUntilReset(limitReset);
-		line2 += ` | ${C.WHITE}⏳ ${formatTime(resetTime.hours, resetTime.minutes)}${C.RESET}`;
-	}
-
-	line2 +=
-		` | ${C.WHITE}💰 $${costUsd.toFixed(2)}${C.RESET} | ` +
-		`${ctxColor}🧠 ${formatNumber(totalTokens)} (${contextPct}%)${C.RESET}`;
+	// 2번째 줄: 세션 시간 | 비용 | 컨텍스트
+	const line2 =
+		`${C.WHITE}⏱️ ${formatTime(sessionHrs, sessionMins)}${C.RESET}` +
+		` | ${C.WHITE}💰 $${costUsd.toFixed(2)}${C.RESET}` +
+		` | ${ctxColor}🧠 ${formatNumber(totalTokens)} (${contextPct}%)${C.RESET}`;
 
 	console.log(line2);
 
-	// 3번째 줄: git changes | PR URL
+	// 3번째 줄: 리셋 타이머 | 사용량 | 번레이트 (--no-usage가 아닐 때)
+	if (!noUsage && blockUsage) {
+		const parts: string[] = [];
+
+		// 리셋 타이머
+		if (blockUsage.resetTime) {
+			const resetTime = getTimeUntilReset(blockUsage.resetTime);
+			parts.push(
+				`${C.WHITE}⏳ ${formatTime(resetTime.hours, resetTime.minutes)}${C.RESET}`,
+			);
+		}
+
+		// 블록 사용량
+		const usagePct = Math.round(
+			(blockUsage.blockTokens / BLOCK_TOKEN_LIMIT) * 100,
+		);
+		const usageColor = getUsageColor(usagePct);
+		parts.push(
+			`${usageColor}📊 ${formatTokensK(blockUsage.blockTokens)}/${formatTokensK(BLOCK_TOKEN_LIMIT)} (${usagePct}%)${C.RESET}`,
+		);
+
+		// 번레이트
+		const burnRate = calculateBurnRate(
+			blockUsage.blockTokens,
+			blockUsage.blockStartTime,
+		);
+		if (burnRate > 0) {
+			parts.push(`${C.WHITE}🔥 ${formatTokensK(burnRate)}/min${C.RESET}`);
+		}
+
+		if (parts.length > 0) {
+			console.log(parts.join(" | "));
+		}
+	}
+
+	// 4번째 줄: git changes | PR URL
 	const hasGitChanges =
 		gitChanges.files > 0 ||
 		gitChanges.insertions > 0 ||
 		gitChanges.deletions > 0;
 	if (hasGitChanges || prUrl) {
-		let line3 = "";
+		let line4 = "";
 		if (hasGitChanges) {
-			line3 += `✏️ ${C.WHITE}${gitChanges.files} files${C.RESET} ${C.GREEN}+${gitChanges.insertions}${C.RESET} ${C.RED}-${gitChanges.deletions}${C.RESET}`;
+			line4 += `✏️ ${C.WHITE}${gitChanges.files} files${C.RESET} ${C.GREEN}+${gitChanges.insertions}${C.RESET} ${C.RED}-${gitChanges.deletions}${C.RESET}`;
 		}
 		if (prUrl) {
 			const prLabel = prUrl
 				.replace("https://github.com/", "")
 				.replace("/pull/", "#");
-			if (line3) line3 += " | ";
+			if (line4) line4 += " | ";
 			// OSC 8 하이퍼링크
-			line3 += `📎 ${C.WHITE}${C.UNDERLINE}\x1b]8;;${prUrl}\x07${prLabel}\x1b]8;;\x07${C.RESET}`;
+			line4 += `📎 ${C.WHITE}${C.UNDERLINE}\x1b]8;;${prUrl}\x07${prLabel}\x1b]8;;\x07${C.RESET}`;
 		}
-		console.log(line3);
+		console.log(line4);
 	}
 }
 
