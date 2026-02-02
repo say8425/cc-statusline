@@ -27,6 +27,8 @@ cc-statusline/
 | Git diff | `git diff --shortstat` |
 | PR URL | `gh pr view` |
 | 리셋 타이머 | `~/.claude/projects/*/conversations/*.jsonl` 파싱 |
+| 블록 사용량 | `message.usage.input_tokens + output_tokens` 합산 |
+| 번레이트 | 블록 토큰 / 경과 시간 (분) |
 
 ## WHY
 
@@ -36,6 +38,8 @@ Claude Code 기본 statusbar에 다음 정보를 추가로 표시:
 - Git diff 통계 (파일 수, +insertions, -deletions)
 - PR URL (클릭 가능한 OSC 8 하이퍼링크)
 - 리셋 타이머 (5시간 사용량 리셋까지 남은 시간)
+- 블록 사용량 (5시간 블록 내 토큰 사용량 및 백분율)
+- 번레이트 (분당 토큰 소비율)
 - TrueColor 동적 색상 (임계값 기반 경고)
 
 ## HOW
@@ -74,7 +78,7 @@ echo '{
 
 ### CLI 옵션
 
-- `--no-limit`: 리셋 타이머 숨김 (Max plan 사용자용)
+- `--no-usage`: 사용량 지표 줄 숨김 (리셋 타이머, 블록 사용량, 번레이트)
 
 ### 수정 시 주의사항
 
