@@ -9,7 +9,7 @@ Claude Code를 위한 커스텀 상태표시줄.
 [![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=flat&logo=typescript&logoColor=white)](https://www.typescriptlang.org)
 [![Bun](https://img.shields.io/badge/Bun-black?style=flat&logo=bun)](https://bun.sh)
 
-## 미리보기
+## 스크린샷
 
 ### Git diff만 표시
 
