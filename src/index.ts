@@ -28,6 +28,7 @@ const cache = {
 	branch: { value: "", timestamp: 0 },
 	gitChanges: { files: 0, insertions: 0, deletions: 0, timestamp: 0 },
 	prUrl: { value: null as string | null, timestamp: 0 },
+	limitReset: { value: null as Date | null, timestamp: 0 },
 };
 
 // 캐시 TTL (ms)
@@ -35,7 +36,11 @@ const CACHE_TTL = {
 	branch: 5000, // 5초
 	gitChanges: 3000, // 3초
 	prUrl: 30000, // 30초
+	limitReset: 60000, // 60초 (JSONL 파싱은 비용이 크므로 긴 TTL)
 };
+
+// 5시간 블록 상수
+const SESSION_DURATION_MS = 5 * 60 * 60 * 1000; // 5시간
 
 // TrueColor 색상 정의
 const C = {
@@ -142,24 +147,127 @@ async function getPrUrlCached(): Promise<string | null> {
 const args = process.argv.slice(2);
 const noLimit = args.includes("--no-limit");
 
-// 환경변수: CC_LIMIT_RESET_HOUR (0-23, 기본값: 9 = 오전 9시)
-const LIMIT_RESET_HOUR = Number.parseInt(
-	process.env.CC_LIMIT_RESET_HOUR || "9",
-	10,
-);
+// 시간을 정각으로 내림
+function floorToHour(timestamp: number): number {
+	const date = new Date(timestamp);
+	date.setUTCMinutes(0, 0, 0);
+	return date.getTime();
+}
 
-// 리셋까지 남은 시간 계산
-function getTimeUntilReset(resetHour: number): { hours: number; minutes: number } {
-	const now = new Date();
-	const reset = new Date();
-	reset.setHours(resetHour, 0, 0, 0);
+// JSONL 파일에서 리셋 시간 추출
+async function parseLimitResetFromJsonl(
+	projectDir: string,
+): Promise<Date | null> {
+	const homeDir = process.env.HOME || "";
+	const claudeDir = `${homeDir}/.claude/projects`;
 
-	// 이미 지났으면 다음 날로
-	if (now >= reset) {
-		reset.setDate(reset.getDate() + 1);
+	// projectDir를 키로 변환 (/ -> -)
+	const projectKey = projectDir.replace(/\//g, "-");
+	const jsonlDir = `${claudeDir}/${projectKey}`;
+
+	try {
+		const glob = new Bun.Glob("*.jsonl");
+		const files: string[] = [];
+
+		for await (const file of glob.scan({ cwd: jsonlDir, absolute: true })) {
+			files.push(file);
+		}
+
+		if (files.length === 0) return null;
+
+		// 가장 최근 파일부터 역순으로 처리
+		files.sort().reverse();
+
+		let latestResetTime: Date | null = null;
+		let latestActivityTime: number | null = null;
+
+		for (const filePath of files) {
+			const file = Bun.file(filePath);
+			const text = await file.text();
+			const lines = text.split("\n").filter((line) => line.trim());
+
+			for (const line of lines) {
+				try {
+					const data = JSON.parse(line);
+
+					// 1. usageLimitResetTime 추출 (에러 메시지에서)
+					if (data.type === "assistant" && data.message?.content) {
+						for (const content of data.message.content) {
+							if (
+								content.text?.includes("Claude AI usage limit reached")
+							) {
+								const match = content.text.match(/\|(\d+)/);
+								if (match?.[1]) {
+									const resetTimestamp = Number.parseInt(match[1], 10);
+									if (resetTimestamp > 0) {
+										const resetDate = new Date(resetTimestamp * 1000);
+										if (!latestResetTime || resetDate > latestResetTime) {
+											latestResetTime = resetDate;
+										}
+									}
+								}
+							}
+						}
+					}
+
+					// 2. 최신 활동 시간 추적 (5시간 블록 계산용)
+					if (data.timestamp) {
+						const ts =
+							typeof data.timestamp === "string"
+								? new Date(data.timestamp).getTime()
+								: data.timestamp;
+						if (!latestActivityTime || ts > latestActivityTime) {
+							latestActivityTime = ts;
+						}
+					}
+				} catch {
+					// JSON 파싱 에러 무시
+				}
+			}
+		}
+
+		// 에러 메시지에서 리셋 시간을 찾았으면 반환
+		if (latestResetTime && latestResetTime > new Date()) {
+			return latestResetTime;
+		}
+
+		// 없으면 5시간 블록 기반으로 계산
+		if (latestActivityTime) {
+			const blockStart = floorToHour(latestActivityTime);
+			const blockEnd = new Date(blockStart + SESSION_DURATION_MS);
+			if (blockEnd > new Date()) {
+				return blockEnd;
+			}
+		}
+
+		return null;
+	} catch {
+		return null;
+	}
+}
+
+// 리셋 시간 가져오기 (캐싱)
+async function getLimitResetCached(
+	projectDir: string,
+): Promise<Date | null> {
+	if (Date.now() - cache.limitReset.timestamp < CACHE_TTL.limitReset) {
+		return cache.limitReset.value;
 	}
 
-	const diff = reset.getTime() - now.getTime();
+	const resetTime = await parseLimitResetFromJsonl(projectDir);
+	cache.limitReset = { value: resetTime, timestamp: Date.now() };
+	return resetTime;
+}
+
+// 리셋까지 남은 시간 계산
+function getTimeUntilReset(resetTime: Date): { hours: number; minutes: number } {
+	const now = new Date();
+	const diff = resetTime.getTime() - now.getTime();
+
+	if (diff <= 0) {
+		return { hours: 0, minutes: 0 };
+	}
+
 	const hours = Math.floor(diff / (1000 * 60 * 60));
 	const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
 
@@ -197,11 +305,12 @@ async function main() {
 	const contextPct = Math.round((totalTokens / contextSize) * 100);
 	const ctxColor = getContextColor(contextPct);
 
-	// 6. Git 정보 (캐싱, 병렬 실행)
-	const [branch, gitChanges, prUrl] = await Promise.all([
+	// 6. Git 정보 + 리셋 시간 (캐싱, 병렬 실행)
+	const [branch, gitChanges, prUrl, limitReset] = await Promise.all([
 		getBranchCached(),
 		getGitChangesCached(),
 		getPrUrlCached(),
+		noLimit ? Promise.resolve(null) : getLimitResetCached(claudeJson.workspace?.project_dir || ""),
 	]);
 
 	// 7. 출력
@@ -218,8 +327,8 @@ async function main() {
 		`${C.WHITE}💰 $${costUsd.toFixed(2)}${C.RESET} | ` +
 		`${ctxColor}🧠 ${formatNumber(totalTokens)} (${contextPct}%)${C.RESET}`;
 
-	if (!noLimit) {
-		const resetTime = getTimeUntilReset(LIMIT_RESET_HOUR);
+	if (!noLimit && limitReset) {
+		const resetTime = getTimeUntilReset(limitReset);
 		line2 += ` | ${C.WHITE}⏳ ${formatTime(resetTime.hours, resetTime.minutes)}${C.RESET}`;
 	}
 

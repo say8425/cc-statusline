@@ -80,13 +80,14 @@ Claude Code用カスタムステータスライン。
 
 Claude Codeの使用量制限リセットまでの残り時間を表示します。
 
-### 設定
+### 動作方法
 
-環境変数でリセット時刻を設定してください：
+`~/.claude/projects/`のJSONLファイルを自動的にパースして検出：
 
-```bash
-export CC_LIMIT_RESET_HOUR=9  # 午前9時（デフォルト）
-```
+1. **使用量制限エラーメッセージ** - "Claude AI usage limit reached"エラーから正確なリセット時刻を抽出
+2. **5時間ビリングブロック** - 最新のアクティビティに基づいてブロック終了時刻を計算（[ccusage](https://github.com/ryoppippi/ccusage)方式）
+
+手動設定は不要です。
 
 ### 無効化
 

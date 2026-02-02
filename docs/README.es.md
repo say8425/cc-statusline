@@ -80,13 +80,14 @@ Agrega lo siguiente a `~/.claude/settings.json`:
 
 Muestra el tiempo restante hasta que se reinicie el límite de uso de Claude Code.
 
-### Configuración
+### Cómo Funciona
 
-Establece la hora de reinicio mediante variable de entorno:
+Analiza automáticamente los archivos JSONL de `~/.claude/projects/` para detectar:
 
-```bash
-export CC_LIMIT_RESET_HOUR=9  # 9 AM (predeterminado)
-```
+1. **Mensajes de error de límite de uso** - Extrae el tiempo exacto de reinicio de errores "Claude AI usage limit reached"
+2. **Bloques de facturación de 5 horas** - Calcula el tiempo de finalización del bloque basado en la última actividad (como [ccusage](https://github.com/ryoppippi/ccusage))
+
+No requiere configuración manual.
 
 ### Desactivar
 

@@ -80,13 +80,14 @@ Claude Code를 위한 커스텀 상태표시줄.
 
 Claude Code 사용량 제한 리셋까지 남은 시간을 표시합니다.
 
-### 설정
+### 동작 방식
 
-환경 변수로 리셋 시간을 설정하세요:
+`~/.claude/projects/`의 JSONL 파일을 자동으로 파싱하여 감지:
 
-```bash
-export CC_LIMIT_RESET_HOUR=9  # 오전 9시 (기본값)
-```
+1. **사용량 제한 에러 메시지** - "Claude AI usage limit reached" 에러에서 정확한 리셋 시간 추출
+2. **5시간 빌링 블록** - 최근 활동 기준으로 블록 종료 시간 계산 ([ccusage](https://github.com/ryoppippi/ccusage) 방식)
+
+수동 설정이 필요 없습니다.
 
 ### 비활성화
 

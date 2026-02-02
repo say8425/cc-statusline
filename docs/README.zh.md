@@ -80,13 +80,14 @@ Claude Code 自定义状态栏。
 
 显示 Claude Code 使用量限制重置的剩余时间。
 
-### 配置
+### 工作原理
 
-通过环境变量设置重置时间：
+自动解析 `~/.claude/projects/` 中的 JSONL 文件以检测：
 
-```bash
-export CC_LIMIT_RESET_HOUR=9  # 上午9点（默认）
-```
+1. **使用量限制错误消息** - 从 "Claude AI usage limit reached" 错误中提取确切的重置时间
+2. **5小时计费块** - 根据最新活动计算块结束时间（类似 [ccusage](https://github.com/ryoppippi/ccusage)）
+
+无需手动配置。
 
 ### 禁用
 
