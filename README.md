@@ -23,6 +23,18 @@ Custom statusline for Claude Code.
 
 ![scenario3_diff_pr](docs/scenario3_diff_pr.png)
 
+### Context Normal (< 50%)
+
+![context_normal](docs/context_normal.png)
+
+### Context Warning (50-80%)
+
+![context_warning](docs/context_warning.png)
+
+### Context Critical (> 80%)
+
+![context_critical](docs/context_critical.png)
+
 ## Installation
 
 Add the following to `~/.claude/settings.json`:

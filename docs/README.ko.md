@@ -23,6 +23,18 @@ Claude Code를 위한 커스텀 상태표시줄.
 
 ![scenario3_diff_pr](scenario3_diff_pr.png)
 
+### Context 정상 (< 50%)
+
+![context_normal](context_normal.png)
+
+### Context 경고 (50-80%)
+
+![context_warning](context_warning.png)
+
+### Context 위험 (> 80%)
+
+![context_critical](context_critical.png)
+
 ## 설치
 
 `~/.claude/settings.json`에 다음을 추가하세요:

@@ -23,6 +23,18 @@ Claude Code用カスタムステータスライン。
 
 ![scenario3_diff_pr](scenario3_diff_pr.png)
 
+### Context 正常 (< 50%)
+
+![context_normal](context_normal.png)
+
+### Context 警告 (50-80%)
+
+![context_warning](context_warning.png)
+
+### Context 危険 (> 80%)
+
+![context_critical](context_critical.png)
+
 ## インストール
 
 `~/.claude/settings.json`に以下を追加してください：
