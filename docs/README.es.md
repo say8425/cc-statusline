@@ -119,7 +119,7 @@ Para ocultar la línea de métricas de uso (temporizador de reinicio, uso del bl
 | Métrica        | Normal (blanco) | Advertencia (amarillo) | Crítico (rojo) |
 | -------------- | --------------- | ---------------------- | -------------- |
 | Contexto %     | < 50%           | 50-80%                 | > 80%          |
-| Uso del bloque %| < 50%          | 50-80%                 | > 80%          |
+| Uso del bloque % | < 50%         | 50-80%                 | > 80%          |
 
 ## Licencia
 
