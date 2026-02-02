@@ -1,6 +1,10 @@
 #!/usr/bin/env bun
 
 import { $ } from "bun";
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const simdjson = require("simdjson") as {
+	lazyParse: (str: string) => { valueForKeyPath: (path: string) => unknown };
+};
 
 // 공식 Claude Code JSON input 타입 정의
 interface ClaudeStatusInput {
@@ -188,21 +192,25 @@ async function parseLimitResetFromJsonl(
 
 			for (const line of lines) {
 				try {
-					const data = JSON.parse(line);
+					const data = simdjson.lazyParse(line);
 
 					// 1. usageLimitResetTime 추출 (에러 메시지에서)
-					if (data.type === "assistant" && data.message?.content) {
-						for (const content of data.message.content) {
-							if (
-								content.text?.includes("Claude AI usage limit reached")
-							) {
-								const match = content.text.match(/\|(\d+)/);
-								if (match?.[1]) {
-									const resetTimestamp = Number.parseInt(match[1], 10);
-									if (resetTimestamp > 0) {
-										const resetDate = new Date(resetTimestamp * 1000);
-										if (!latestResetTime || resetDate > latestResetTime) {
-											latestResetTime = resetDate;
+					const type = data.valueForKeyPath("type") as string | undefined;
+					if (type === "assistant") {
+						const content = data.valueForKeyPath("message.content") as
+							| Array<{ text?: string }>
+							| undefined;
+						if (content) {
+							for (const c of content) {
+								if (c.text?.includes("Claude AI usage limit reached")) {
+									const match = c.text.match(/\|(\d+)/);
+									if (match?.[1]) {
+										const resetTimestamp = Number.parseInt(match[1], 10);
+										if (resetTimestamp > 0) {
+											const resetDate = new Date(resetTimestamp * 1000);
+											if (!latestResetTime || resetDate > latestResetTime) {
+												latestResetTime = resetDate;
+											}
 										}
 									}
 								}
@@ -211,11 +219,15 @@ async function parseLimitResetFromJsonl(
 					}
 
 					// 2. 최신 활동 시간 추적 (5시간 블록 계산용)
-					if (data.timestamp) {
+					const timestamp = data.valueForKeyPath("timestamp") as
+						| string
+						| number
+						| undefined;
+					if (timestamp) {
 						const ts =
-							typeof data.timestamp === "string"
-								? new Date(data.timestamp).getTime()
-								: data.timestamp;
+							typeof timestamp === "string"
+								? new Date(timestamp).getTime()
+								: timestamp;
 						if (!latestActivityTime || ts > latestActivityTime) {
 							latestActivityTime = ts;
 						}
