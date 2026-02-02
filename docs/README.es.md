@@ -12,34 +12,16 @@ Línea de estado personalizada para Claude Code.
 ## Vista previa
 
 ### Solo Git diff
+
 ![scenario1_diff_only](scenario1_diff_only.png)
 
 ### Solo PR
+
 ![scenario2_pr_only](scenario2_pr_only.png)
 
 ### Git diff + PR
+
 ![scenario3_diff_pr](scenario3_diff_pr.png)
-
-## Características
-
-- **Tiempo de sesión**: Tiempo transcurrido de la sesión actual
-- **Costo**: Costo de la sesión en USD
-- **Contexto**: Uso de tokens con porcentaje (codificado por colores)
-- **Git Diff**: Cantidad de archivos, inserciones, eliminaciones
-- **PR URL**: Hipervínculo OSC 8 clickeable
-- **TrueColor**: Colores dinámicos basados en umbrales
-
-## Guía de Emojis
-
-| Emoji | Descripción |
-|-------|-------------|
-| 📁 | Nombre de la carpeta del proyecto |
-| 🌿 | Rama Git actual |
-| ⏱️ | Tiempo transcurrido de sesión |
-| 💰 | Costo de sesión en USD |
-| 🧠 | Uso de ventana de contexto |
-| ✏️ | Cambios sin confirmar |
-| 📎 | Enlace de Pull Request |
 
 ## Instalación
 
@@ -55,6 +37,27 @@ Agrega lo siguiente a `~/.claude/settings.json`:
 }
 ```
 
+## Características
+
+- **Tiempo de sesión**: Tiempo transcurrido de la sesión actual
+- **Costo**: Costo de la sesión en USD
+- **Contexto**: Uso de tokens con porcentaje (codificado por colores)
+- **Git Diff**: Cantidad de archivos, inserciones, eliminaciones
+- **PR URL**: Hipervínculo OSC 8 clickeable
+- **TrueColor**: Colores dinámicos basados en umbrales
+
+## Guía de Emojis
+
+| Emoji | Descripción                       |
+| ----- | --------------------------------- |
+| 📁    | Nombre de la carpeta del proyecto |
+| 🌿    | Rama Git actual                   |
+| ⏱️    | Tiempo transcurrido de sesión     |
+| 💰    | Costo de sesión en USD            |
+| 🧠    | Uso de ventana de contexto        |
+| ✏️    | Cambios sin confirmar             |
+| 📎    | Enlace de Pull Request            |
+
 ## Dependencias
 
 - [Bun](https://bun.sh) - Runtime de JavaScript
@@ -62,9 +65,9 @@ Agrega lo siguiente a `~/.claude/settings.json`:
 
 ## Umbrales de Color
 
-| Métrica | Normal (blanco) | Advertencia (amarillo) | Crítico (rojo) |
-| ------- | --------------- | ---------------------- | -------------- |
-| Contexto % | < 50% | 50-80% | > 80% |
+| Métrica    | Normal (blanco) | Advertencia (amarillo) | Crítico (rojo) |
+| ---------- | --------------- | ---------------------- | -------------- |
+| Contexto % | < 50%           | 50-80%                 | > 80%          |
 
 ## Licencia
 

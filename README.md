@@ -9,37 +9,19 @@ Custom statusline for Claude Code.
 [![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=flat&logo=typescript&logoColor=white)](https://www.typescriptlang.org)
 [![Bun](https://img.shields.io/badge/Bun-black?style=flat&logo=bun)](https://bun.sh)
 
-## Preview
+## Screenshot
 
 ### Git diff only
+
 ![scenario1_diff_only](docs/scenario1_diff_only.png)
 
 ### PR only
+
 ![scenario2_pr_only](docs/scenario2_pr_only.png)
 
 ### Git diff + PR
+
 ![scenario3_diff_pr](docs/scenario3_diff_pr.png)
-
-## Features
-
-- **Session Time**: Current session elapsed time
-- **Cost**: Session cost in USD
-- **Context**: Token usage with percentage (color-coded)
-- **Git Diff**: File count, insertions, deletions
-- **PR URL**: Clickable OSC 8 hyperlink
-- **TrueColor**: Dynamic colors based on thresholds
-
-## Emoji Guide
-
-| Emoji | Description |
-|-------|-------------|
-| 📁 | Project folder name |
-| 🌿 | Current Git branch |
-| ⏱️ | Session elapsed time |
-| 💰 | Session cost in USD |
-| 🧠 | Context window usage |
-| ✏️ | Uncommitted changes |
-| 📎 | Pull request link |
 
 ## Installation
 
@@ -54,6 +36,27 @@ Add the following to `~/.claude/settings.json`:
   }
 }
 ```
+
+## Features
+
+- **Session Time**: Current session elapsed time
+- **Cost**: Session cost in USD
+- **Context**: Token usage with percentage (color-coded)
+- **Git Diff**: File count, insertions, deletions
+- **PR URL**: Clickable OSC 8 hyperlink
+- **TrueColor**: Dynamic colors based on thresholds
+
+## Emoji Guide
+
+| Emoji | Description          |
+| ----- | -------------------- |
+| 📁    | Project folder name  |
+| 🌿    | Current Git branch   |
+| ⏱️    | Session elapsed time |
+| 💰    | Session cost in USD  |
+| 🧠    | Context window usage |
+| ✏️    | Uncommitted changes  |
+| 📎    | Pull request link    |
 
 ## Dependencies
 
