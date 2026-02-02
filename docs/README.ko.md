@@ -9,6 +9,20 @@ Claude Code를 위한 커스텀 상태표시줄.
 [![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=flat&logo=typescript&logoColor=white)](https://www.typescriptlang.org)
 [![Bun](https://img.shields.io/badge/Bun-black?style=flat&logo=bun)](https://bun.sh)
 
+## 설치
+
+`~/.claude/settings.json`에 다음을 추가하세요:
+
+```json
+{
+  "statusLine": {
+    "type": "command",
+    "command": "bunx @say8425/cc-statusline",
+    "padding": 0
+  }
+}
+```
+
 ## 스크린샷
 
 ### Git diff만 표시
@@ -35,19 +49,7 @@ Claude Code를 위한 커스텀 상태표시줄.
 
 ![context_critical](context_critical.png)
 
-## 설치
 
-`~/.claude/settings.json`에 다음을 추가하세요:
-
-```json
-{
-  "statusLine": {
-    "type": "command",
-    "command": "bunx @say8425/cc-statusline",
-    "padding": 0
-  }
-}
-```
 
 ## 기능
 

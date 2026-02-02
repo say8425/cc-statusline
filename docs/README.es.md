@@ -9,6 +9,20 @@ Línea de estado personalizada para Claude Code.
 [![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=flat&logo=typescript&logoColor=white)](https://www.typescriptlang.org)
 [![Bun](https://img.shields.io/badge/Bun-black?style=flat&logo=bun)](https://bun.sh)
 
+## Instalación
+
+Agrega lo siguiente a `~/.claude/settings.json`:
+
+```json
+{
+  "statusLine": {
+    "type": "command",
+    "command": "bunx @say8425/cc-statusline",
+    "padding": 0
+  }
+}
+```
+
 ## Capturas de pantalla
 
 ### Solo Git diff
@@ -34,20 +48,6 @@ Línea de estado personalizada para Claude Code.
 ### Context Crítico (> 80%)
 
 ![context_critical](context_critical.png)
-
-## Instalación
-
-Agrega lo siguiente a `~/.claude/settings.json`:
-
-```json
-{
-  "statusLine": {
-    "type": "command",
-    "command": "bunx @say8425/cc-statusline",
-    "padding": 0
-  }
-}
-```
 
 ## Características
 
