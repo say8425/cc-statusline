@@ -25,12 +25,8 @@
     "lint": "biome check src/",
     "typecheck": "tsc --noEmit"
   },
-  "trustedDependencies": [
-    "everything-json",
-    "simdjson"
-  ],
   "type": "module",
   "dependencies": {
-    "simdjson": "^0.9.2"
+    "ccusage": "^18.0.5"
   }
 }

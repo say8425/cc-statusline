@@ -1,11 +1,7 @@
 #!/usr/bin/env bun
 
 import { $ } from "bun";
-
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-const simdjson = require("simdjson") as {
-	lazyParse: (str: string) => { valueForKeyPath: (path: string) => unknown };
-};
+import { loadSessionBlockData } from "ccusage/data-loader";
 
 // 공식 Claude Code JSON input 타입 정의
 interface ClaudeStatusInput {
@@ -53,9 +49,6 @@ const CACHE_TTL = {
 	prUrl: 30000, // 30초
 	blockUsage: 60000, // 60초 (JSONL 파싱은 비용이 크므로 긴 TTL)
 };
-
-// 5시간 블록 상수
-const SESSION_DURATION_MS = 5 * 60 * 60 * 1000; // 5시간
 
 // TrueColor 색상 정의
 const C = {
@@ -162,24 +155,8 @@ async function getPrUrlCached(): Promise<string | null> {
 const args = process.argv.slice(2);
 const noUsage = args.includes("--no-usage");
 
-// 시간을 정각으로 내림
-function floorToHour(timestamp: number): number {
-	const date = new Date(timestamp);
-	date.setUTCMinutes(0, 0, 0);
-	return date.getTime();
-}
-
-// JSONL 파일에서 블록 사용량 정보 추출
-async function parseBlockUsageFromJsonl(
-	projectDir: string,
-): Promise<BlockUsageInfo> {
-	const homeDir = process.env.HOME || "";
-	const claudeDir = `${homeDir}/.claude/projects`;
-
-	// projectDir를 키로 변환 (/ -> -)
-	const projectKey = projectDir.replace(/\//g, "-");
-	const jsonlDir = `${claudeDir}/${projectKey}`;
-
+// ccusage를 사용하여 블록 사용량 정보 추출
+async function getBlockUsageFromCcusage(): Promise<BlockUsageInfo> {
 	const result: BlockUsageInfo = {
 		resetTime: null,
 		blockTokens: 0,
@@ -187,130 +164,32 @@ async function parseBlockUsageFromJsonl(
 	};
 
 	try {
-		const glob = new Bun.Glob("*.jsonl");
-		const files: string[] = [];
+		const blocks = await loadSessionBlockData({
+			sessionDurationHours: 5,
+			offline: true,
+			order: "desc",
+		});
 
-		for await (const file of glob.scan({ cwd: jsonlDir, absolute: true })) {
-			files.push(file);
-		}
+		if (blocks.length === 0) return result;
 
-		if (files.length === 0) return result;
+		// 가장 최근의 활성 블록 찾기 (갭 블록 제외)
+		const activeBlock = blocks.find((b) => !b.isGap);
+		if (!activeBlock) return result;
 
-		// 가장 최근 파일부터 역순으로 처리
-		files.sort().reverse();
+		// 블록 토큰 합산 (input + output만, 캐시 토큰 제외)
+		const { tokenCounts } = activeBlock;
+		result.blockTokens = tokenCounts.inputTokens + tokenCounts.outputTokens;
 
-		let latestResetTime: Date | null = null;
-		let latestActivityTime: number | null = null;
-		let blockStartTime: number | null = null;
+		result.blockStartTime = activeBlock.startTime.getTime();
 
-		// 모든 파일에서 최신 활동 시간을 먼저 찾아 블록 시작 시간 계산
-		for (const filePath of files) {
-			const file = Bun.file(filePath);
-			const text = await file.text();
-			const lines = text.split("\n").filter((line) => line.trim());
-
-			for (const line of lines) {
-				try {
-					const data = simdjson.lazyParse(line);
-					const timestamp = data.valueForKeyPath("timestamp") as
-						| string
-						| number
-						| undefined;
-					if (timestamp) {
-						const ts =
-							typeof timestamp === "string"
-								? new Date(timestamp).getTime()
-								: timestamp;
-						if (!latestActivityTime || ts > latestActivityTime) {
-							latestActivityTime = ts;
-						}
-					}
-				} catch {
-					// JSON 파싱 에러 무시
-				}
-			}
-		}
-
-		// 블록 시작 시간 계산
-		if (latestActivityTime) {
-			blockStartTime = floorToHour(latestActivityTime);
-			result.blockStartTime = blockStartTime;
-		}
-
-		// 블록 내 토큰 사용량 및 리셋 시간 추출
-		let blockTokens = 0;
-		for (const filePath of files) {
-			const file = Bun.file(filePath);
-			const text = await file.text();
-			const lines = text.split("\n").filter((line) => line.trim());
-
-			for (const line of lines) {
-				try {
-					const data = simdjson.lazyParse(line);
-
-					// 1. usageLimitResetTime 추출 (에러 메시지에서)
-					const type = data.valueForKeyPath("type") as string | undefined;
-					if (type === "assistant") {
-						const content = data.valueForKeyPath("message.content") as
-							| Array<{ text?: string }>
-							| undefined;
-						if (content) {
-							for (const c of content) {
-								if (c.text?.includes("Claude AI usage limit reached")) {
-									const match = c.text.match(/\|(\d+)/);
-									if (match?.[1]) {
-										const resetTimestamp = Number.parseInt(match[1], 10);
-										if (resetTimestamp > 0) {
-											const resetDate = new Date(resetTimestamp * 1000);
-											if (!latestResetTime || resetDate > latestResetTime) {
-												latestResetTime = resetDate;
-											}
-										}
-									}
-								}
-							}
-						}
-					}
-
-					// 2. 블록 내 토큰 사용량 합산
-					const timestamp = data.valueForKeyPath("timestamp") as
-						| string
-						| number
-						| undefined;
-					if (timestamp && blockStartTime) {
-						const ts =
-							typeof timestamp === "string"
-								? new Date(timestamp).getTime()
-								: timestamp;
-
-						// 블록 시작 시간 이후의 메시지만 포함
-						if (ts >= blockStartTime) {
-							const usage = data.valueForKeyPath("message.usage") as
-								| { input_tokens?: number; output_tokens?: number }
-								| undefined;
-							if (usage) {
-								blockTokens +=
-									(usage.input_tokens || 0) + (usage.output_tokens || 0);
-							}
-						}
-					}
-				} catch {
-					// JSON 파싱 에러 무시
-				}
-			}
-		}
-
-		result.blockTokens = blockTokens;
-
-		// 에러 메시지에서 리셋 시간을 찾았으면 사용
-		if (latestResetTime && latestResetTime > new Date()) {
-			result.resetTime = latestResetTime;
-		} else if (latestActivityTime && blockStartTime) {
-			// 없으면 5시간 블록 기반으로 계산
-			const blockEnd = new Date(blockStartTime + SESSION_DURATION_MS);
-			if (blockEnd > new Date()) {
-				result.resetTime = blockEnd;
-			}
+		// 리셋 시간 설정 (ccusage가 제공하는 usageLimitResetTime 또는 블록 종료 시간)
+		if (
+			activeBlock.usageLimitResetTime &&
+			activeBlock.usageLimitResetTime > new Date()
+		) {
+			result.resetTime = activeBlock.usageLimitResetTime;
+		} else if (activeBlock.endTime > new Date()) {
+			result.resetTime = activeBlock.endTime;
 		}
 
 		return result;
@@ -320,14 +199,12 @@ async function parseBlockUsageFromJsonl(
 }
 
 // 블록 사용량 가져오기 (캐싱)
-async function getBlockUsageCached(
-	projectDir: string,
-): Promise<BlockUsageInfo | null> {
+async function getBlockUsageCached(): Promise<BlockUsageInfo | null> {
 	if (Date.now() - cache.blockUsage.timestamp < CACHE_TTL.blockUsage) {
 		return cache.blockUsage.value;
 	}
 
-	const blockUsage = await parseBlockUsageFromJsonl(projectDir);
+	const blockUsage = await getBlockUsageFromCcusage();
 	cache.blockUsage = { value: blockUsage, timestamp: Date.now() };
 	return blockUsage;
 }
@@ -412,9 +289,7 @@ async function main() {
 		getBranchCached(),
 		getGitChangesCached(),
 		getPrUrlCached(),
-		noUsage
-			? Promise.resolve(null)
-			: getBlockUsageCached(claudeJson.workspace?.project_dir || ""),
+		noUsage ? Promise.resolve(null) : getBlockUsageCached(),
 	]);
 
 	// 7. 출력
