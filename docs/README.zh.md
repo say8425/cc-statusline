@@ -9,6 +9,20 @@ Claude Code 自定义状态栏。
 [![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=flat&logo=typescript&logoColor=white)](https://www.typescriptlang.org)
 [![Bun](https://img.shields.io/badge/Bun-black?style=flat&logo=bun)](https://bun.sh)
 
+## 安装
+
+将以下内容添加到 `~/.claude/settings.json`：
+
+```json
+{
+  "statusLine": {
+    "type": "command",
+    "command": "bunx @say8425/cc-statusline",
+    "padding": 0
+  }
+}
+```
+
 ## 截图
 
 ### 仅 Git diff
@@ -34,20 +48,6 @@ Claude Code 自定义状态栏。
 ### Context 危险 (> 80%)
 
 ![context_critical](context_critical.png)
-
-## 安装
-
-将以下内容添加到 `~/.claude/settings.json`：
-
-```json
-{
-  "statusLine": {
-    "type": "command",
-    "command": "bunx @say8425/cc-statusline",
-    "padding": 0
-  }
-}
-```
 
 ## 功能
 

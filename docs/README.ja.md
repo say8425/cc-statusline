@@ -9,6 +9,20 @@ Claude Code用カスタムステータスライン。
 [![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=flat&logo=typescript&logoColor=white)](https://www.typescriptlang.org)
 [![Bun](https://img.shields.io/badge/Bun-black?style=flat&logo=bun)](https://bun.sh)
 
+## インストール
+
+`~/.claude/settings.json`に以下を追加してください：
+
+```json
+{
+  "statusLine": {
+    "type": "command",
+    "command": "bunx @say8425/cc-statusline",
+    "padding": 0
+  }
+}
+```
+
 ## スクリーンショット
 
 ### Git diffのみ
@@ -34,20 +48,6 @@ Claude Code用カスタムステータスライン。
 ### Context 危険 (> 80%)
 
 ![context_critical](context_critical.png)
-
-## インストール
-
-`~/.claude/settings.json`に以下を追加してください：
-
-```json
-{
-  "statusLine": {
-    "type": "command",
-    "command": "bunx @say8425/cc-statusline",
-    "padding": 0
-  }
-}
-```
 
 ## 機能
 
