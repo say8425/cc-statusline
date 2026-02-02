@@ -1,6 +1,7 @@
 #!/usr/bin/env bun
 
 import { $ } from "bun";
+
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const simdjson = require("simdjson") as {
 	lazyParse: (str: string) => { valueForKeyPath: (path: string) => unknown };
@@ -259,9 +260,7 @@ async function parseLimitResetFromJsonl(
 }
 
 // 리셋 시간 가져오기 (캐싱)
-async function getLimitResetCached(
-	projectDir: string,
-): Promise<Date | null> {
+async function getLimitResetCached(projectDir: string): Promise<Date | null> {
 	if (Date.now() - cache.limitReset.timestamp < CACHE_TTL.limitReset) {
 		return cache.limitReset.value;
 	}
@@ -272,7 +271,10 @@ async function getLimitResetCached(
 }
 
 // 리셋까지 남은 시간 계산
-function getTimeUntilReset(resetTime: Date): { hours: number; minutes: number } {
+function getTimeUntilReset(resetTime: Date): {
+	hours: number;
+	minutes: number;
+} {
 	const now = new Date();
 	const diff = resetTime.getTime() - now.getTime();
 
@@ -322,7 +324,9 @@ async function main() {
 		getBranchCached(),
 		getGitChangesCached(),
 		getPrUrlCached(),
-		noLimit ? Promise.resolve(null) : getLimitResetCached(claudeJson.workspace?.project_dir || ""),
+		noLimit
+			? Promise.resolve(null)
+			: getLimitResetCached(claudeJson.workspace?.project_dir || ""),
 	]);
 
 	// 7. 출력
@@ -333,16 +337,17 @@ async function main() {
 	}
 	console.log(line1);
 
-	// 2번째 줄: 세션 시간 | 비용 | 컨텍스트 | 리셋 타이머
-	let line2 =
-		`${C.WHITE}⏱️ ${formatTime(sessionHrs, sessionMins)}${C.RESET} | ` +
-		`${C.WHITE}💰 $${costUsd.toFixed(2)}${C.RESET} | ` +
-		`${ctxColor}🧠 ${formatNumber(totalTokens)} (${contextPct}%)${C.RESET}`;
+	// 2번째 줄: 세션 시간 | 리셋 타이머 | 비용 | 컨텍스트
+	let line2 = `${C.WHITE}⏱️ ${formatTime(sessionHrs, sessionMins)}${C.RESET}`;
 
 	if (!noLimit && limitReset) {
 		const resetTime = getTimeUntilReset(limitReset);
 		line2 += ` | ${C.WHITE}⏳ ${formatTime(resetTime.hours, resetTime.minutes)}${C.RESET}`;
 	}
+
+	line2 +=
+		` | ${C.WHITE}💰 $${costUsd.toFixed(2)}${C.RESET} | ` +
+		`${ctxColor}🧠 ${formatNumber(totalTokens)} (${contextPct}%)${C.RESET}`;
 
 	console.log(line2);
 
