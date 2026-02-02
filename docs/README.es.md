@@ -62,23 +62,27 @@ Agrega lo siguiente a `~/.claude/settings.json`:
 - **PR URL**: Hipervínculo OSC 8 clickeable
 - **TrueColor**: Colores dinámicos basados en umbrales
 - **Temporizador de reinicio**: Tiempo restante hasta el reinicio del límite
+- **Uso del bloque**: Uso de tokens del bloque de 5 horas con porcentaje
+- **Tasa de consumo**: Tasa de consumo de tokens por minuto
 
 ## Guía de Emojis
 
-| Emoji | Descripción                       |
-| ----- | --------------------------------- |
-| 📁    | Nombre de la carpeta del proyecto |
-| 🌿    | Rama Git actual                   |
-| ⏱️    | Tiempo transcurrido de sesión     |
-| 💰    | Costo de sesión en USD            |
-| 🧠    | Uso de ventana de contexto        |
-| ✏️    | Cambios sin confirmar             |
-| 📎    | Enlace de Pull Request            |
-| ⏳    | Cuenta regresiva de reinicio      |
+| Emoji | Descripción                          |
+| ----- | ------------------------------------ |
+| 📁    | Nombre de la carpeta del proyecto    |
+| 🌿    | Rama Git actual                      |
+| ⏱️    | Tiempo transcurrido de sesión        |
+| 💰    | Costo de sesión en USD               |
+| 🧠    | Uso de ventana de contexto           |
+| ⏳    | Cuenta regresiva de reinicio         |
+| 📊    | Uso de tokens del bloque de 5 horas  |
+| 🔥    | Tasa de consumo de tokens (por min)  |
+| ✏️    | Cambios sin confirmar                |
+| 📎    | Enlace de Pull Request               |
 
-## Temporizador de Reinicio de Límite
+## Métricas de Uso
 
-Muestra el tiempo restante hasta que se reinicie el límite de uso de Claude Code.
+Muestra información de uso del bloque de facturación de 5 horas.
 
 ### Cómo Funciona
 
@@ -86,18 +90,20 @@ Analiza automáticamente los archivos JSONL de `~/.claude/projects/` para detect
 
 1. **Mensajes de error de límite de uso** - Extrae el tiempo exacto de reinicio de errores "Claude AI usage limit reached"
 2. **Bloques de facturación de 5 horas** - Calcula el tiempo de finalización del bloque basado en la última actividad (como [ccusage](https://github.com/ryoppippi/ccusage))
+3. **Uso de tokens** - Suma los tokens de entrada y salida dentro del bloque actual de 5 horas
+4. **Tasa de consumo** - Calcula el consumo promedio de tokens por minuto
 
 No requiere configuración manual.
 
 ### Desactivar
 
-Para ocultar el temporizador de reinicio, usa la bandera `--no-limit`:
+Para ocultar la línea de métricas de uso (temporizador de reinicio, uso del bloque, tasa de consumo), usa la bandera `--no-usage`:
 
 ```json
 {
   "statusLine": {
     "type": "command",
-    "command": "bunx @say8425/cc-statusline --no-limit",
+    "command": "bunx @say8425/cc-statusline --no-usage",
     "padding": 0
   }
 }
@@ -110,9 +116,10 @@ Para ocultar el temporizador de reinicio, usa la bandera `--no-limit`:
 
 ## Umbrales de Color
 
-| Métrica    | Normal (blanco) | Advertencia (amarillo) | Crítico (rojo) |
-| ---------- | --------------- | ---------------------- | -------------- |
-| Contexto % | < 50%           | 50-80%                 | > 80%          |
+| Métrica        | Normal (blanco) | Advertencia (amarillo) | Crítico (rojo) |
+| -------------- | --------------- | ---------------------- | -------------- |
+| Contexto %     | < 50%           | 50-80%                 | > 80%          |
+| Uso del bloque %| < 50%          | 50-80%                 | > 80%          |
 
 ## Licencia
 
