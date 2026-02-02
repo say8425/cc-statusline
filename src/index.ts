@@ -50,6 +50,9 @@ const CACHE_TTL = {
 	blockUsage: 60000, // 60초 (JSONL 파싱은 비용이 크므로 긴 TTL)
 };
 
+// Pro plan 5시간 토큰 한도 (약 450K)
+const BLOCK_TOKEN_LIMIT = 450000;
+
 // TrueColor 색상 정의
 const C = {
 	RESET: "\x1b[0m",
@@ -245,13 +248,10 @@ function calculateBurnRate(
 	const now = Date.now();
 	const elapsedMinutes = (now - blockStartTime) / (1000 * 60);
 
-	if (elapsedMinutes < 1) return blockTokens; // 1분 미만이면 현재 토큰 수 반환
+	if (elapsedMinutes < 1) return 0; // 1분 미만에는 변동성이 큰 값을 표시하지 않음
 
 	return Math.round(blockTokens / elapsedMinutes);
 }
-
-// Pro plan 5시간 토큰 한도 (약 450K)
-const BLOCK_TOKEN_LIMIT = 450000;
 
 // 메인 함수
 async function main() {
