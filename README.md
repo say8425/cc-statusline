@@ -39,15 +39,15 @@ Add the following to `~/.claude/settings.json`:
 
 ### Context Normal (< 50%)
 
-![context_normal](docs/context_normal.png)
+![Screenshot of status line with normal context usage, under 50%](docs/context_normal.png)
 
 ### Context Warning (50-80%)
 
-![context_warning](docs/context_warning.png)
+![Screenshot of status line with warning context usage, between 50% and 80%](docs/context_warning.png)
 
 ### Context Critical (> 80%)
 
-![context_critical](docs/context_critical.png)
+![Screenshot of status line with critical context usage, over 80%](docs/context_critical.png)
 
 ## Features
 
