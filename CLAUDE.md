@@ -26,6 +26,7 @@ cc-statusline/
 | Git 브랜치 | `git branch --show-current` |
 | Git diff | `git diff --shortstat` |
 | PR URL | `gh pr view` |
+| 리셋 타이머 | `~/.claude/projects/*/conversations/*.jsonl` 파싱 |
 
 ## WHY
 
@@ -34,6 +35,7 @@ Claude Code 기본 statusbar에 다음 정보를 추가로 표시:
 - Context window 토큰 사용량 및 사용률 (%)
 - Git diff 통계 (파일 수, +insertions, -deletions)
 - PR URL (클릭 가능한 OSC 8 하이퍼링크)
+- 리셋 타이머 (5시간 사용량 리셋까지 남은 시간)
 - TrueColor 동적 색상 (임계값 기반 경고)
 
 ## HOW
@@ -70,7 +72,13 @@ echo '{
 }' | bun src/index.ts
 ```
 
+### CLI 옵션
+
+- `--no-limit`: 리셋 타이머 숨김 (Max plan 사용자용)
+
 ### 수정 시 주의사항
 
 - 300ms마다 실행되므로 성능 중요
 - 공식 JSON input structure 참조: https://code.claude.com/docs/en/statusline
+- JSONL 파싱은 60초 캐시 TTL 적용
+- simdjson 사용으로 JSON 파싱 성능 최적화
