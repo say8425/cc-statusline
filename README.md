@@ -49,6 +49,10 @@ Add the following to `~/.claude/settings.json`:
 
 ![Screenshot of status line with critical context usage, over 80%](docs/context_critical.png)
 
+### Limit Reset Timer
+
+![Screenshot of status line with limit reset timer](docs/limit_reset.png)
+
 ## Features
 
 - **Session Time**: Current session elapsed time
@@ -57,6 +61,7 @@ Add the following to `~/.claude/settings.json`:
 - **Git Diff**: File count, insertions, deletions
 - **PR URL**: Clickable OSC 8 hyperlink
 - **TrueColor**: Dynamic colors based on thresholds
+- **Limit Reset Timer**: Countdown to usage limit reset
 
 ## Emoji Guide
 
@@ -69,6 +74,33 @@ Add the following to `~/.claude/settings.json`:
 | 🧠    | Context window usage |
 | ✏️    | Uncommitted changes  |
 | 📎    | Pull request link    |
+| ⏳    | Limit reset countdown |
+
+## Limit Reset Timer
+
+Shows time remaining until your Claude Code usage limit resets.
+
+### Configuration
+
+Set the reset hour via environment variable:
+
+```bash
+export CC_LIMIT_RESET_HOUR=9  # 9 AM (default)
+```
+
+### Disable
+
+To hide the limit reset timer, use the `--no-limit` flag:
+
+```json
+{
+  "statusLine": {
+    "type": "command",
+    "command": "bunx @say8425/cc-statusline --no-limit",
+    "padding": 0
+  }
+}
+```
 
 ## Dependencies
 

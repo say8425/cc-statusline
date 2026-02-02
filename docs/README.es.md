@@ -49,6 +49,10 @@ Agrega lo siguiente a `~/.claude/settings.json`:
 
 ![Captura de pantalla de la línea de estado con uso de contexto crítico, más del 80%](context_critical.png)
 
+### Temporizador de Reinicio de Límite
+
+![Captura de pantalla de la línea de estado con temporizador de reinicio de límite](limit_reset.png)
+
 ## Características
 
 - **Tiempo de sesión**: Tiempo transcurrido de la sesión actual
@@ -57,6 +61,7 @@ Agrega lo siguiente a `~/.claude/settings.json`:
 - **Git Diff**: Cantidad de archivos, inserciones, eliminaciones
 - **PR URL**: Hipervínculo OSC 8 clickeable
 - **TrueColor**: Colores dinámicos basados en umbrales
+- **Temporizador de reinicio**: Tiempo restante hasta el reinicio del límite
 
 ## Guía de Emojis
 
@@ -69,6 +74,33 @@ Agrega lo siguiente a `~/.claude/settings.json`:
 | 🧠    | Uso de ventana de contexto        |
 | ✏️    | Cambios sin confirmar             |
 | 📎    | Enlace de Pull Request            |
+| ⏳    | Cuenta regresiva de reinicio      |
+
+## Temporizador de Reinicio de Límite
+
+Muestra el tiempo restante hasta que se reinicie el límite de uso de Claude Code.
+
+### Configuración
+
+Establece la hora de reinicio mediante variable de entorno:
+
+```bash
+export CC_LIMIT_RESET_HOUR=9  # 9 AM (predeterminado)
+```
+
+### Desactivar
+
+Para ocultar el temporizador de reinicio, usa la bandera `--no-limit`:
+
+```json
+{
+  "statusLine": {
+    "type": "command",
+    "command": "bunx @say8425/cc-statusline --no-limit",
+    "padding": 0
+  }
+}
+```
 
 ## Dependencias
 
