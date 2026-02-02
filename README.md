@@ -80,13 +80,14 @@ Add the following to `~/.claude/settings.json`:
 
 Shows time remaining until your Claude Code usage limit resets.
 
-### Configuration
+### How It Works
 
-Set the reset hour via environment variable:
+Automatically parses JSONL files from `~/.claude/projects/` to detect:
 
-```bash
-export CC_LIMIT_RESET_HOUR=9  # 9 AM (default)
-```
+1. **Usage limit error messages** - Extracts exact reset time from "Claude AI usage limit reached" errors
+2. **5-hour billing blocks** - Calculates block end time based on latest activity (like [ccusage](https://github.com/ryoppippi/ccusage))
+
+No manual configuration required.
 
 ### Disable
 
