@@ -49,6 +49,10 @@ Claude Code 自定义状态栏。
 
 ![危险上下文使用量（超过80%）的状态栏截图](context_critical.png)
 
+### 限制重置计时器
+
+![带有限制重置计时器的状态栏截图](limit_reset.png)
+
 ## 功能
 
 - **会话时间**: 当前会话经过时间
@@ -57,6 +61,7 @@ Claude Code 自定义状态栏。
 - **Git Diff**: 文件数、新增、删除
 - **PR URL**: 可点击的 OSC 8 超链接
 - **TrueColor**: 基于阈值的动态颜色
+- **限制重置计时器**: 使用量限制重置剩余时间
 
 ## 表情符号指南
 
@@ -69,6 +74,33 @@ Claude Code 自定义状态栏。
 | 🧠   | 上下文窗口使用量  |
 | ✏️   | 未提交的更改      |
 | 📎   | Pull Request 链接 |
+| ⏳   | 限制重置倒计时    |
+
+## 限制重置计时器
+
+显示 Claude Code 使用量限制重置的剩余时间。
+
+### 配置
+
+通过环境变量设置重置时间：
+
+```bash
+export CC_LIMIT_RESET_HOUR=9  # 上午9点（默认）
+```
+
+### 禁用
+
+要隐藏限制重置计时器，请使用 `--no-limit` 标志：
+
+```json
+{
+  "statusLine": {
+    "type": "command",
+    "command": "bunx @say8425/cc-statusline --no-limit",
+    "padding": 0
+  }
+}
+```
 
 ## 依赖项
 

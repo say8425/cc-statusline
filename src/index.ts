@@ -138,6 +138,34 @@ async function getPrUrlCached(): Promise<string | null> {
 	}
 }
 
+// CLI 인자 파싱
+const args = process.argv.slice(2);
+const noLimit = args.includes("--no-limit");
+
+// 환경변수: CC_LIMIT_RESET_HOUR (0-23, 기본값: 9 = 오전 9시)
+const LIMIT_RESET_HOUR = Number.parseInt(
+	process.env.CC_LIMIT_RESET_HOUR || "9",
+	10,
+);
+
+// 리셋까지 남은 시간 계산
+function getTimeUntilReset(resetHour: number): { hours: number; minutes: number } {
+	const now = new Date();
+	const reset = new Date();
+	reset.setHours(resetHour, 0, 0, 0);
+
+	// 이미 지났으면 다음 날로
+	if (now >= reset) {
+		reset.setDate(reset.getDate() + 1);
+	}
+
+	const diff = reset.getTime() - now.getTime();
+	const hours = Math.floor(diff / (1000 * 60 * 60));
+	const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+
+	return { hours, minutes };
+}
+
 // 메인 함수
 async function main() {
 	// 1. stdin에서 Claude Code JSON 읽기
@@ -184,12 +212,18 @@ async function main() {
 	}
 	console.log(line1);
 
-	// 2번째 줄: 세션 시간 | 비용 | 컨텍스트
-	console.log(
+	// 2번째 줄: 세션 시간 | 비용 | 컨텍스트 | 리셋 타이머
+	let line2 =
 		`${C.WHITE}⏱️ ${formatTime(sessionHrs, sessionMins)}${C.RESET} | ` +
-			`${C.WHITE}💰 $${costUsd.toFixed(2)}${C.RESET} | ` +
-			`${ctxColor}🧠 ${formatNumber(totalTokens)} (${contextPct}%)${C.RESET}`,
-	);
+		`${C.WHITE}💰 $${costUsd.toFixed(2)}${C.RESET} | ` +
+		`${ctxColor}🧠 ${formatNumber(totalTokens)} (${contextPct}%)${C.RESET}`;
+
+	if (!noLimit) {
+		const resetTime = getTimeUntilReset(LIMIT_RESET_HOUR);
+		line2 += ` | ${C.WHITE}⏳ ${formatTime(resetTime.hours, resetTime.minutes)}${C.RESET}`;
+	}
+
+	console.log(line2);
 
 	// 3번째 줄: git changes | PR URL
 	const hasGitChanges =

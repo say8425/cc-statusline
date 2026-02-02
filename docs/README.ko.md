@@ -49,7 +49,9 @@ Claude Code를 위한 커스텀 상태표시줄.
 
 ![위험 컨텍스트 사용량(80% 초과)의 상태표시줄 스크린샷](context_critical.png)
 
+### 제한 리셋 타이머
 
+![제한 리셋 타이머가 포함된 상태표시줄 스크린샷](limit_reset.png)
 
 ## 기능
 
@@ -59,6 +61,7 @@ Claude Code를 위한 커스텀 상태표시줄.
 - **Git Diff**: 파일 수, 추가, 삭제
 - **PR URL**: 클릭 가능한 OSC 8 하이퍼링크
 - **TrueColor**: 임계값에 따른 동적 색상
+- **제한 리셋 타이머**: 사용량 제한 리셋까지 남은 시간
 
 ## Emoji 가이드
 
@@ -71,6 +74,33 @@ Claude Code를 위한 커스텀 상태표시줄.
 | 🧠    | 컨텍스트 창 사용량     |
 | ✏️    | 커밋되지 않은 변경사항 |
 | 📎    | Pull Request 링크      |
+| ⏳    | 제한 리셋 카운트다운   |
+
+## 제한 리셋 타이머
+
+Claude Code 사용량 제한 리셋까지 남은 시간을 표시합니다.
+
+### 설정
+
+환경 변수로 리셋 시간을 설정하세요:
+
+```bash
+export CC_LIMIT_RESET_HOUR=9  # 오전 9시 (기본값)
+```
+
+### 비활성화
+
+제한 리셋 타이머를 숨기려면 `--no-limit` 플래그를 사용하세요:
+
+```json
+{
+  "statusLine": {
+    "type": "command",
+    "command": "bunx @say8425/cc-statusline --no-limit",
+    "padding": 0
+  }
+}
+```
 
 ## 의존성
 
