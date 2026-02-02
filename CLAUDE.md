@@ -13,7 +13,7 @@ cc-statusline/
 └── CLAUDE.md
 ```
 
-**기술 스택**: Bun, TypeScript, gh CLI
+**기술 스택**: Bun, TypeScript, gh CLI, ccusage
 
 **데이터 소스**:
 | 데이터 | 출처 |
@@ -26,8 +26,8 @@ cc-statusline/
 | Git 브랜치 | `git branch --show-current` |
 | Git diff | `git diff --shortstat` |
 | PR URL | `gh pr view` |
-| 리셋 타이머 | `~/.claude/projects/*/conversations/*.jsonl` 파싱 |
-| 블록 사용량 | `message.usage.input_tokens + output_tokens` 합산 |
+| 리셋 타이머 | ccusage `loadSessionBlockData()` |
+| 블록 사용량 | ccusage `tokenCounts.inputTokens + outputTokens` |
 | 번레이트 | 블록 토큰 / 경과 시간 (분) |
 
 ## WHY
@@ -84,5 +84,4 @@ echo '{
 
 - 300ms마다 실행되므로 성능 중요
 - 공식 JSON input structure 참조: https://code.claude.com/docs/en/statusline
-- JSONL 파싱은 60초 캐시 TTL 적용
-- simdjson 사용으로 JSON 파싱 성능 최적화
+- ccusage 결과는 60초 캐시 TTL 적용
