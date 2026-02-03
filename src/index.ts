@@ -51,13 +51,15 @@ const CACHE_TTL = {
 };
 
 // Plan별 5시간 토큰 한도
-const PLAN_LIMITS: Record<string, number> = {
+const PLAN_LIMITS = {
 	pro: 450_000, // Pro plan
 	max5x: 2_250_000, // Max 5x (450K * 5)
 	max20x: 9_000_000, // Max 20x (450K * 20)
-};
+} as const;
 
-const DEFAULT_PLAN = "pro";
+type Plan = keyof typeof PLAN_LIMITS;
+
+const DEFAULT_PLAN: Plan = "pro";
 
 // TrueColor 색상 정의
 const C = {
@@ -166,8 +168,12 @@ const noUsage = args.includes("--no-usage");
 
 // --plan 옵션 파싱 (예: --plan max5x)
 const planIndex = args.indexOf("--plan");
-const planArg = planIndex !== -1 ? args[planIndex + 1] : DEFAULT_PLAN;
-const BLOCK_TOKEN_LIMIT = PLAN_LIMITS[planArg] ?? PLAN_LIMITS[DEFAULT_PLAN];
+const planArg =
+	planIndex !== -1 && planIndex + 1 < args.length
+		? args[planIndex + 1]
+		: DEFAULT_PLAN;
+const BLOCK_TOKEN_LIMIT =
+	PLAN_LIMITS[planArg as Plan] ?? PLAN_LIMITS[DEFAULT_PLAN];
 
 // ccusage를 사용하여 블록 사용량 정보 추출
 async function getBlockUsageFromCcusage(): Promise<BlockUsageInfo> {
