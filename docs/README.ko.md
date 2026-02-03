@@ -95,6 +95,26 @@ Claude Code를 위한 커스텀 상태표시줄.
 
 수동 설정이 필요 없습니다.
 
+### 플랜 선택
+
+Claude Code 플랜마다 토큰 한도가 다릅니다. `--plan` 플래그로 플랜을 설정하세요:
+
+```json
+{
+  "statusLine": {
+    "type": "command",
+    "command": "bunx @say8425/cc-statusline --plan max5x",
+    "padding": 0
+  }
+}
+```
+
+| 플랜 | 토큰 한도 | 명령어 |
+|------|-----------|--------|
+| Pro (기본값) | 450K | `--plan pro` 또는 생략 |
+| Max 5x | 2.25M | `--plan max5x` |
+| Max 20x | 9M | `--plan max20x` |
+
 ### 비활성화
 
 사용량 지표 줄(리셋 타이머, 블록 사용량, 번레이트)을 숨기려면 `--no-usage` 플래그를 사용하세요:

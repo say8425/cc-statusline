@@ -50,8 +50,14 @@ const CACHE_TTL = {
 	blockUsage: 60000, // 60초 (JSONL 파싱은 비용이 크므로 긴 TTL)
 };
 
-// Pro plan 5시간 토큰 한도 (약 450K)
-const BLOCK_TOKEN_LIMIT = 450000;
+// Plan별 5시간 토큰 한도
+const PLAN_LIMITS: Record<string, number> = {
+	pro: 450_000, // Pro plan
+	max5x: 2_250_000, // Max 5x (450K * 5)
+	max20x: 9_000_000, // Max 20x (450K * 20)
+};
+
+const DEFAULT_PLAN = "pro";
 
 // TrueColor 색상 정의
 const C = {
@@ -157,6 +163,11 @@ async function getPrUrlCached(): Promise<string | null> {
 // CLI 인자 파싱
 const args = process.argv.slice(2);
 const noUsage = args.includes("--no-usage");
+
+// --plan 옵션 파싱 (예: --plan max5x)
+const planIndex = args.indexOf("--plan");
+const planArg = planIndex !== -1 ? args[planIndex + 1] : DEFAULT_PLAN;
+const BLOCK_TOKEN_LIMIT = PLAN_LIMITS[planArg] ?? PLAN_LIMITS[DEFAULT_PLAN];
 
 // ccusage를 사용하여 블록 사용량 정보 추출
 async function getBlockUsageFromCcusage(): Promise<BlockUsageInfo> {

@@ -95,6 +95,26 @@ Claude Code 自定义状态栏。
 
 无需手动配置。
 
+### 套餐选择
+
+不同的 Claude Code 套餐有不同的令牌限制。使用 `--plan` 标志设置您的套餐：
+
+```json
+{
+  "statusLine": {
+    "type": "command",
+    "command": "bunx @say8425/cc-statusline --plan max5x",
+    "padding": 0
+  }
+}
+```
+
+| 套餐 | 令牌限制 | 命令 |
+|------|----------|------|
+| Pro（默认） | 450K | `--plan pro` 或省略 |
+| Max 5x | 2.25M | `--plan max5x` |
+| Max 20x | 9M | `--plan max20x` |
+
 ### 禁用
 
 要隐藏使用量指标行（重置计时器、块使用量、燃烧率），请使用 `--no-usage` 标志：

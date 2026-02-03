@@ -95,6 +95,26 @@ Analiza automáticamente los archivos JSONL de `~/.claude/projects/` para detect
 
 No requiere configuración manual.
 
+### Selección de Plan
+
+Los diferentes planes de Claude Code tienen diferentes límites de tokens. Usa la bandera `--plan` para configurar tu plan:
+
+```json
+{
+  "statusLine": {
+    "type": "command",
+    "command": "bunx @say8425/cc-statusline --plan max5x",
+    "padding": 0
+  }
+}
+```
+
+| Plan | Límite de Tokens | Comando |
+|------|------------------|---------|
+| Pro (predeterminado) | 450K | `--plan pro` u omitir |
+| Max 5x | 2.25M | `--plan max5x` |
+| Max 20x | 9M | `--plan max20x` |
+
 ### Desactivar
 
 Para ocultar la línea de métricas de uso (temporizador de reinicio, uso del bloque, tasa de consumo), usa la bandera `--no-usage`:
