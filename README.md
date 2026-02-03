@@ -25,10 +25,10 @@ Add the following to `~/.claude/settings.json`:
 
 ## CLI Options
 
-| Option | Description |
-|--------|-------------|
-| [`--plan <plan>`](#plan-selection) | Set token limit for your subscription (pro, max5x, max20x) |
-| [`--no-usage`](#disable) | Hide usage metrics line |
+| Option | Description | Default |
+|--------|-------------|---------|
+| [`--plan <plan>`](#plan-selection) | Set token limit for your subscription (pro, max5x, max20x) | `pro` |
+| [`--no-usage`](#disable) | Hide usage metrics line | shown |
 
 ## Screenshots
 
