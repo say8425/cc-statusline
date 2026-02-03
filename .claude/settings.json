@@ -1,15 +1,15 @@
 {
-  "hooks": {
-    "PostToolUse": [
-      {
-        "matcher": "Edit|Write",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "file=\"$CLAUDE_FILE_PATHS\"; if [[ \"$file\" =~ \\.(ts|tsx|js|jsx|json)$ ]]; then bun biome check --write \"$file\" 2>/dev/null || true; fi"
-          }
-        ]
-      }
-    ]
-  }
+	"hooks": {
+		"PostToolUse": [
+			{
+				"matcher": "Edit|Write",
+				"hooks": [
+					{
+						"type": "command",
+						"command": "jq -r '.tool_input.file_path' | { read file_path; if echo \"$file_path\" | grep -qE '\\.(ts|tsx|js|jsx|json)$'; then bun biome check --write \"$file_path\" 2>/dev/null || true; fi; }"
+					}
+				]
+			}
+		]
+	}
 }
