@@ -25,19 +25,45 @@ PR 번호가 주어지지 않은 경우:
 gh pr view --json number -q .number
 ```
 
-### Step 2: 리뷰 코멘트 가져오기
+### Step 2: 리뷰 코멘트 및 스레드 정보 가져오기
+
+GraphQL을 사용하여 코멘트와 스레드 ID를 한 번에 가져옵니다:
 
 ```bash
-gh api repos/{owner}/{repo}/pulls/{pr_number}/comments
+gh api graphql -f query='
+query($owner: String!, $repo: String!, $pr_number: Int!) {
+  repository(owner: $owner, name: $repo) {
+    pullRequest(number: $pr_number) {
+      reviewThreads(first: 100) {
+        nodes {
+          id
+          isResolved
+          comments(first: 50) {
+            nodes {
+              databaseId
+              body
+              path
+              line
+              diffHunk
+              author { login }
+            }
+          }
+        }
+      }
+    }
+  }
+}' -f owner="{owner}" -f repo="{repo}" -F pr_number={pr_number}
 ```
 
 반환되는 주요 필드:
 
-- `id`: 코멘트 ID
+- `id` (thread): 스레드 ID (resolve에 사용)
+- `isResolved`: 스레드 해결 여부
+- `databaseId`: 코멘트 ID (REST API의 comment id와 동일, reply에 사용)
 - `body`: 코멘트 내용
 - `path`: 파일 경로
-- `line`: 라인 번호
-- `diff_hunk`: 관련 diff
+- `line`: 파일의 절대 라인 번호
+- `diffHunk`: 관련 diff 컨텍스트
 
 ### Step 3: 각 코멘트 분석 및 처리
 
@@ -59,28 +85,7 @@ gh api repos/{owner}/{repo}/pulls/{pr_number}/comments/{comment_id}/replies \
 
 ### Step 5: Thread Resolve
 
-1. 먼저 review thread ID를 가져옵니다:
-
-```bash
-gh api graphql -f query='
-query {
-  repository(owner: "{owner}", name: "{repo}") {
-    pullRequest(number: {pr_number}) {
-      reviewThreads(first: 100) {
-        nodes {
-          id
-          isResolved
-          comments(first: 1) {
-            nodes { body }
-          }
-        }
-      }
-    }
-  }
-}'
-```
-
-2. 각 thread를 resolve합니다:
+Step 2에서 가져온 스레드 ID를 사용하여 각 thread를 resolve합니다:
 
 ```bash
 gh api graphql -f query='
@@ -96,7 +101,7 @@ mutation {
 - Reply와 Resolve 전에 반드시 코드 변경을 먼저 커밋/푸시해야 함
 - Bot이 작성한 코멘트도 처리 대상에 포함됨 (Gemini Code Assist 등)
 - `suggestion` 블록이 있는 코멘트는 해당 코드를 적용
-- Thread ID와 Comment ID는 다름에 주의 (Thread resolve에는 Thread ID 필요)
+- Thread ID와 Comment ID(databaseId)는 다름에 주의: reply에는 databaseId, resolve에는 thread id 사용
 - 거부 시에도 반드시 reply와 resolve를 수행 (거부 사유를 명확히 기재)
 - 거부 사유 예시: 설계 의도와 충돌, 과도한 추상화, 성능 저하, 범위 초과, 이미 다른 방식으로 해결됨
 
