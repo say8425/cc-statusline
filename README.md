@@ -95,6 +95,26 @@ Automatically parses JSONL files from `~/.claude/projects/` to detect:
 
 No manual configuration required.
 
+### Plan Selection
+
+Different Claude Code plans have different token limits. Use the `--plan` flag to set your plan:
+
+```json
+{
+  "statusLine": {
+    "type": "command",
+    "command": "bunx @say8425/cc-statusline --plan max5x",
+    "padding": 0
+  }
+}
+```
+
+| Plan | Token Limit | Command |
+|------|-------------|---------|
+| Pro (default) | 450K | `--plan pro` or omit |
+| Max 5x | 2.25M | `--plan max5x` |
+| Max 20x | 9M | `--plan max20x` |
+
 ### Disable
 
 To hide the usage metrics line (reset timer, block usage, burn rate), use the `--no-usage` flag:
