@@ -26,9 +26,9 @@ Agrega lo siguiente a `~/.claude/settings.json`:
 ## Opciones CLI
 
 | Opción | Descripción | Por defecto |
-|--------|-------------|-------------|
+|--------|-------------|:-----------:|
 | [`--plan <plan>`](#selección-de-plan) | Establecer límite de tokens según tu suscripción (pro, max5x, max20x) | `pro` |
-| [`--no-usage`](#desactivar) | Ocultar línea de métricas de uso | mostrado |
+| [`--no-usage`](#desactivar) | Ocultar línea de métricas de uso | - |
 
 ## Capturas de pantalla
 
