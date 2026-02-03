@@ -1,0 +1,15 @@
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "file=\"$CLAUDE_FILE_PATHS\"; if [[ \"$file\" =~ \\.(ts|tsx|js|jsx|json)$ ]]; then bun biome check --write \"$file\" 2>/dev/null || true; fi"
+          }
+        ]
+      }
+    ]
+  }
+}
