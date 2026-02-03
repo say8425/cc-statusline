@@ -1,5 +1,26 @@
 # Changelog
 
+## [1.4.0](https://github.com/say8425/cc-statusline/compare/v1.3.0...v1.4.0) (2026-02-03)
+
+
+### Features
+
+* add --plan option for different subscription tiers ([3542e82](https://github.com/say8425/cc-statusline/commit/3542e827fb121a36e82b0ff015b0ae9122ca23d1))
+* add biome check hook for auto-formatting ([ab72260](https://github.com/say8425/cc-statusline/commit/ab72260ccf833be1db2b870738c2fb2460f27fb9))
+* add limit reset timer display ([a69505f](https://github.com/say8425/cc-statusline/commit/a69505fa99bea23763aeec475f7f92fed53080bf))
+* add review-comments skill for PR comment handling ([e40ef1b](https://github.com/say8425/cc-statusline/commit/e40ef1b914f62d804c9234569f3e2bfe23ad5896))
+* add usage metrics line with block usage and burn rate ([80b307d](https://github.com/say8425/cc-statusline/commit/80b307d27c3ea7f14968336817045b3b489a3816))
+
+
+### Bug Fixes
+
+* address PR review comments ([f2bb2dc](https://github.com/say8425/cc-statusline/commit/f2bb2dca08363dc6c0261485dedde823ccc56630))
+
+
+### Performance Improvements
+
+* use simdjson for faster JSONL parsing ([b9acfe2](https://github.com/say8425/cc-statusline/commit/b9acfe2fbc52e8a2f7d4362ffebe922b3bdb575d))
+
 ## [1.3.0](https://github.com/say8425/cc-statusline/compare/v1.2.0...v1.3.0) (2026-01-29)
 
 
