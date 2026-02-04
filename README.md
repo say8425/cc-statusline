@@ -6,6 +6,7 @@ Custom statusline for Claude Code.
 
 [![Claude Code](https://img.shields.io/badge/Claude_Code-D97757?style=flat&logo=claude&logoColor=white)](https://code.claude.com/docs/en/statusline)
 [![npm](https://img.shields.io/npm/v/%40say8425%2Fcc-statusline?logo=npm&logoColor=%23CC3534&color=%23CC3534)](https://www.npmjs.com/package/@say8425/cc-statusline)
+[![Coverage](https://img.shields.io/badge/Coverage-97%25-brightgreen?style=flat)](https://github.com/say8425/cc-statusline)
 [![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=flat&logo=typescript&logoColor=white)](https://www.typescriptlang.org)
 [![Bun](https://img.shields.io/badge/Bun-black?style=flat&logo=bun)](https://bun.sh)
 
