@@ -1,32 +1,35 @@
 {
-  "name": "@say8425/cc-statusline",
-  "version": "1.4.0",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/say8425/cc-statusline.git"
-  },
-  "devDependencies": {
-    "@biomejs/biome": "^2.3.9",
-    "@types/bun": "latest",
-    "typescript": "^5.9.3"
-  },
-  "bin": {
-    "cc-statusline": "src/index.ts"
-  },
-  "description": "Custom statusline for Claude Code",
-  "files": [
-    "src/index.ts"
-  ],
-  "publishConfig": {
-    "registry": "https://registry.npmjs.org"
-  },
-  "scripts": {
-    "start": "bun src/index.ts",
-    "lint": "biome check src/",
-    "typecheck": "tsc --noEmit"
-  },
-  "type": "module",
-  "dependencies": {
-    "ccusage": "^18.0.5"
-  }
+	"name": "@say8425/cc-statusline",
+	"version": "1.4.0",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/say8425/cc-statusline.git"
+	},
+	"devDependencies": {
+		"@biomejs/biome": "^2.3.9",
+		"@types/bun": "latest",
+		"typescript": "^5.9.3"
+	},
+	"bin": {
+		"cc-statusline": "src/index.ts"
+	},
+	"description": "Custom statusline for Claude Code",
+	"files": [
+		"src/index.ts",
+		"src/lib.ts"
+	],
+	"publishConfig": {
+		"registry": "https://registry.npmjs.org"
+	},
+	"scripts": {
+		"start": "bun src/index.ts",
+		"test": "bun test",
+		"test:coverage": "bun test --coverage",
+		"lint": "biome check src/",
+		"typecheck": "tsc --noEmit"
+	},
+	"type": "module",
+	"dependencies": {
+		"ccusage": "^18.0.5"
+	}
 }

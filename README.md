@@ -141,6 +141,25 @@ To hide the usage metrics line (reset timer, block usage, burn rate), use the `-
 - [Bun](https://bun.sh) - JavaScript runtime
 - [gh](https://cli.github.com) - GitHub CLI (optional, for PR URL)
 
+## Development
+
+```bash
+# Install dependencies
+bun install
+
+# Run tests
+bun test
+
+# Run tests with coverage
+bun test --coverage
+
+# Type check
+bun run typecheck
+
+# Lint
+bun run lint
+```
+
 ## Color Thresholds
 
 | Metric        | Normal (white) | Warning (yellow) | Critical (red) |

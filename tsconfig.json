@@ -1,16 +1,18 @@
 {
-  "compilerOptions": {
-    "target": "ES2022",
-    "module": "ESNext",
-    "moduleResolution": "bundler",
-    "strict": true,
-    "esModuleInterop": true,
-    "skipLibCheck": true,
-    "forceConsistentCasingInFileNames": true,
-    "outDir": "dist",
-    "declaration": true,
-    "types": ["bun-types"]
-  },
-  "include": ["src/**/*"],
-  "exclude": ["node_modules"]
+	"compilerOptions": {
+		"target": "ES2022",
+		"module": "ESNext",
+		"moduleResolution": "bundler",
+		"strict": true,
+		"esModuleInterop": true,
+		"skipLibCheck": true,
+		"forceConsistentCasingInFileNames": true,
+		"outDir": "dist",
+		"declaration": true,
+		"types": ["bun-types"],
+		"allowImportingTsExtensions": true,
+		"noEmit": true
+	},
+	"include": ["src/**/*"],
+	"exclude": ["node_modules", "src/__tests__"]
 }

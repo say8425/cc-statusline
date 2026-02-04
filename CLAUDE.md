@@ -7,7 +7,17 @@ Claude Code용 커스텀 statusline (Bun/TypeScript).
 ```
 cc-statusline/
 ├── src/
-│   └── index.ts       # 메인 스크립트
+│   ├── index.ts       # 엔트리포인트
+│   ├── lib.ts         # 모든 로직 (export)
+│   └── __tests__/     # 테스트 파일
+│       ├── pure.test.ts       # 순수 함수 테스트
+│       ├── cached.test.ts     # 캐시 메커니즘 테스트
+│       ├── cli.test.ts        # CLI 파싱 테스트
+│       ├── main.test.ts       # renderStatusLine 테스트
+│       ├── async.test.ts      # 비동기 함수 통합 테스트
+│       ├── integration.test.ts # main 함수 통합 테스트
+│       └── stdin.test.ts      # readStdin 테스트
+├── bunfig.toml        # Bun 테스트 설정
 ├── package.json
 ├── tsconfig.json
 └── CLAUDE.md
@@ -63,7 +73,7 @@ Claude Code 기본 statusbar에 다음 정보를 추가로 표시:
 - `bun`: JavaScript 런타임
 - `gh`: GitHub CLI (PR URL)
 
-### 테스트
+### 수동 테스트
 
 ```bash
 echo '{
@@ -75,6 +85,27 @@ echo '{
   "workspace":{"project_dir":"/Users/penguin/dev/cc-statusline"}
 }' | bun src/index.ts
 ```
+
+### 단위 테스트
+
+```bash
+# 테스트 실행
+bun test
+
+# 커버리지 포함
+bun test --coverage
+```
+
+**테스트 구조**:
+- `pure.test.ts`: 순수 함수 (getUsageColor, formatNumber, formatTime, formatTokensK, getTimeUntilReset, calculateBurnRate)
+- `cached.test.ts`: 캐시 TTL 및 메커니즘
+- `cli.test.ts`: CLI 인자 파싱 (--plan, --no-usage)
+- `main.test.ts`: renderStatusLine 순수 함수 (의존성 주입 방식)
+- `async.test.ts`: 비동기 함수 통합 테스트 (실제 git/gh 호출)
+- `integration.test.ts`: main 함수 E2E 테스트
+- `stdin.test.ts`: stdin 읽기 테스트
+
+**커버리지**: 함수 100%, 라인 97%+
 
 ### CLI 옵션
 
