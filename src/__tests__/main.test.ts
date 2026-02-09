@@ -2,7 +2,7 @@ import { afterEach, describe, expect, setSystemTime, test } from "bun:test";
 import {
 	C,
 	type ClaudeStatusInput,
-	PLAN_LIMITS,
+	COST_LIMITS,
 	type RenderContext,
 	renderStatusLine,
 } from "../lib.ts";
@@ -53,7 +53,7 @@ function createRenderContext(
 		prUrl: overrides.prUrl ?? null,
 		blockUsage: overrides.blockUsage ?? null,
 		noUsage: overrides.noUsage ?? true,
-		blockTokenLimit: overrides.blockTokenLimit ?? PLAN_LIMITS.pro,
+		blockCostLimit: overrides.blockCostLimit ?? COST_LIMITS.pro,
 	};
 }
 
@@ -192,6 +192,7 @@ describe("renderStatusLine", () => {
 				blockUsage: {
 					resetTime: new Date(),
 					blockTokens: 10000,
+					blockCostUSD: 5.0,
 					blockStartTime: Date.now() - 600000,
 				},
 			});
@@ -211,6 +212,7 @@ describe("renderStatusLine", () => {
 				blockUsage: {
 					resetTime: new Date(now + 3600000), // 1 hour later
 					blockTokens: 100000,
+					blockCostUSD: 5.0,
 					blockStartTime: now - 600000, // 10 minutes ago
 				},
 			});
@@ -232,6 +234,7 @@ describe("renderStatusLine", () => {
 				blockUsage: {
 					resetTime: new Date(now + 2 * 3600000 + 30 * 60000), // 2h 30m later
 					blockTokens: 50000,
+					blockCostUSD: 3.0,
 					blockStartTime: now - 600000,
 				},
 			});
@@ -241,23 +244,24 @@ describe("renderStatusLine", () => {
 			expect(lines[2]).toContain("02:30");
 		});
 
-		test("shows block usage percentage", () => {
+		test("shows block usage as cost percentage", () => {
 			const now = Date.now();
 			setSystemTime(now);
 
 			const ctx = createRenderContext({
 				noUsage: false,
-				blockTokenLimit: PLAN_LIMITS.pro, // 450K
+				blockCostLimit: COST_LIMITS.max5x, // $40
 				blockUsage: {
 					resetTime: new Date(now + 3600000),
-					blockTokens: 225000, // 50% of 450K
+					blockTokens: 225000,
+					blockCostUSD: 20.0, // 50% of $40
 					blockStartTime: now - 600000,
 				},
 			});
 			const lines = renderStatusLine(ctx);
 
 			expect(lines[2]).toContain("📊");
-			expect(lines[2]).toContain("225K/450K");
+			expect(lines[2]).toContain("$20.00/$40");
 			expect(lines[2]).toContain("50%");
 		});
 
@@ -270,6 +274,7 @@ describe("renderStatusLine", () => {
 				blockUsage: {
 					resetTime: new Date(now + 3600000),
 					blockTokens: 50000, // 50K tokens
+					blockCostUSD: 5.0,
 					blockStartTime: now - 5 * 60000, // 5 minutes ago -> 10K/min
 				},
 			});
@@ -288,6 +293,7 @@ describe("renderStatusLine", () => {
 				blockUsage: {
 					resetTime: new Date(now + 3600000),
 					blockTokens: 50000,
+					blockCostUSD: 5.0,
 					blockStartTime: now - 30000, // 30 seconds ago
 				},
 			});

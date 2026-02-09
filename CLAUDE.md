@@ -37,7 +37,7 @@ cc-statusline/
 | Git diff | `git diff --shortstat` |
 | PR URL | `gh pr view` |
 | 리셋 타이머 | ccusage `loadSessionBlockData()` |
-| 블록 사용량 | ccusage `tokenCounts.inputTokens + outputTokens` |
+| 블록 사용량 | ccusage `costUSD` (비용 기반) |
 | 번레이트 | 블록 토큰 / 경과 시간 (분) |
 
 ## WHY
