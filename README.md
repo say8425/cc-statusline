@@ -91,20 +91,28 @@ Add the following to `~/.claude/settings.json`:
 
 Shows usage information for the 5-hour billing block.
 
+> [!NOTE]
+> Anthropic does not publicly disclose the exact formula for subscription usage calculation. Block usage is estimated based on API published pricing and may differ from the actual `/usage` value.
+
 ### How It Works
 
 Automatically parses JSONL files from `~/.claude/projects/` to detect:
 
-1. **Usage limit error messages** - Extracts exact reset time from "Claude AI usage limit reached" errors
-2. **5-hour billing blocks** - Calculates block end time based on latest activity (like [ccusage](https://github.com/ryoppippi/ccusage))
-3. **Cost usage** - Tracks cost (USD) within the current 5-hour block
+1. **5-hour billing blocks** - Detects block boundaries using cumulative time and inactivity gap detection (hour-floored for reset timer)
+2. **Cost calculation** - Computes cost using model-specific pricing (opus/sonnet/haiku) × token counts
+3. **Cross-project scanning** - Scans all projects under `~/.claude/projects/` (blocks are shared across projects)
 4. **Burn rate** - Calculates average token consumption per minute
 
 No manual configuration required.
 
 ### Plan Selection
 
-Different Claude Code plans have different cost limits. Use the `--plan` flag to set your plan:
+Your plan is **automatically detected** from macOS Keychain (`Claude Code-credentials` → `rateLimitTier`), so no configuration is needed.
+
+> [!NOTE]
+> Auto-detection is **macOS only**. On other platforms, use `--plan` to specify your plan explicitly.
+
+To manually override, use the `--plan` flag:
 
 ```json
 {
@@ -118,9 +126,10 @@ Different Claude Code plans have different cost limits. Use the `--plan` flag to
 
 | Plan | Cost Limit | Command |
 |------|------------|---------|
-| Pro (default) | $8 | `--plan pro` or omit |
+| Pro | $8 | `--plan pro` |
 | Max 5x | $40 | `--plan max5x` |
-| Max 20x | $80 | `--plan max20x` |
+| Max 20x | $160 | `--plan max20x` |
+| Auto-detect (default) | - | - |
 
 ### Disable
 

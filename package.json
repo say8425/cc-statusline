@@ -22,6 +22,7 @@
 		"registry": "https://registry.npmjs.org"
 	},
 	"scripts": {
+		"build": "bun build ./src/index.ts --outfile ./dist/index.js --target bun",
 		"start": "bun src/index.ts",
 		"test": "bun test",
 		"test:coverage": "bun test --coverage",
@@ -29,7 +30,5 @@
 		"typecheck": "tsc --noEmit"
 	},
 	"type": "module",
-	"dependencies": {
-		"ccusage": "^18.0.5"
-	}
+	"dependencies": {}
 }

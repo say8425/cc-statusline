@@ -125,6 +125,29 @@ describe("cache mechanism", () => {
 		});
 	});
 
+	describe("plan cache", () => {
+		test("cache hit when timestamp is fresh", () => {
+			cache.plan = { value: "max20x", timestamp: Date.now() };
+
+			const isFresh = Date.now() - cache.plan.timestamp < CACHE_TTL.plan;
+			expect(isFresh).toBe(true);
+			expect(cache.plan.value).toBe("max20x");
+		});
+
+		test("cache miss when timestamp is stale", () => {
+			const now = Date.now();
+			setSystemTime(now);
+
+			cache.plan = {
+				value: "max5x",
+				timestamp: now - CACHE_TTL.plan - 1000,
+			};
+
+			const isFresh = now - cache.plan.timestamp < CACHE_TTL.plan;
+			expect(isFresh).toBe(false);
+		});
+	});
+
 	describe("resetCache", () => {
 		test("resets all cache values to defaults", () => {
 			// Populate all caches
@@ -145,6 +168,7 @@ describe("cache mechanism", () => {
 				},
 				timestamp: Date.now(),
 			};
+			cache.plan = { value: "max20x", timestamp: Date.now() };
 
 			resetCache();
 
@@ -157,6 +181,7 @@ describe("cache mechanism", () => {
 			});
 			expect(cache.prUrl).toEqual({ value: null, timestamp: 0 });
 			expect(cache.blockUsage).toEqual({ value: null, timestamp: 0 });
+			expect(cache.plan).toEqual({ value: "pro", timestamp: 0 });
 		});
 	});
 });
@@ -176,5 +201,9 @@ describe("CACHE_TTL values", () => {
 
 	test("blockUsage TTL is 60 seconds", () => {
 		expect(CACHE_TTL.blockUsage).toBe(60000);
+	});
+
+	test("plan TTL is 300 seconds (5 minutes)", () => {
+		expect(CACHE_TTL.plan).toBe(300000);
 	});
 });
