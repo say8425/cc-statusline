@@ -2,11 +2,14 @@ import { beforeEach, describe, expect, test } from "bun:test";
 import {
 	CACHE_TTL,
 	cache,
+	detectPlanCached,
+	detectPlanFromKeychain,
 	getBlockUsageCached,
-	getBlockUsageFromCcusage,
+	getBlockUsageFromJSONL,
 	getBranchCached,
 	getGitChangesCached,
 	getPrUrlCached,
+	type Plan,
 	resetCache,
 } from "../lib.ts";
 
@@ -92,11 +95,11 @@ describe("async functions (integration)", () => {
 		});
 	});
 
-	describe("getBlockUsageFromCcusage", () => {
+	describe("getBlockUsageFromJSONL", () => {
 		test(
 			"returns BlockUsageInfo object",
 			async () => {
-				const usage = await getBlockUsageFromCcusage();
+				const usage = await getBlockUsageFromJSONL();
 
 				expect(usage).toHaveProperty("resetTime");
 				expect(usage).toHaveProperty("blockTokens");
@@ -123,7 +126,7 @@ describe("async functions (integration)", () => {
 		);
 
 		test("caches result on subsequent calls", async () => {
-			// Pre-populate cache to avoid ccusage call
+			// Pre-populate cache to avoid JSONL parsing call
 			cache.blockUsage = {
 				value: {
 					resetTime: null,
@@ -141,6 +144,36 @@ describe("async functions (integration)", () => {
 			const timestamp2 = cache.blockUsage.timestamp;
 
 			expect(timestamp1).toBe(timestamp2);
+		});
+	});
+
+	describe("detectPlanFromKeychain", () => {
+		test("returns a valid Plan value", async () => {
+			const plan = await detectPlanFromKeychain();
+			const validPlans: Plan[] = ["pro", "max5x", "max20x"];
+			expect(validPlans).toContain(plan);
+		});
+	});
+
+	describe("detectPlanCached", () => {
+		test("returns a valid Plan value", async () => {
+			const plan = await detectPlanCached();
+			const validPlans: Plan[] = ["pro", "max5x", "max20x"];
+			expect(validPlans).toContain(plan);
+		});
+
+		test("caches result on subsequent calls", async () => {
+			// Pre-populate cache to avoid Keychain call
+			cache.plan = { value: "max20x", timestamp: Date.now() };
+
+			await detectPlanCached();
+			const timestamp1 = cache.plan.timestamp;
+
+			await detectPlanCached();
+			const timestamp2 = cache.plan.timestamp;
+
+			expect(timestamp1).toBe(timestamp2);
+			expect(cache.plan.value).toBe("max20x");
 		});
 	});
 });

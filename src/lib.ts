@@ -1,7 +1,10 @@
 #!/usr/bin/env bun
 
+import { createReadStream } from "node:fs";
+import { readdir } from "node:fs/promises";
+import { join } from "node:path";
+import { createInterface } from "node:readline";
 import { $ } from "bun";
-import { loadSessionBlockData } from "ccusage/data-loader";
 
 // 공식 Claude Code JSON input 타입 정의
 export interface ClaudeStatusInput {
@@ -35,7 +38,7 @@ export interface BlockUsageInfo {
 // CLI 파싱 결과 타입
 export interface CliOptions {
 	noUsage: boolean;
-	blockCostLimit: number;
+	blockCostLimit: number | null; // null이면 Keychain에서 자동 감지
 }
 
 // 캐시 구조
@@ -47,6 +50,7 @@ export const cache = {
 		value: null as BlockUsageInfo | null,
 		timestamp: 0,
 	},
+	plan: { value: "pro" as Plan, timestamp: 0 },
 };
 
 // 캐시 초기화 (테스트용)
@@ -55,6 +59,7 @@ export function resetCache(): void {
 	cache.gitChanges = { files: 0, insertions: 0, deletions: 0, timestamp: 0 };
 	cache.prUrl = { value: null, timestamp: 0 };
 	cache.blockUsage = { value: null, timestamp: 0 };
+	cache.plan = { value: "pro" as Plan, timestamp: 0 };
 }
 
 // 캐시 TTL (ms)
@@ -63,18 +68,38 @@ export const CACHE_TTL = {
 	gitChanges: 0, // 캐시 없음 - git diff는 충분히 빠름
 	prUrl: 30000, // 30초
 	blockUsage: 60000, // 60초 (JSONL 파싱은 비용이 크므로 긴 TTL)
+	plan: 300000, // 5분 (플랜은 세션 중 바뀌지 않음)
 };
 
 // Plan별 5시간 비용 한도 ($USD)
 export const COST_LIMITS = {
 	pro: 8, // ~$8/block (커뮤니티 추정)
 	max5x: 40, // ~$40/block
-	max20x: 80, // ~$80/block
+	max20x: 160, // ~$160/block (20×pro)
 } as const;
 
 export type Plan = keyof typeof COST_LIMITS;
 
 export const DEFAULT_PLAN: Plan = "pro";
+
+// 모델별 가격 (per 1M tokens, USD)
+export const MODEL_PRICING: Record<
+	string,
+	{ input: number; cacheCreate: number; cacheRead: number; output: number }
+> = {
+	opus: { input: 5, cacheCreate: 6.25, cacheRead: 0.5, output: 25 },
+	sonnet: { input: 3, cacheCreate: 3.75, cacheRead: 0.3, output: 15 },
+	haiku: { input: 1, cacheCreate: 1.25, cacheRead: 0.1, output: 5 },
+};
+
+// 모델명에서 가격 키 추출 (예: "claude-opus-4-6" → "opus")
+export function getModelKey(model: string): string | null {
+	const lower = model.toLowerCase();
+	if (lower.includes("opus")) return "opus";
+	if (lower.includes("sonnet")) return "sonnet";
+	if (lower.includes("haiku")) return "haiku";
+	return null;
+}
 
 // TrueColor 색상 정의
 export const C = {
@@ -223,19 +248,156 @@ export function parseCliArgs(args: string[]): CliOptions {
 	const noUsage = args.includes("--no-usage");
 
 	// --plan 옵션 파싱 (예: --plan max5x)
+	// --plan 미지정 시 null 반환 (Keychain에서 자동 감지)
 	const planIndex = args.indexOf("--plan");
+	if (planIndex === -1) {
+		return { noUsage, blockCostLimit: null };
+	}
+
 	const planArg =
-		planIndex !== -1 && planIndex + 1 < args.length
-			? args[planIndex + 1]
-			: DEFAULT_PLAN;
+		planIndex + 1 < args.length ? args[planIndex + 1] : DEFAULT_PLAN;
 	const blockCostLimit =
 		COST_LIMITS[planArg as Plan] ?? COST_LIMITS[DEFAULT_PLAN];
 
 	return { noUsage, blockCostLimit };
 }
 
-// ccusage를 사용하여 블록 사용량 정보 추출
-export async function getBlockUsageFromCcusage(): Promise<BlockUsageInfo> {
+// JSONL 엔트리에서 assistant 타입의 사용량 정보
+export interface JSONLAssistantEntry {
+	type: "assistant";
+	timestamp: string;
+	message: {
+		model: string;
+		usage: {
+			input_tokens: number;
+			cache_creation_input_tokens: number;
+			cache_read_input_tokens: number;
+			output_tokens: number;
+		};
+	};
+}
+
+// 단일 엔트리의 비용 계산
+export function calculateEntryCost(entry: JSONLAssistantEntry): number {
+	const modelKey = getModelKey(entry.message.model);
+	if (!modelKey) return 0;
+
+	const pricing = MODEL_PRICING[modelKey];
+	const usage = entry.message.usage;
+
+	return (
+		(usage.input_tokens * pricing.input +
+			usage.cache_creation_input_tokens * pricing.cacheCreate +
+			usage.cache_read_input_tokens * pricing.cacheRead +
+			usage.output_tokens * pricing.output) /
+		1_000_000
+	);
+}
+
+// 단일 엔트리의 총 토큰 수
+function calculateEntryTokens(entry: JSONLAssistantEntry): number {
+	const usage = entry.message.usage;
+	return (
+		usage.input_tokens +
+		usage.cache_creation_input_tokens +
+		usage.cache_read_input_tokens +
+		usage.output_tokens
+	);
+}
+
+// 5시간 블록 감지 및 현재 활성 블록의 엔트리 추출
+export function findActiveBlockEntries(
+	entries: JSONLAssistantEntry[],
+): JSONLAssistantEntry[] {
+	if (entries.length === 0) return [];
+
+	const BLOCK_DURATION_MS = 5 * 60 * 60 * 1000; // 5시간
+	const now = Date.now();
+
+	// timestamp 순 정렬
+	entries.sort(
+		(a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime(),
+	);
+
+	// 블록 감지 (par_cc_usage 방식): 누적 시간 + 갭 기반 블록 분리
+	let blockStartTs = new Date(entries[0].timestamp).getTime();
+	let blockStart =
+		Math.floor(blockStartTs / (60 * 60 * 1000)) * (60 * 60 * 1000);
+	let blockEnd = blockStart + BLOCK_DURATION_MS;
+	let lastEntryTs = blockStartTs;
+	let blockEntries: JSONLAssistantEntry[] = [];
+
+	for (const entry of entries) {
+		const ts = new Date(entry.timestamp).getTime();
+
+		// 새 블록 조건 (par_cc_usage 방식):
+		// 1) 블록 시작으로부터 5시간 초과 (누적 시간 기반)
+		// 2) 이전 엔트리와 5시간 이상 갭 (비활동 갭 기반)
+		const timeSinceBlockStart = ts - blockStartTs;
+		const timeSinceLastEntry = ts - lastEntryTs;
+
+		if (
+			timeSinceBlockStart >= BLOCK_DURATION_MS ||
+			timeSinceLastEntry >= BLOCK_DURATION_MS
+		) {
+			// 새 블록 시작
+			blockStartTs = ts;
+			blockStart = Math.floor(ts / (60 * 60 * 1000)) * (60 * 60 * 1000);
+			blockEnd = blockStart + BLOCK_DURATION_MS;
+			blockEntries = [];
+		}
+
+		blockEntries.push(entry);
+		lastEntryTs = ts;
+	}
+
+	// 현재 시각이 블록 내에 있는지 확인
+	if (now < blockEnd) {
+		return blockEntries;
+	}
+
+	return [];
+}
+
+// JSONL 파일을 라인별로 스트리밍 파싱 (assistant 엔트리만 추출)
+async function parseJSONLFile(
+	filePath: string,
+	sinceMs: number,
+): Promise<JSONLAssistantEntry[]> {
+	const entries: JSONLAssistantEntry[] = [];
+
+	const rl = createInterface({
+		input: createReadStream(filePath),
+		crlfDelay: Number.POSITIVE_INFINITY,
+	});
+
+	for await (const line of rl) {
+		if (!line.includes('"type":"assistant"')) continue;
+
+		try {
+			const obj = JSON.parse(line);
+			if (
+				obj.type !== "assistant" ||
+				!obj.message?.usage ||
+				!obj.message?.model ||
+				!obj.timestamp
+			)
+				continue;
+
+			const ts = new Date(obj.timestamp).getTime();
+			if (ts < sinceMs) continue;
+
+			entries.push(obj as JSONLAssistantEntry);
+		} catch {
+			// 파싱 실패한 라인은 무시
+		}
+	}
+
+	return entries;
+}
+
+// ~/.claude/projects/ 전체를 스캔하여 블록 사용량 계산
+export async function getBlockUsageFromJSONL(): Promise<BlockUsageInfo> {
 	const result: BlockUsageInfo = {
 		resetTime: null,
 		blockTokens: 0,
@@ -244,40 +406,64 @@ export async function getBlockUsageFromCcusage(): Promise<BlockUsageInfo> {
 	};
 
 	try {
-		const blocks = await loadSessionBlockData({
-			sessionDurationHours: 5,
-			offline: true,
-			order: "desc",
-		});
+		const homeDir = process.env.HOME || process.env.USERPROFILE || "/tmp";
+		const projectsDir = join(homeDir, ".claude", "projects");
 
-		if (blocks.length === 0) return result;
+		// 최대 10시간 전까지만 스캔 (5시간 블록 2개 분량)
+		const sinceMs = Date.now() - 10 * 60 * 60 * 1000;
 
-		// 가장 최근의 활성 블록 찾기 (갭 블록 제외)
-		const activeBlock = blocks.find((b) => !b.isGap);
-		if (!activeBlock) return result;
+		// 모든 프로젝트 디렉토리 스캔
+		let projectDirs: string[];
+		try {
+			projectDirs = (await readdir(projectsDir, { withFileTypes: true }))
+				.filter((d) => d.isDirectory())
+				.map((d) => join(projectsDir, d.name));
+		} catch {
+			return result;
+		}
 
-		// 블록 토큰 합산 (캐시 토큰 포함 — 번레이트 참고값)
-		const { tokenCounts } = activeBlock;
-		result.blockTokens =
-			tokenCounts.inputTokens +
-			tokenCounts.outputTokens +
-			tokenCounts.cacheCreationInputTokens +
-			tokenCounts.cacheReadInputTokens;
+		// 모든 JSONL 파일 수집
+		const jsonlFiles: string[] = [];
+		for (const dir of projectDirs) {
+			try {
+				const files = await readdir(dir);
+				for (const file of files) {
+					if (file.endsWith(".jsonl")) {
+						jsonlFiles.push(join(dir, file));
+					}
+				}
+			} catch {
+				// 디렉토리 읽기 실패는 무시
+			}
+		}
 
-		// 블록 비용 (ccusage의 costUSD 필드)
-		result.blockCostUSD =
-			((activeBlock as Record<string, unknown>).costUSD as number) ?? 0;
+		// 모든 JSONL 파일에서 assistant 엔트리 추출 (병렬)
+		const allEntriesArrays = await Promise.all(
+			jsonlFiles.map((f) => parseJSONLFile(f, sinceMs)),
+		);
+		const allEntries = allEntriesArrays.flat();
 
-		result.blockStartTime = activeBlock.startTime.getTime();
+		if (allEntries.length === 0) return result;
 
-		// 리셋 시간 설정 (ccusage가 제공하는 usageLimitResetTime 또는 블록 종료 시간)
-		if (
-			activeBlock.usageLimitResetTime &&
-			activeBlock.usageLimitResetTime > new Date()
-		) {
-			result.resetTime = activeBlock.usageLimitResetTime;
-		} else if (activeBlock.endTime > new Date()) {
-			result.resetTime = activeBlock.endTime;
+		// 현재 활성 블록의 엔트리 추출
+		const activeEntries = findActiveBlockEntries(allEntries);
+		if (activeEntries.length === 0) return result;
+
+		// 비용 및 토큰 합산
+		for (const entry of activeEntries) {
+			result.blockCostUSD += calculateEntryCost(entry);
+			result.blockTokens += calculateEntryTokens(entry);
+		}
+
+		// 블록 시작 시간
+		result.blockStartTime = new Date(activeEntries[0].timestamp).getTime();
+
+		// 리셋 시간 = 블록 시작 시간(시간 단위 floor) + 5시간
+		const blockStartFloored =
+			Math.floor(result.blockStartTime / (60 * 60 * 1000)) * (60 * 60 * 1000);
+		const blockEndTime = blockStartFloored + 5 * 60 * 60 * 1000;
+		if (blockEndTime > Date.now()) {
+			result.resetTime = new Date(blockEndTime);
 		}
 
 		return result;
@@ -292,9 +478,36 @@ export async function getBlockUsageCached(): Promise<BlockUsageInfo | null> {
 		return cache.blockUsage.value;
 	}
 
-	const blockUsage = await getBlockUsageFromCcusage();
+	const blockUsage = await getBlockUsageFromJSONL();
 	cache.blockUsage = { value: blockUsage, timestamp: Date.now() };
 	return blockUsage;
+}
+
+// macOS Keychain에서 플랜 자동 감지
+export async function detectPlanFromKeychain(): Promise<Plan> {
+	if (process.platform !== "darwin") return DEFAULT_PLAN;
+	try {
+		const result =
+			await $`security find-generic-password -s "Claude Code-credentials" -w 2>/dev/null`.text();
+		const creds = JSON.parse(result);
+		const tier = creds?.claudeAiOauth?.rateLimitTier ?? "";
+		if (tier.includes("max_20x")) return "max20x";
+		if (tier.includes("max_5x")) return "max5x";
+		return "pro";
+	} catch {
+		return DEFAULT_PLAN;
+	}
+}
+
+// 플랜 감지 (캐싱)
+export async function detectPlanCached(): Promise<Plan> {
+	if (Date.now() - cache.plan.timestamp < CACHE_TTL.plan) {
+		return cache.plan.value;
+	}
+
+	const plan = await detectPlanFromKeychain();
+	cache.plan = { value: plan, timestamp: Date.now() };
+	return plan;
 }
 
 // 렌더링 컨텍스트 타입 (테스트를 위한 의존성 주입)
@@ -417,18 +630,24 @@ export function renderStatusLine(ctx: RenderContext): string[] {
 export async function main(cliArgs?: string[]): Promise<void> {
 	// CLI 인자 파싱
 	const args = cliArgs ?? process.argv.slice(2);
-	const { noUsage, blockCostLimit } = parseCliArgs(args);
+	const { noUsage, blockCostLimit: cliCostLimit } = parseCliArgs(args);
 
 	// 1. stdin에서 Claude Code JSON 읽기 (empty stdin 처리)
 	const claudeJson: ClaudeStatusInput = JSON.parse((await readStdin()) || "{}");
 
-	// 2. Git 정보 + 블록 사용량 (캐싱, 병렬 실행)
-	const [branch, gitChanges, prUrl, blockUsage] = await Promise.all([
-		getBranchCached(),
-		getGitChangesCached(),
-		getPrUrlCached(),
-		noUsage ? Promise.resolve(null) : getBlockUsageCached(),
-	]);
+	// 2. Git 정보 + 블록 사용량 + 플랜 감지 (캐싱, 병렬 실행)
+	const [branch, gitChanges, prUrl, blockUsage, detectedPlan] =
+		await Promise.all([
+			getBranchCached(),
+			getGitChangesCached(),
+			getPrUrlCached(),
+			noUsage ? Promise.resolve(null) : getBlockUsageCached(),
+			cliCostLimit === null ? detectPlanCached() : Promise.resolve(null),
+		]);
+
+	// --plan 미지정 시 Keychain에서 자동 감지한 플랜 사용
+	const blockCostLimit =
+		cliCostLimit ?? COST_LIMITS[detectedPlan ?? DEFAULT_PLAN];
 
 	// 3. 렌더링 및 출력
 	const lines = renderStatusLine({

@@ -23,7 +23,7 @@ cc-statusline/
 └── CLAUDE.md
 ```
 
-**기술 스택**: Bun, TypeScript, gh CLI, ccusage
+**기술 스택**: Bun, TypeScript, gh CLI
 
 **데이터 소스**:
 | 데이터 | 출처 |
@@ -36,9 +36,10 @@ cc-statusline/
 | Git 브랜치 | `git branch --show-current` |
 | Git diff | `git diff --shortstat` |
 | PR URL | `gh pr view` |
-| 리셋 타이머 | ccusage `loadSessionBlockData()` |
-| 블록 사용량 | ccusage `costUSD` (비용 기반) |
+| 리셋 타이머 | JSONL 직접 파싱 (5시간 블록 감지) |
+| 블록 사용량 | JSONL 직접 파싱 (모델별 가격 × 토큰, 비용 기반) |
 | 번레이트 | 블록 토큰 / 경과 시간 (분) |
+| 플랜 | macOS Keychain `Claude Code-credentials` → `rateLimitTier` (macOS only, 자동 감지) |
 
 ## WHY
 
@@ -97,7 +98,7 @@ bun test --coverage
 ```
 
 **테스트 구조**:
-- `pure.test.ts`: 순수 함수 (getUsageColor, formatNumber, formatTime, formatTokensK, getTimeUntilReset, calculateBurnRate)
+- `pure.test.ts`: 순수 함수 (getUsageColor, formatNumber, formatTime, formatTokensK, getTimeUntilReset, calculateBurnRate, findActiveBlockEntries)
 - `cached.test.ts`: 캐시 TTL 및 메커니즘
 - `cli.test.ts`: CLI 인자 파싱 (--plan, --no-usage)
 - `main.test.ts`: renderStatusLine 순수 함수 (의존성 주입 방식)
@@ -109,11 +110,11 @@ bun test --coverage
 
 ### CLI 옵션
 
-- `--plan <plan>`: 플랜별 토큰 한도 설정 (pro: 450K, max5x: 2.25M, max20x: 9M)
+- `--plan <plan>`: 플랜별 비용 한도 설정 (pro: $8, max5x: $40, max20x: $160). 미지정 시 macOS Keychain에서 자동 감지
 - `--no-usage`: 사용량 지표 줄 숨김 (리셋 타이머, 블록 사용량, 번레이트)
 
 ### 수정 시 주의사항
 
 - 300ms마다 실행되므로 성능 중요
 - 공식 JSON input structure 참조: https://code.claude.com/docs/en/statusline
-- ccusage 결과는 60초 캐시 TTL 적용
+- JSONL 파싱 결과는 60초 캐시 TTL 적용

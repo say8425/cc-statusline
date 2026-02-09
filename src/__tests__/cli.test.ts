@@ -2,18 +2,18 @@ import { describe, expect, test } from "bun:test";
 import { COST_LIMITS, parseCliArgs } from "../lib.ts";
 
 describe("parseCliArgs", () => {
-	test("returns default values for empty args", () => {
+	test("returns null blockCostLimit when --plan is not specified", () => {
 		const result = parseCliArgs([]);
 		expect(result).toEqual({
 			noUsage: false,
-			blockCostLimit: COST_LIMITS.pro,
+			blockCostLimit: null,
 		});
 	});
 
-	test("parses --no-usage flag", () => {
+	test("parses --no-usage flag (blockCostLimit remains null)", () => {
 		const result = parseCliArgs(["--no-usage"]);
 		expect(result.noUsage).toBe(true);
-		expect(result.blockCostLimit).toBe(COST_LIMITS.pro);
+		expect(result.blockCostLimit).toBeNull();
 	});
 
 	test("parses --plan max5x", () => {

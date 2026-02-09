@@ -2,11 +2,13 @@ import { afterEach, describe, expect, setSystemTime, test } from "bun:test";
 import {
 	C,
 	calculateBurnRate,
+	findActiveBlockEntries,
 	formatNumber,
 	formatTime,
 	formatTokensK,
 	getTimeUntilReset,
 	getUsageColor,
+	type JSONLAssistantEntry,
 } from "../lib.ts";
 
 describe("getUsageColor", () => {
@@ -173,5 +175,153 @@ describe("calculateBurnRate", () => {
 
 		// 10000 tokens / 3 minutes = 3333.33... tokens/min -> rounds to 3333
 		expect(calculateBurnRate(tokens, startTime)).toBe(3333);
+	});
+});
+
+describe("findActiveBlockEntries", () => {
+	function makeEntry(timestamp: string): JSONLAssistantEntry {
+		return {
+			type: "assistant",
+			timestamp,
+			message: {
+				model: "claude-sonnet-4-20250514",
+				usage: {
+					input_tokens: 100,
+					cache_creation_input_tokens: 0,
+					cache_read_input_tokens: 0,
+					output_tokens: 50,
+				},
+			},
+		};
+	}
+
+	afterEach(() => {
+		setSystemTime();
+	});
+
+	test("returns empty array for empty input", () => {
+		expect(findActiveBlockEntries([])).toEqual([]);
+	});
+
+	test("returns entries within a single block", () => {
+		const now = new Date("2024-01-01T12:30:00Z");
+		setSystemTime(now);
+
+		const entries = [
+			makeEntry("2024-01-01T10:15:00Z"),
+			makeEntry("2024-01-01T11:00:00Z"),
+			makeEntry("2024-01-01T12:00:00Z"),
+		];
+
+		const result = findActiveBlockEntries(entries);
+		expect(result.length).toBe(3);
+	});
+
+	test("returns empty array when current time is past block end", () => {
+		// Block: 10:15 → floor=10:00 → blockEnd=15:00
+		// now = 16:00 → past blockEnd
+		const now = new Date("2024-01-01T16:00:00Z");
+		setSystemTime(now);
+
+		const entries = [
+			makeEntry("2024-01-01T10:15:00Z"),
+			makeEntry("2024-01-01T11:00:00Z"),
+		];
+
+		const result = findActiveBlockEntries(entries);
+		expect(result.length).toBe(0);
+	});
+
+	test("starts new block when cumulative time exceeds 5 hours", () => {
+		// Entry at 01:30, then entries continue until 06:27
+		// blockStartTs = 01:30, timeSinceBlockStart at 06:30 = 5h → new block
+		const now = new Date("2024-01-01T07:00:00Z");
+		setSystemTime(now);
+
+		const entries = [
+			makeEntry("2024-01-01T01:30:00Z"), // block1 start
+			makeEntry("2024-01-01T03:00:00Z"),
+			makeEntry("2024-01-01T05:00:00Z"),
+			makeEntry("2024-01-01T06:30:00Z"), // 5h from 01:30 → new block
+			makeEntry("2024-01-01T06:45:00Z"),
+		];
+
+		const result = findActiveBlockEntries(entries);
+		// Only the last 2 entries (new block starting at 06:30)
+		expect(result.length).toBe(2);
+		expect(result[0].timestamp).toBe("2024-01-01T06:30:00Z");
+		expect(result[1].timestamp).toBe("2024-01-01T06:45:00Z");
+	});
+
+	test("starts new block on inactivity gap >= 5 hours", () => {
+		const now = new Date("2024-01-01T19:00:00Z");
+		setSystemTime(now);
+
+		const entries = [
+			makeEntry("2024-01-01T08:00:00Z"), // block1
+			makeEntry("2024-01-01T09:00:00Z"),
+			// 5h+ gap
+			makeEntry("2024-01-01T15:00:00Z"), // block2 start (6h gap from 09:00)
+			makeEntry("2024-01-01T16:00:00Z"),
+		];
+
+		const result = findActiveBlockEntries(entries);
+		expect(result.length).toBe(2);
+		expect(result[0].timestamp).toBe("2024-01-01T15:00:00Z");
+	});
+
+	test("continuous activity spanning 5h boundary creates new block (real scenario)", () => {
+		// Simulates the real bug: 383 entries from 01:34~06:27 UTC continuous activity
+		// /usage says block is 06:00~11:00 → entries after 06:34 (5h from 01:34) should be new block
+		const now = new Date("2024-01-01T06:51:00Z");
+		setSystemTime(now);
+
+		const entries = [
+			makeEntry("2024-01-01T01:34:00Z"), // block1 start
+			makeEntry("2024-01-01T02:00:00Z"),
+			makeEntry("2024-01-01T03:00:00Z"),
+			makeEntry("2024-01-01T04:00:00Z"),
+			makeEntry("2024-01-01T05:00:00Z"),
+			makeEntry("2024-01-01T06:00:00Z"),
+			makeEntry("2024-01-01T06:27:00Z"),
+			// At 06:34, timeSinceBlockStart = 5h from 01:34 → new block
+			makeEntry("2024-01-01T06:34:00Z"), // new block starts here
+			makeEntry("2024-01-01T06:45:00Z"),
+		];
+
+		const result = findActiveBlockEntries(entries);
+		// New block: 06:34 onwards, blockStart floor = 06:00, blockEnd = 11:00
+		// now (06:51) < blockEnd (11:00) → returns entries
+		expect(result.length).toBe(2);
+		expect(result[0].timestamp).toBe("2024-01-01T06:34:00Z");
+	});
+
+	test("sorts entries by timestamp before processing", () => {
+		const now = new Date("2024-01-01T12:00:00Z");
+		setSystemTime(now);
+
+		// Out of order
+		const entries = [
+			makeEntry("2024-01-01T11:00:00Z"),
+			makeEntry("2024-01-01T10:00:00Z"),
+			makeEntry("2024-01-01T10:30:00Z"),
+		];
+
+		const result = findActiveBlockEntries(entries);
+		expect(result.length).toBe(3);
+		// Should be sorted
+		expect(result[0].timestamp).toBe("2024-01-01T10:00:00Z");
+		expect(result[1].timestamp).toBe("2024-01-01T10:30:00Z");
+		expect(result[2].timestamp).toBe("2024-01-01T11:00:00Z");
+	});
+
+	test("single entry within block window", () => {
+		const now = new Date("2024-01-01T11:00:00Z");
+		setSystemTime(now);
+
+		const entries = [makeEntry("2024-01-01T10:30:00Z")];
+
+		const result = findActiveBlockEntries(entries);
+		expect(result.length).toBe(1);
 	});
 });

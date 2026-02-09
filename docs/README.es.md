@@ -91,20 +91,28 @@ Agrega lo siguiente a `~/.claude/settings.json`:
 
 Muestra información de uso del bloque de facturación de 5 horas.
 
+> [!NOTE]
+> Anthropic no publica la fórmula exacta para el cálculo de uso de suscripción. El uso de bloque es una estimación basada en precios publicados de la API y puede diferir del valor real de `/usage`.
+
 ### Cómo Funciona
 
 Analiza automáticamente los archivos JSONL de `~/.claude/projects/` para detectar:
 
-1. **Mensajes de error de límite de uso** - Extrae el tiempo exacto de reinicio de errores "Claude AI usage limit reached"
-2. **Bloques de facturación de 5 horas** - Calcula el tiempo de finalización del bloque basado en la última actividad (como [ccusage](https://github.com/ryoppippi/ccusage))
-3. **Uso de costo** - Rastrea el costo (USD) dentro del bloque actual de 5 horas
+1. **Bloques de facturación de 5 horas** - Detecta los límites de bloque usando tiempo acumulado y detección de brechas de inactividad (redondeado a la hora para el temporizador de reinicio)
+2. **Cálculo de costos** - Calcula el costo usando precios específicos por modelo (opus/sonnet/haiku) × cantidad de tokens
+3. **Escaneo entre proyectos** - Escanea todos los proyectos bajo `~/.claude/projects/` (los bloques se comparten entre proyectos)
 4. **Tasa de consumo** - Calcula el consumo promedio de tokens por minuto
 
 No requiere configuración manual.
 
 ### Selección de Plan
 
-Los diferentes planes de Claude Code tienen diferentes límites de costo. Usa la bandera `--plan` para configurar tu plan:
+El plan se **detecta automáticamente** desde macOS Keychain (`Claude Code-credentials` → `rateLimitTier`), por lo que no se necesita configuración.
+
+> [!NOTE]
+> La detección automática es **solo para macOS**. En otras plataformas, usa `--plan` para especificar tu plan explícitamente.
+
+Para especificar manualmente, usa la bandera `--plan`:
 
 ```json
 {
@@ -118,9 +126,10 @@ Los diferentes planes de Claude Code tienen diferentes límites de costo. Usa la
 
 | Plan | Límite de Costo | Comando |
 |------|-----------------|---------|
-| Pro (predeterminado) | $8 | `--plan pro` u omitir |
+| Pro | $8 | `--plan pro` |
 | Max 5x | $40 | `--plan max5x` |
-| Max 20x | $80 | `--plan max20x` |
+| Max 20x | $160 | `--plan max20x` |
+| Auto-detección (predeterminado) | - | - |
 
 ### Desactivar
 
