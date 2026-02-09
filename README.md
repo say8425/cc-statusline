@@ -27,7 +27,7 @@ Add the following to `~/.claude/settings.json`:
 
 | Option | Description | Default |
 |--------|-------------|:-------:|
-| [`--plan <plan>`](#plan-selection) | Set token limit for your subscription (pro, max5x, max20x) | `pro` |
+| [`--plan <plan>`](#plan-selection) | Set cost limit for your subscription (pro, max5x, max20x) | `pro` |
 | [`--no-usage`](#disable) | Hide usage metrics line | - |
 
 ## Screenshots
@@ -69,7 +69,7 @@ Add the following to `~/.claude/settings.json`:
 - **PR URL**: Clickable OSC 8 hyperlink
 - **TrueColor**: Dynamic colors based on thresholds
 - **Limit Reset Timer**: Countdown to usage limit reset
-- **Block Usage**: 5-hour block token usage with percentage
+- **Block Usage**: 5-hour block cost usage with percentage
 - **Burn Rate**: Token consumption rate per minute
 
 ## Emoji Guide
@@ -82,7 +82,7 @@ Add the following to `~/.claude/settings.json`:
 | 💰    | Session cost in USD      |
 | 🧠    | Context window usage     |
 | ⏳    | Limit reset countdown    |
-| 📊    | 5-hour block token usage |
+| 📊    | 5-hour block cost usage  |
 | 🔥    | Token burn rate (per min)|
 | ✏️    | Uncommitted changes      |
 | 📎    | Pull request link        |
@@ -97,14 +97,14 @@ Automatically parses JSONL files from `~/.claude/projects/` to detect:
 
 1. **Usage limit error messages** - Extracts exact reset time from "Claude AI usage limit reached" errors
 2. **5-hour billing blocks** - Calculates block end time based on latest activity (like [ccusage](https://github.com/ryoppippi/ccusage))
-3. **Token usage** - Sums input and output tokens within the current 5-hour block
+3. **Cost usage** - Tracks cost (USD) within the current 5-hour block
 4. **Burn rate** - Calculates average token consumption per minute
 
 No manual configuration required.
 
 ### Plan Selection
 
-Different Claude Code plans have different token limits. Use the `--plan` flag to set your plan:
+Different Claude Code plans have different cost limits. Use the `--plan` flag to set your plan:
 
 ```json
 {
@@ -116,11 +116,11 @@ Different Claude Code plans have different token limits. Use the `--plan` flag t
 }
 ```
 
-| Plan | Token Limit | Command |
-|------|-------------|---------|
-| Pro (default) | 450K | `--plan pro` or omit |
-| Max 5x | 2.25M | `--plan max5x` |
-| Max 20x | 9M | `--plan max20x` |
+| Plan | Cost Limit | Command |
+|------|------------|---------|
+| Pro (default) | $8 | `--plan pro` or omit |
+| Max 5x | $40 | `--plan max5x` |
+| Max 20x | $80 | `--plan max20x` |
 
 ### Disable
 

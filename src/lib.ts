@@ -28,13 +28,14 @@ export interface ClaudeStatusInput {
 export interface BlockUsageInfo {
 	resetTime: Date | null;
 	blockTokens: number;
+	blockCostUSD: number;
 	blockStartTime: number | null;
 }
 
 // CLI 파싱 결과 타입
 export interface CliOptions {
 	noUsage: boolean;
-	blockTokenLimit: number;
+	blockCostLimit: number;
 }
 
 // 캐시 구조
@@ -59,19 +60,19 @@ export function resetCache(): void {
 // 캐시 TTL (ms)
 export const CACHE_TTL = {
 	branch: 5000, // 5초
-	gitChanges: 3000, // 3초
+	gitChanges: 0, // 캐시 없음 - git diff는 충분히 빠름
 	prUrl: 30000, // 30초
 	blockUsage: 60000, // 60초 (JSONL 파싱은 비용이 크므로 긴 TTL)
 };
 
-// Plan별 5시간 토큰 한도
-export const PLAN_LIMITS = {
-	pro: 450_000, // Pro plan
-	max5x: 2_250_000, // Max 5x (450K * 5)
-	max20x: 9_000_000, // Max 20x (450K * 20)
+// Plan별 5시간 비용 한도 ($USD)
+export const COST_LIMITS = {
+	pro: 8, // ~$8/block (커뮤니티 추정)
+	max5x: 40, // ~$40/block
+	max20x: 80, // ~$80/block
 } as const;
 
-export type Plan = keyof typeof PLAN_LIMITS;
+export type Plan = keyof typeof COST_LIMITS;
 
 export const DEFAULT_PLAN: Plan = "pro";
 
@@ -227,10 +228,10 @@ export function parseCliArgs(args: string[]): CliOptions {
 		planIndex !== -1 && planIndex + 1 < args.length
 			? args[planIndex + 1]
 			: DEFAULT_PLAN;
-	const blockTokenLimit =
-		PLAN_LIMITS[planArg as Plan] ?? PLAN_LIMITS[DEFAULT_PLAN];
+	const blockCostLimit =
+		COST_LIMITS[planArg as Plan] ?? COST_LIMITS[DEFAULT_PLAN];
 
-	return { noUsage, blockTokenLimit };
+	return { noUsage, blockCostLimit };
 }
 
 // ccusage를 사용하여 블록 사용량 정보 추출
@@ -238,6 +239,7 @@ export async function getBlockUsageFromCcusage(): Promise<BlockUsageInfo> {
 	const result: BlockUsageInfo = {
 		resetTime: null,
 		blockTokens: 0,
+		blockCostUSD: 0,
 		blockStartTime: null,
 	};
 
@@ -254,9 +256,17 @@ export async function getBlockUsageFromCcusage(): Promise<BlockUsageInfo> {
 		const activeBlock = blocks.find((b) => !b.isGap);
 		if (!activeBlock) return result;
 
-		// 블록 토큰 합산 (input + output만, 캐시 토큰 제외)
+		// 블록 토큰 합산 (캐시 토큰 포함 — 번레이트 참고값)
 		const { tokenCounts } = activeBlock;
-		result.blockTokens = tokenCounts.inputTokens + tokenCounts.outputTokens;
+		result.blockTokens =
+			tokenCounts.inputTokens +
+			tokenCounts.outputTokens +
+			tokenCounts.cacheCreationInputTokens +
+			tokenCounts.cacheReadInputTokens;
+
+		// 블록 비용 (ccusage의 costUSD 필드)
+		result.blockCostUSD =
+			((activeBlock as Record<string, unknown>).costUSD as number) ?? 0;
 
 		result.blockStartTime = activeBlock.startTime.getTime();
 
@@ -295,7 +305,7 @@ export interface RenderContext {
 	prUrl: string | null;
 	blockUsage: BlockUsageInfo | null;
 	noUsage: boolean;
-	blockTokenLimit: number;
+	blockCostLimit: number;
 }
 
 // 상태 라인 렌더링 (순수 함수 - 테스트 가능)
@@ -355,13 +365,13 @@ export function renderStatusLine(ctx: RenderContext): string[] {
 			);
 		}
 
-		// 블록 사용량
+		// 블록 사용량 (비용 기반)
 		const usagePct = Math.round(
-			(ctx.blockUsage.blockTokens / ctx.blockTokenLimit) * 100,
+			(ctx.blockUsage.blockCostUSD / ctx.blockCostLimit) * 100,
 		);
 		const usageColor = getUsageColor(usagePct);
 		parts.push(
-			`${usageColor}📊 ${formatTokensK(ctx.blockUsage.blockTokens)}/${formatTokensK(ctx.blockTokenLimit)} (${usagePct}%)${C.RESET}`,
+			`${usageColor}📊 $${ctx.blockUsage.blockCostUSD.toFixed(2)}/$${ctx.blockCostLimit} (${usagePct}%)${C.RESET}`,
 		);
 
 		// 번레이트
@@ -407,7 +417,7 @@ export function renderStatusLine(ctx: RenderContext): string[] {
 export async function main(cliArgs?: string[]): Promise<void> {
 	// CLI 인자 파싱
 	const args = cliArgs ?? process.argv.slice(2);
-	const { noUsage, blockTokenLimit } = parseCliArgs(args);
+	const { noUsage, blockCostLimit } = parseCliArgs(args);
 
 	// 1. stdin에서 Claude Code JSON 읽기 (empty stdin 처리)
 	const claudeJson: ClaudeStatusInput = JSON.parse((await readStdin()) || "{}");
@@ -428,7 +438,7 @@ export async function main(cliArgs?: string[]): Promise<void> {
 		prUrl,
 		blockUsage,
 		noUsage,
-		blockTokenLimit,
+		blockCostLimit,
 	});
 
 	for (const line of lines) {

@@ -60,7 +60,7 @@ describe("async functions (integration)", () => {
 			expect(typeof changes.deletions).toBe("number");
 		});
 
-		test("caches result on subsequent calls", async () => {
+		test("fetches fresh data on every call (TTL=0, no cache)", async () => {
 			const changes1 = await getGitChangesCached();
 			const timestamp1 = cache.gitChanges.timestamp;
 
@@ -68,7 +68,8 @@ describe("async functions (integration)", () => {
 			const timestamp2 = cache.gitChanges.timestamp;
 
 			expect(changes1.files).toBe(changes2.files);
-			expect(timestamp1).toBe(timestamp2);
+			// TTL이 0이므로 매번 새로 fetch하여 timestamp가 갱신됨
+			expect(timestamp2).toBeGreaterThanOrEqual(timestamp1);
 		});
 	});
 
@@ -99,8 +100,10 @@ describe("async functions (integration)", () => {
 
 				expect(usage).toHaveProperty("resetTime");
 				expect(usage).toHaveProperty("blockTokens");
+				expect(usage).toHaveProperty("blockCostUSD");
 				expect(usage).toHaveProperty("blockStartTime");
 				expect(typeof usage.blockTokens).toBe("number");
+				expect(typeof usage.blockCostUSD).toBe("number");
 			},
 			{ timeout: 30000 },
 		);
@@ -122,7 +125,12 @@ describe("async functions (integration)", () => {
 		test("caches result on subsequent calls", async () => {
 			// Pre-populate cache to avoid ccusage call
 			cache.blockUsage = {
-				value: { resetTime: null, blockTokens: 1000, blockStartTime: null },
+				value: {
+					resetTime: null,
+					blockTokens: 1000,
+					blockCostUSD: 0.5,
+					blockStartTime: null,
+				},
 				timestamp: Date.now(),
 			};
 

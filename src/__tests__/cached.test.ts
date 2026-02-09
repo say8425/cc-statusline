@@ -43,7 +43,7 @@ describe("cache mechanism", () => {
 	});
 
 	describe("gitChanges cache", () => {
-		test("cache hit when timestamp is fresh", () => {
+		test("always cache miss when TTL is 0", () => {
 			cache.gitChanges = {
 				files: 5,
 				insertions: 20,
@@ -51,25 +51,11 @@ describe("cache mechanism", () => {
 				timestamp: Date.now(),
 			};
 
+			// TTL이 0이면 항상 cache miss
 			const isFresh =
 				Date.now() - cache.gitChanges.timestamp < CACHE_TTL.gitChanges;
-			expect(isFresh).toBe(true);
-			expect(cache.gitChanges.files).toBe(5);
-		});
-
-		test("cache miss when timestamp is stale", () => {
-			const now = Date.now();
-			setSystemTime(now);
-
-			cache.gitChanges = {
-				files: 1,
-				insertions: 1,
-				deletions: 1,
-				timestamp: now - CACHE_TTL.gitChanges - 1000,
-			};
-
-			const isFresh = now - cache.gitChanges.timestamp < CACHE_TTL.gitChanges;
 			expect(isFresh).toBe(false);
+			expect(CACHE_TTL.gitChanges).toBe(0);
 		});
 	});
 
@@ -109,6 +95,7 @@ describe("cache mechanism", () => {
 			const blockUsageValue = {
 				resetTime: new Date("2024-01-01T15:00:00Z"),
 				blockTokens: 5000,
+				blockCostUSD: 2.5,
 				blockStartTime: Date.now() - 3600000,
 			};
 			cache.blockUsage = { value: blockUsageValue, timestamp: Date.now() };
@@ -124,7 +111,12 @@ describe("cache mechanism", () => {
 			setSystemTime(now);
 
 			cache.blockUsage = {
-				value: { resetTime: null, blockTokens: 0, blockStartTime: null },
+				value: {
+					resetTime: null,
+					blockTokens: 0,
+					blockCostUSD: 0,
+					blockStartTime: null,
+				},
 				timestamp: now - CACHE_TTL.blockUsage - 1000,
 			};
 
@@ -148,6 +140,7 @@ describe("cache mechanism", () => {
 				value: {
 					resetTime: new Date(),
 					blockTokens: 1000,
+					blockCostUSD: 0.5,
 					blockStartTime: Date.now(),
 				},
 				timestamp: Date.now(),
@@ -173,8 +166,8 @@ describe("CACHE_TTL values", () => {
 		expect(CACHE_TTL.branch).toBe(5000);
 	});
 
-	test("gitChanges TTL is 3 seconds", () => {
-		expect(CACHE_TTL.gitChanges).toBe(3000);
+	test("gitChanges TTL is 0 (no cache)", () => {
+		expect(CACHE_TTL.gitChanges).toBe(0);
 	});
 
 	test("prUrl TTL is 30 seconds", () => {

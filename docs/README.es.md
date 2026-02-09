@@ -27,7 +27,7 @@ Agrega lo siguiente a `~/.claude/settings.json`:
 
 | Opción | Descripción | Por defecto |
 |--------|-------------|:-----------:|
-| [`--plan <plan>`](#selección-de-plan) | Establecer límite de tokens según tu suscripción (pro, max5x, max20x) | `pro` |
+| [`--plan <plan>`](#selección-de-plan) | Establecer límite de costo según tu suscripción (pro, max5x, max20x) | `pro` |
 | [`--no-usage`](#desactivar) | Ocultar línea de métricas de uso | - |
 
 ## Capturas de pantalla
@@ -69,7 +69,7 @@ Agrega lo siguiente a `~/.claude/settings.json`:
 - **PR URL**: Hipervínculo OSC 8 clickeable
 - **TrueColor**: Colores dinámicos basados en umbrales
 - **Temporizador de reinicio**: Tiempo restante hasta el reinicio del límite
-- **Uso del bloque**: Uso de tokens del bloque de 5 horas con porcentaje
+- **Uso del bloque**: Uso de costo del bloque de 5 horas con porcentaje
 - **Tasa de consumo**: Tasa de consumo de tokens por minuto
 
 ## Guía de Emojis
@@ -82,7 +82,7 @@ Agrega lo siguiente a `~/.claude/settings.json`:
 | 💰    | Costo de sesión en USD               |
 | 🧠    | Uso de ventana de contexto           |
 | ⏳    | Cuenta regresiva de reinicio         |
-| 📊    | Uso de tokens del bloque de 5 horas  |
+| 📊    | Uso de costo del bloque de 5 horas   |
 | 🔥    | Tasa de consumo de tokens (por min)  |
 | ✏️    | Cambios sin confirmar                |
 | 📎    | Enlace de Pull Request               |
@@ -97,14 +97,14 @@ Analiza automáticamente los archivos JSONL de `~/.claude/projects/` para detect
 
 1. **Mensajes de error de límite de uso** - Extrae el tiempo exacto de reinicio de errores "Claude AI usage limit reached"
 2. **Bloques de facturación de 5 horas** - Calcula el tiempo de finalización del bloque basado en la última actividad (como [ccusage](https://github.com/ryoppippi/ccusage))
-3. **Uso de tokens** - Suma los tokens de entrada y salida dentro del bloque actual de 5 horas
+3. **Uso de costo** - Rastrea el costo (USD) dentro del bloque actual de 5 horas
 4. **Tasa de consumo** - Calcula el consumo promedio de tokens por minuto
 
 No requiere configuración manual.
 
 ### Selección de Plan
 
-Los diferentes planes de Claude Code tienen diferentes límites de tokens. Usa la bandera `--plan` para configurar tu plan:
+Los diferentes planes de Claude Code tienen diferentes límites de costo. Usa la bandera `--plan` para configurar tu plan:
 
 ```json
 {
@@ -116,11 +116,11 @@ Los diferentes planes de Claude Code tienen diferentes límites de tokens. Usa l
 }
 ```
 
-| Plan | Límite de Tokens | Comando |
-|------|------------------|---------|
-| Pro (predeterminado) | 450K | `--plan pro` u omitir |
-| Max 5x | 2.25M | `--plan max5x` |
-| Max 20x | 9M | `--plan max20x` |
+| Plan | Límite de Costo | Comando |
+|------|-----------------|---------|
+| Pro (predeterminado) | $8 | `--plan pro` u omitir |
+| Max 5x | $40 | `--plan max5x` |
+| Max 20x | $80 | `--plan max20x` |
 
 ### Desactivar
 
