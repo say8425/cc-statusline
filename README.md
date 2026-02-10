@@ -37,21 +37,9 @@ Add the following to `~/.claude/settings.json`:
 
 ![scenario3_diff_pr](docs/scenario3_diff_pr.png)
 
-### Context Normal (< 50%)
-
-![Screenshot of status line with normal context usage, under 50%](docs/context_normal.png)
-
-### Context Warning (50-80%)
-
-![Screenshot of status line with warning context usage, between 50% and 80%](docs/context_warning.png)
-
-### Context Critical (> 80%)
-
-![Screenshot of status line with critical context usage, over 80%](docs/context_critical.png)
-
 ### Usage Metrics
 
-![Screenshot of status line with limit reset timer](docs/limit_reset.png)
+![Screenshot of status line with usage metrics](docs/usage_metrics.png)
 
 ## Features
 

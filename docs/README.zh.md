@@ -37,21 +37,10 @@ Claude Code 自定义状态栏。
 
 ![scenario3_diff_pr](scenario3_diff_pr.png)
 
-### Context 正常 (< 50%)
-
-![正常上下文使用量（低于50%）的状态栏截图](context_normal.png)
-
-### Context 警告 (50-80%)
-
-![警告上下文使用量（50%-80%）的状态栏截图](context_warning.png)
-
-### Context 危险 (> 80%)
-
-![危险上下文使用量（超过80%）的状态栏截图](context_critical.png)
 
 ### 使用量指标
 
-![带有限制重置计时器的状态栏截图](limit_reset.png)
+![带有使用量指标的状态栏截图](usage_metrics.png)
 
 ## 功能
 

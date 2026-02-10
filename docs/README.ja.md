@@ -37,21 +37,10 @@ Claude Code用カスタムステータスライン。
 
 ![scenario3_diff_pr](scenario3_diff_pr.png)
 
-### Context 正常 (< 50%)
-
-![正常なコンテキスト使用量（50%未満）のステータスラインのスクリーンショット](context_normal.png)
-
-### Context 警告 (50-80%)
-
-![警告コンテキスト使用量（50%-80%）のステータスラインのスクリーンショット](context_warning.png)
-
-### Context 危険 (> 80%)
-
-![危険なコンテキスト使用量（80%超）のステータスラインのスクリーンショット](context_critical.png)
 
 ### 使用量メトリクス
 
-![制限リセットタイマー付きステータスラインのスクリーンショット](limit_reset.png)
+![使用量メトリクス付きステータスラインのスクリーンショット](usage_metrics.png)
 
 ## 機能
 

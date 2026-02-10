@@ -37,21 +37,10 @@ Agrega lo siguiente a `~/.claude/settings.json`:
 
 ![scenario3_diff_pr](scenario3_diff_pr.png)
 
-### Context Normal (< 50%)
-
-![Captura de pantalla de la línea de estado con uso de contexto normal, menos del 50%](context_normal.png)
-
-### Context Advertencia (50-80%)
-
-![Captura de pantalla de la línea de estado con uso de contexto en advertencia, entre 50% y 80%](context_warning.png)
-
-### Context Crítico (> 80%)
-
-![Captura de pantalla de la línea de estado con uso de contexto crítico, más del 80%](context_critical.png)
 
 ### Métricas de Uso
 
-![Captura de pantalla de la línea de estado con temporizador de reinicio de límite](limit_reset.png)
+![Captura de pantalla de la línea de estado con métricas de uso](usage_metrics.png)
 
 ## Características
 
