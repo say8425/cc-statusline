@@ -23,13 +23,6 @@ Agrega lo siguiente a `~/.claude/settings.json`:
 }
 ```
 
-## Opciones CLI
-
-| Opción | Descripción | Por defecto |
-|--------|-------------|:-----------:|
-| [`--plan <plan>`](#selección-de-plan) | Establecer límite de costo según tu suscripción (pro, max5x, max20x) | `pro` |
-| [`--no-usage`](#desactivar) | Ocultar línea de métricas de uso | - |
-
 ## Capturas de pantalla
 
 ### Solo Git diff
@@ -56,7 +49,7 @@ Agrega lo siguiente a `~/.claude/settings.json`:
 
 ![Captura de pantalla de la línea de estado con uso de contexto crítico, más del 80%](context_critical.png)
 
-### Temporizador de Reinicio de Límite
+### Métricas de Uso
 
 ![Captura de pantalla de la línea de estado con temporizador de reinicio de límite](limit_reset.png)
 
@@ -69,8 +62,8 @@ Agrega lo siguiente a `~/.claude/settings.json`:
 - **PR URL**: Hipervínculo OSC 8 clickeable
 - **TrueColor**: Colores dinámicos basados en umbrales
 - **Temporizador de reinicio**: Tiempo restante hasta el reinicio del límite
-- **Uso del bloque**: Uso de costo del bloque de 5 horas con porcentaje
-- **Tasa de consumo**: Tasa de consumo de tokens por minuto
+- **Uso del bloque**: Porcentaje de utilización de 5 horas (desde API del servidor)
+- **Uso semanal**: Porcentaje de utilización de 7 días (desde API del servidor)
 
 ## Guía de Emojis
 
@@ -82,64 +75,38 @@ Agrega lo siguiente a `~/.claude/settings.json`:
 | 💰    | Costo de sesión en USD               |
 | 🧠    | Uso de ventana de contexto           |
 | ⏳    | Cuenta regresiva de reinicio         |
-| 📊    | Uso de costo del bloque de 5 horas   |
-| 🔥    | Tasa de consumo de tokens (por min)  |
+| 📊    | Utilización de 5 horas %             |
+| 📅    | Utilización de 7 días %              |
 | ✏️    | Cambios sin confirmar                |
 | 📎    | Enlace de Pull Request               |
 
 ## Métricas de Uso
 
-Muestra información de uso del bloque de facturación de 5 horas.
+Muestra información de uso desde la API de Uso de Anthropic.
+
+> [!WARNING]
+> La función `--show-usage` utiliza un endpoint no oficial de la API de Anthropic, obtenido mediante ingeniería inversa, para recuperar datos de uso. Esta no es una API oficialmente soportada y puede cambiar o dejar de funcionar en cualquier momento sin previo aviso. **Úselo bajo su propio riesgo.** El autor no asume responsabilidad por ninguna consecuencia, incluyendo pero no limitado a restricciones de cuenta o interrupciones del servicio, que puedan surgir del uso de esta función.
 
 > [!NOTE]
-> Anthropic no publica la fórmula exacta para el cálculo de uso de suscripción. El uso de bloque es una estimación basada en precios publicados de la API y puede diferir del valor real de `/usage`.
+> Esta función es **solo para macOS** ya que lee el token OAuth del macOS Keychain (`Claude Code-credentials`).
 
 ### Cómo Funciona
 
-Analiza automáticamente los archivos JSONL de `~/.claude/projects/` para detectar:
+Llama a la API de Uso de Anthropic (`/api/oauth/usage`) usando el token de acceso OAuth del macOS Keychain para obtener:
 
-1. **Bloques de facturación de 5 horas** - Detecta los límites de bloque usando tiempo acumulado y detección de brechas de inactividad (redondeado a la hora para el temporizador de reinicio)
-2. **Cálculo de costos** - Calcula el costo usando precios específicos por modelo (opus/sonnet/haiku) × cantidad de tokens
-3. **Escaneo entre proyectos** - Escanea todos los proyectos bajo `~/.claude/projects/` (los bloques se comparten entre proyectos)
-4. **Tasa de consumo** - Calcula el consumo promedio de tokens por minuto
+1. **Utilización de 5 horas** - Porcentaje de uso calculado por el servidor para el bloque de facturación actual
+2. **Utilización de 7 días** - Porcentaje de uso semanal calculado por el servidor
+3. **Temporizador de reinicio** - Tiempo exacto de reinicio desde el servidor (`resets_at`)
 
-No requiere configuración manual.
+### Activar
 
-### Selección de Plan
-
-El plan se **detecta automáticamente** desde macOS Keychain (`Claude Code-credentials` → `rateLimitTier`), por lo que no se necesita configuración.
-
-> [!NOTE]
-> La detección automática es **solo para macOS**. En otras plataformas, usa `--plan` para especificar tu plan explícitamente.
-
-Para especificar manualmente, usa la bandera `--plan`:
+Las métricas de uso están **ocultas por defecto**. Para activarlas, use la bandera `--show-usage`:
 
 ```json
 {
   "statusLine": {
     "type": "command",
-    "command": "bunx @say8425/cc-statusline --plan max5x",
-    "padding": 0
-  }
-}
-```
-
-| Plan | Límite de Costo | Comando |
-|------|-----------------|---------|
-| Pro | $8 | `--plan pro` |
-| Max 5x | $40 | `--plan max5x` |
-| Max 20x | $160 | `--plan max20x` |
-| Auto-detección (predeterminado) | - | - |
-
-### Desactivar
-
-Para ocultar la línea de métricas de uso (temporizador de reinicio, uso del bloque, tasa de consumo), usa la bandera `--no-usage`:
-
-```json
-{
-  "statusLine": {
-    "type": "command",
-    "command": "bunx @say8425/cc-statusline --no-usage",
+    "command": "bunx @say8425/cc-statusline --show-usage",
     "padding": 0
   }
 }
@@ -152,10 +119,10 @@ Para ocultar la línea de métricas de uso (temporizador de reinicio, uso del bl
 
 ## Umbrales de Color
 
-| Métrica        | Normal (blanco) | Advertencia (amarillo) | Crítico (rojo) |
-| -------------- | --------------- | ---------------------- | -------------- |
-| Contexto %     | < 50%           | 50-80%                 | > 80%          |
-| Uso del bloque % | < 50%         | 50-80%                 | > 80%          |
+| Métrica          | Normal (blanco) | Advertencia (amarillo) | Crítico (rojo) |
+| ---------------- | --------------- | ---------------------- | -------------- |
+| Contexto %       | < 50%           | 50-80%                 | > 80%          |
+| Uso del bloque % | < 50%           | 50-80%                 | > 80%          |
 
 ## Licencia
 

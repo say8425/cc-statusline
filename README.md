@@ -23,13 +23,6 @@ Add the following to `~/.claude/settings.json`:
 }
 ```
 
-## CLI Options
-
-| Option | Description | Default |
-|--------|-------------|:-------:|
-| [`--plan <plan>`](#plan-selection) | Set cost limit for your subscription (pro, max5x, max20x) | `pro` |
-| [`--no-usage`](#disable) | Hide usage metrics line | - |
-
 ## Screenshots
 
 ### Git diff only
@@ -56,7 +49,7 @@ Add the following to `~/.claude/settings.json`:
 
 ![Screenshot of status line with critical context usage, over 80%](docs/context_critical.png)
 
-### Limit Reset Timer
+### Usage Metrics
 
 ![Screenshot of status line with limit reset timer](docs/limit_reset.png)
 
@@ -69,8 +62,8 @@ Add the following to `~/.claude/settings.json`:
 - **PR URL**: Clickable OSC 8 hyperlink
 - **TrueColor**: Dynamic colors based on thresholds
 - **Limit Reset Timer**: Countdown to usage limit reset
-- **Block Usage**: 5-hour block cost usage with percentage
-- **Burn Rate**: Token consumption rate per minute
+- **Block Usage**: 5-hour utilization percentage (from server API)
+- **Weekly Usage**: 7-day utilization percentage (from server API)
 
 ## Emoji Guide
 
@@ -82,64 +75,38 @@ Add the following to `~/.claude/settings.json`:
 | 💰    | Session cost in USD      |
 | 🧠    | Context window usage     |
 | ⏳    | Limit reset countdown    |
-| 📊    | 5-hour block cost usage  |
-| 🔥    | Token burn rate (per min)|
+| 📊    | 5-hour utilization %     |
+| 📅    | 7-day utilization %      |
 | ✏️    | Uncommitted changes      |
 | 📎    | Pull request link        |
 
 ## Usage Metrics
 
-Shows usage information for the 5-hour billing block.
+Shows usage information from the Anthropic Usage API.
+
+> [!WARNING]
+> The `--show-usage` feature uses an unofficial, reverse-engineered Anthropic API endpoint to retrieve usage data. This is not an officially supported API, and may break or change at any time without notice. **Use at your own risk.** The author assumes no responsibility for any consequences, including but not limited to account restrictions or service disruptions, that may arise from the use of this feature.
 
 > [!NOTE]
-> Anthropic does not publicly disclose the exact formula for subscription usage calculation. Block usage is estimated based on API published pricing and may differ from the actual `/usage` value.
+> This feature is **macOS only** as it reads the OAuth token from macOS Keychain (`Claude Code-credentials`).
 
 ### How It Works
 
-Automatically parses JSONL files from `~/.claude/projects/` to detect:
+Calls the Anthropic Usage API (`/api/oauth/usage`) using the OAuth access token from macOS Keychain to retrieve:
 
-1. **5-hour billing blocks** - Detects block boundaries using cumulative time and inactivity gap detection (hour-floored for reset timer)
-2. **Cost calculation** - Computes cost using model-specific pricing (opus/sonnet/haiku) × token counts
-3. **Cross-project scanning** - Scans all projects under `~/.claude/projects/` (blocks are shared across projects)
-4. **Burn rate** - Calculates average token consumption per minute
+1. **5-hour utilization** - Server-calculated usage percentage for the current billing block
+2. **7-day utilization** - Server-calculated weekly usage percentage
+3. **Reset timer** - Exact reset time from the server (`resets_at`)
 
-No manual configuration required.
+### Enable
 
-### Plan Selection
-
-Your plan is **automatically detected** from macOS Keychain (`Claude Code-credentials` → `rateLimitTier`), so no configuration is needed.
-
-> [!NOTE]
-> Auto-detection is **macOS only**. On other platforms, use `--plan` to specify your plan explicitly.
-
-To manually override, use the `--plan` flag:
+Usage metrics are **hidden by default**. To enable, use the `--show-usage` flag:
 
 ```json
 {
   "statusLine": {
     "type": "command",
-    "command": "bunx @say8425/cc-statusline --plan max5x",
-    "padding": 0
-  }
-}
-```
-
-| Plan | Cost Limit | Command |
-|------|------------|---------|
-| Pro | $8 | `--plan pro` |
-| Max 5x | $40 | `--plan max5x` |
-| Max 20x | $160 | `--plan max20x` |
-| Auto-detect (default) | - | - |
-
-### Disable
-
-To hide the usage metrics line (reset timer, block usage, burn rate), use the `--no-usage` flag:
-
-```json
-{
-  "statusLine": {
-    "type": "command",
-    "command": "bunx @say8425/cc-statusline --no-usage",
+    "command": "bunx @say8425/cc-statusline --show-usage",
     "padding": 0
   }
 }
