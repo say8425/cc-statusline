@@ -36,10 +36,8 @@ cc-statusline/
 | Git 브랜치 | `git branch --show-current` |
 | Git diff | `git diff --shortstat` |
 | PR URL | `gh pr view` |
-| 리셋 타이머 | JSONL 직접 파싱 (5시간 블록 감지) |
-| 블록 사용량 | JSONL 직접 파싱 (모델별 가격 × 토큰, 비용 기반) |
-| 번레이트 | 블록 토큰 / 경과 시간 (분) |
-| 플랜 | macOS Keychain `Claude Code-credentials` → `rateLimitTier` (macOS only, 자동 감지) |
+| 블록 사용량 | Anthropic Usage API (`/api/oauth/usage`, OAuth 토큰) |
+| 리셋 타이머 | Anthropic Usage API `resets_at` |
 
 ## WHY
 
@@ -49,8 +47,7 @@ Claude Code 기본 statusbar에 다음 정보를 추가로 표시:
 - Git diff 통계 (파일 수, +insertions, -deletions)
 - PR URL (클릭 가능한 OSC 8 하이퍼링크)
 - 리셋 타이머 (5시간 사용량 리셋까지 남은 시간)
-- 블록 사용량 (5시간 블록 내 토큰 사용량 및 백분율)
-- 번레이트 (분당 토큰 소비율)
+- 블록 사용량 (서버 API 기반 5시간/7일 utilization %)
 - TrueColor 동적 색상 (임계값 기반 경고)
 
 ## HOW
@@ -98,11 +95,11 @@ bun test --coverage
 ```
 
 **테스트 구조**:
-- `pure.test.ts`: 순수 함수 (getUsageColor, formatNumber, formatTime, formatTokensK, getTimeUntilReset, calculateBurnRate, findActiveBlockEntries)
+- `pure.test.ts`: 순수 함수 (getUsageColor, formatNumber, formatTime, getTimeUntilReset)
 - `cached.test.ts`: 캐시 TTL 및 메커니즘
-- `cli.test.ts`: CLI 인자 파싱 (--plan, --no-usage)
+- `cli.test.ts`: CLI 인자 파싱 (--show-usage)
 - `main.test.ts`: renderStatusLine 순수 함수 (의존성 주입 방식)
-- `async.test.ts`: 비동기 함수 통합 테스트 (실제 git/gh 호출)
+- `async.test.ts`: 비동기 함수 통합 테스트 (실제 git/gh/API 호출)
 - `integration.test.ts`: main 함수 E2E 테스트
 - `stdin.test.ts`: stdin 읽기 테스트
 
@@ -110,11 +107,10 @@ bun test --coverage
 
 ### CLI 옵션
 
-- `--plan <plan>`: 플랜별 비용 한도 설정 (pro: $8, max5x: $40, max20x: $160). 미지정 시 macOS Keychain에서 자동 감지
-- `--no-usage`: 사용량 지표 줄 숨김 (리셋 타이머, 블록 사용량, 번레이트)
+- `--show-usage`: 사용량 지표 줄 표시 (기본: 숨김). 리셋 타이머, 5시간/7일 사용량을 Anthropic Usage API에서 가져와 표시
 
 ### 수정 시 주의사항
 
 - 300ms마다 실행되므로 성능 중요
 - 공식 JSON input structure 참조: https://code.claude.com/docs/en/statusline
-- JSONL 파싱 결과는 60초 캐시 TTL 적용
+- Usage API 결과는 120초 캐시 TTL 적용
