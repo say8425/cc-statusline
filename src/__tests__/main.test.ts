@@ -236,7 +236,7 @@ describe("renderStatusLine", () => {
 			expect(lines[2]).toContain("02:30");
 		});
 
-		test("shows 5-hour utilization as percentage", () => {
+		test("shows 5-hour utilization as fraction", () => {
 			const now = Date.now();
 			setSystemTime(now);
 
@@ -251,7 +251,7 @@ describe("renderStatusLine", () => {
 			const lines = renderStatusLine(ctx);
 
 			expect(lines[2]).toContain("📊");
-			expect(lines[2]).toContain("56%");
+			expect(lines[2]).toContain("56/100");
 		});
 
 		test("shows 7-day utilization when available", () => {
@@ -269,7 +269,7 @@ describe("renderStatusLine", () => {
 			const lines = renderStatusLine(ctx);
 
 			expect(lines[2]).toContain("📅");
-			expect(lines[2]).toContain("37%");
+			expect(lines[2]).toContain("37/100");
 		});
 
 		test("omits 7-day utilization when null", () => {
@@ -305,7 +305,7 @@ describe("renderStatusLine", () => {
 			const lines = renderStatusLine(ctx);
 
 			expect(lines[2]).toContain(C.RED);
-			expect(lines[2]).toContain("85%");
+			expect(lines[2]).toContain("85/100");
 		});
 	});
 
