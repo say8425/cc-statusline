@@ -2,14 +2,12 @@ import { beforeEach, describe, expect, test } from "bun:test";
 import {
 	CACHE_TTL,
 	cache,
-	detectPlanCached,
-	detectPlanFromKeychain,
-	getBlockUsageCached,
-	getBlockUsageFromJSONL,
+	getAccessToken,
+	getAccessTokenCached,
 	getBranchCached,
 	getGitChangesCached,
 	getPrUrlCached,
-	type Plan,
+	getUsageCached,
 	resetCache,
 } from "../lib.ts";
 
@@ -95,85 +93,64 @@ describe("async functions (integration)", () => {
 		});
 	});
 
-	describe("getBlockUsageFromJSONL", () => {
-		test(
-			"returns BlockUsageInfo object",
-			async () => {
-				const usage = await getBlockUsageFromJSONL();
-
-				expect(usage).toHaveProperty("resetTime");
-				expect(usage).toHaveProperty("blockTokens");
-				expect(usage).toHaveProperty("blockCostUSD");
-				expect(usage).toHaveProperty("blockStartTime");
-				expect(typeof usage.blockTokens).toBe("number");
-				expect(typeof usage.blockCostUSD).toBe("number");
-			},
-			{ timeout: 30000 },
-		);
-	});
-
-	describe("getBlockUsageCached", () => {
-		test(
-			"returns BlockUsageInfo or null",
-			async () => {
-				const usage = await getBlockUsageCached();
-
-				// Should return BlockUsageInfo object
-				expect(usage).not.toBeNull();
-				expect(usage).toHaveProperty("blockTokens");
-			},
-			{ timeout: 30000 },
-		);
-
-		test("caches result on subsequent calls", async () => {
-			// Pre-populate cache to avoid JSONL parsing call
-			cache.blockUsage = {
-				value: {
-					resetTime: null,
-					blockTokens: 1000,
-					blockCostUSD: 0.5,
-					blockStartTime: null,
-				},
-				timestamp: Date.now(),
-			};
-
-			await getBlockUsageCached();
-			const timestamp1 = cache.blockUsage.timestamp;
-
-			await getBlockUsageCached();
-			const timestamp2 = cache.blockUsage.timestamp;
-
-			expect(timestamp1).toBe(timestamp2);
+	describe("getAccessToken", () => {
+		test("returns a string or null", async () => {
+			const token = await getAccessToken();
+			expect(token === null || typeof token === "string").toBe(true);
 		});
 	});
 
-	describe("detectPlanFromKeychain", () => {
-		test("returns a valid Plan value", async () => {
-			const plan = await detectPlanFromKeychain();
-			const validPlans: Plan[] = ["pro", "max5x", "max20x"];
-			expect(validPlans).toContain(plan);
-		});
-	});
-
-	describe("detectPlanCached", () => {
-		test("returns a valid Plan value", async () => {
-			const plan = await detectPlanCached();
-			const validPlans: Plan[] = ["pro", "max5x", "max20x"];
-			expect(validPlans).toContain(plan);
+	describe("getAccessTokenCached", () => {
+		test("returns a string or null", async () => {
+			const token = await getAccessTokenCached();
+			expect(token === null || typeof token === "string").toBe(true);
 		});
 
 		test("caches result on subsequent calls", async () => {
 			// Pre-populate cache to avoid Keychain call
-			cache.plan = { value: "max20x", timestamp: Date.now() };
+			cache.accessToken = { value: "test-token-123", timestamp: Date.now() };
 
-			await detectPlanCached();
-			const timestamp1 = cache.plan.timestamp;
+			await getAccessTokenCached();
+			const timestamp1 = cache.accessToken.timestamp;
 
-			await detectPlanCached();
-			const timestamp2 = cache.plan.timestamp;
+			await getAccessTokenCached();
+			const timestamp2 = cache.accessToken.timestamp;
 
 			expect(timestamp1).toBe(timestamp2);
-			expect(cache.plan.value).toBe("max20x");
+			expect(cache.accessToken.value).toBe("test-token-123");
+		});
+	});
+
+	describe("getUsageCached", () => {
+		test("returns BlockUsageInfo or null", async () => {
+			const usage = await getUsageCached();
+
+			// Should return BlockUsageInfo object or null (if no token/API fails)
+			if (usage !== null) {
+				expect(usage).toHaveProperty("utilization");
+				expect(usage).toHaveProperty("sevenDayUtilization");
+				expect(usage).toHaveProperty("resetTime");
+			}
+		});
+
+		test("caches result on subsequent calls", async () => {
+			// Pre-populate cache to avoid API call
+			cache.blockUsage = {
+				value: {
+					resetTime: null,
+					utilization: 56,
+					sevenDayUtilization: 37,
+				},
+				timestamp: Date.now(),
+			};
+
+			await getUsageCached();
+			const timestamp1 = cache.blockUsage.timestamp;
+
+			await getUsageCached();
+			const timestamp2 = cache.blockUsage.timestamp;
+
+			expect(timestamp1).toBe(timestamp2);
 		});
 	});
 });

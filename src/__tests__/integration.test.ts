@@ -19,7 +19,7 @@ describe("main function (integration)", () => {
 		consoleLogSpy.mockRestore();
 	});
 
-	test("main function outputs status lines with valid input", async () => {
+	test("main function outputs status lines with valid input (default: no usage)", async () => {
 		const testInput = JSON.stringify({
 			cost: { total_duration_ms: 3600000, total_cost_usd: 0.5 },
 			context_window: {
@@ -52,9 +52,9 @@ describe("main function (integration)", () => {
 		Bun.stdin.stream = () => stream;
 
 		try {
-			await main(["--no-usage"]);
+			await main([]);
 
-			// Should have at least 2 lines of output
+			// Should have at least 2 lines of output (no usage line by default)
 			expect(logs.length).toBeGreaterThanOrEqual(2);
 
 			// First line should contain project name
@@ -69,7 +69,7 @@ describe("main function (integration)", () => {
 		}
 	});
 
-	test("main function parses CLI args correctly", async () => {
+	test("main function parses --show-usage correctly", async () => {
 		const testInput = JSON.stringify({
 			cost: { total_duration_ms: 0, total_cost_usd: 0 },
 			context_window: {
@@ -100,10 +100,10 @@ describe("main function (integration)", () => {
 		Bun.stdin.stream = () => stream;
 
 		try {
-			await main(["--no-usage", "--plan", "max5x"]);
+			await main(["--show-usage"]);
 
-			// With --no-usage, should have 2-3 lines (no usage line)
-			// The exact count depends on git changes and PR URL
+			// Should have at least 2 lines
+			// Usage line depends on whether API call succeeds
 			expect(logs.length).toBeGreaterThanOrEqual(2);
 		} finally {
 			// @ts-expect-error - restoring stdin

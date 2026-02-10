@@ -94,9 +94,8 @@ describe("cache mechanism", () => {
 		test("cache hit when timestamp is fresh", () => {
 			const blockUsageValue = {
 				resetTime: new Date("2024-01-01T15:00:00Z"),
-				blockTokens: 5000,
-				blockCostUSD: 2.5,
-				blockStartTime: Date.now() - 3600000,
+				utilization: 56,
+				sevenDayUtilization: 37,
 			};
 			cache.blockUsage = { value: blockUsageValue, timestamp: Date.now() };
 
@@ -113,9 +112,8 @@ describe("cache mechanism", () => {
 			cache.blockUsage = {
 				value: {
 					resetTime: null,
-					blockTokens: 0,
-					blockCostUSD: 0,
-					blockStartTime: null,
+					utilization: 0,
+					sevenDayUtilization: null,
 				},
 				timestamp: now - CACHE_TTL.blockUsage - 1000,
 			};
@@ -125,26 +123,32 @@ describe("cache mechanism", () => {
 		});
 	});
 
-	describe("plan cache", () => {
+	describe("accessToken cache", () => {
 		test("cache hit when timestamp is fresh", () => {
-			cache.plan = { value: "max20x", timestamp: Date.now() };
+			cache.accessToken = { value: "test-token-123", timestamp: Date.now() };
 
-			const isFresh = Date.now() - cache.plan.timestamp < CACHE_TTL.plan;
+			const isFresh =
+				Date.now() - cache.accessToken.timestamp < CACHE_TTL.accessToken;
 			expect(isFresh).toBe(true);
-			expect(cache.plan.value).toBe("max20x");
+			expect(cache.accessToken.value).toBe("test-token-123");
 		});
 
 		test("cache miss when timestamp is stale", () => {
 			const now = Date.now();
 			setSystemTime(now);
 
-			cache.plan = {
-				value: "max5x",
-				timestamp: now - CACHE_TTL.plan - 1000,
+			cache.accessToken = {
+				value: "old-token",
+				timestamp: now - CACHE_TTL.accessToken - 1000,
 			};
 
-			const isFresh = now - cache.plan.timestamp < CACHE_TTL.plan;
+			const isFresh = now - cache.accessToken.timestamp < CACHE_TTL.accessToken;
 			expect(isFresh).toBe(false);
+		});
+
+		test("cache stores null when no token available", () => {
+			cache.accessToken = { value: null, timestamp: Date.now() };
+			expect(cache.accessToken.value).toBeNull();
 		});
 	});
 
@@ -162,13 +166,12 @@ describe("cache mechanism", () => {
 			cache.blockUsage = {
 				value: {
 					resetTime: new Date(),
-					blockTokens: 1000,
-					blockCostUSD: 0.5,
-					blockStartTime: Date.now(),
+					utilization: 56,
+					sevenDayUtilization: 37,
 				},
 				timestamp: Date.now(),
 			};
-			cache.plan = { value: "max20x", timestamp: Date.now() };
+			cache.accessToken = { value: "test-token", timestamp: Date.now() };
 
 			resetCache();
 
@@ -181,7 +184,7 @@ describe("cache mechanism", () => {
 			});
 			expect(cache.prUrl).toEqual({ value: null, timestamp: 0 });
 			expect(cache.blockUsage).toEqual({ value: null, timestamp: 0 });
-			expect(cache.plan).toEqual({ value: "pro", timestamp: 0 });
+			expect(cache.accessToken).toEqual({ value: null, timestamp: 0 });
 		});
 	});
 });
@@ -199,11 +202,11 @@ describe("CACHE_TTL values", () => {
 		expect(CACHE_TTL.prUrl).toBe(30000);
 	});
 
-	test("blockUsage TTL is 60 seconds", () => {
-		expect(CACHE_TTL.blockUsage).toBe(60000);
+	test("blockUsage TTL is 120 seconds", () => {
+		expect(CACHE_TTL.blockUsage).toBe(120000);
 	});
 
-	test("plan TTL is 300 seconds (5 minutes)", () => {
-		expect(CACHE_TTL.plan).toBe(300000);
+	test("accessToken TTL is 300 seconds (5 minutes)", () => {
+		expect(CACHE_TTL.accessToken).toBe(300000);
 	});
 });
