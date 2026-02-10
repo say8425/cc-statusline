@@ -62,14 +62,14 @@ export function renderStatusLine(ctx: RenderContext): string[] {
 		// 5시간 사용량 (서버 utilization 그대로)
 		const usageColor = getUsageColor(ctx.blockUsage.utilization);
 		parts.push(
-			`${usageColor}📊 ${Math.round(ctx.blockUsage.utilization)}%${C.RESET}`,
+			`${usageColor}📊 ${Math.round(ctx.blockUsage.utilization)}/100${C.RESET}`,
 		);
 
 		// 7일 사용량
 		if (ctx.blockUsage.sevenDayUtilization !== null) {
 			const weekColor = getUsageColor(ctx.blockUsage.sevenDayUtilization);
 			parts.push(
-				`${weekColor}📅 ${Math.round(ctx.blockUsage.sevenDayUtilization)}%${C.RESET}`,
+				`${weekColor}📅 ${Math.round(ctx.blockUsage.sevenDayUtilization)}/100${C.RESET}`,
 			);
 		}
 
