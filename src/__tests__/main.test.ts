@@ -1,10 +1,7 @@
 import { afterEach, describe, expect, setSystemTime, test } from "bun:test";
-import {
-	C,
-	type ClaudeStatusInput,
-	type RenderContext,
-	renderStatusLine,
-} from "../lib.ts";
+import { C } from "../colors.ts";
+import { renderStatusLine } from "../render.ts";
+import type { ClaudeStatusInput, RenderContext } from "../types.ts";
 
 // Helper to create Claude input JSON
 function createClaudeInput(

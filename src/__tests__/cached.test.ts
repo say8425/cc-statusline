@@ -6,7 +6,7 @@ import {
 	setSystemTime,
 	test,
 } from "bun:test";
-import { CACHE_TTL, cache, resetCache } from "../lib.ts";
+import { CACHE_TTL, cache, resetCache } from "../cache.ts";
 
 describe("cache mechanism", () => {
 	beforeEach(() => {

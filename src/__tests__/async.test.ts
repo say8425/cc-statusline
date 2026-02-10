@@ -1,15 +1,15 @@
 import { beforeEach, describe, expect, test } from "bun:test";
+import { CACHE_TTL, cache, resetCache } from "../cache.ts";
 import {
-	CACHE_TTL,
-	cache,
-	getAccessToken,
-	getAccessTokenCached,
 	getBranchCached,
 	getGitChangesCached,
 	getPrUrlCached,
+} from "../git/index.ts";
+import {
+	getAccessToken,
+	getAccessTokenCached,
 	getUsageCached,
-	resetCache,
-} from "../lib.ts";
+} from "../usage/index.ts";
 
 // 이 테스트들은 실제 git/gh 명령어를 실행합니다.
 // CI 환경에서는 git repo가 있어야 하고, gh가 설치되어 있어야 합니다.

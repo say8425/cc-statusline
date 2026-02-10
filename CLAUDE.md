@@ -7,16 +7,35 @@ Claude Code용 커스텀 statusline (Bun/TypeScript).
 ```
 cc-statusline/
 ├── src/
-│   ├── index.ts       # 엔트리포인트
-│   ├── lib.ts         # 모든 로직 (export)
-│   └── __tests__/     # 테스트 파일
-│       ├── pure.test.ts       # 순수 함수 테스트
-│       ├── cached.test.ts     # 캐시 메커니즘 테스트
-│       ├── cli.test.ts        # CLI 파싱 테스트
-│       ├── main.test.ts       # renderStatusLine 테스트
-│       ├── async.test.ts      # 비동기 함수 통합 테스트
-│       ├── integration.test.ts # main 함수 통합 테스트
-│       └── stdin.test.ts      # readStdin 테스트
+│   ├── index.ts                    # main() 함수 (엔트리포인트)
+│   ├── types.ts                    # 모든 shared 인터페이스
+│   ├── cache.ts                    # cache, CACHE_TTL, resetCache
+│   ├── colors.ts                   # C 상수, getUsageColor
+│   ├── cli.ts                      # parseCliArgs
+│   ├── render.ts                   # renderStatusLine
+│   ├── stdin.ts                    # readStdin
+│   ├── format/
+│   │   ├── index.ts                # barrel re-export
+│   │   ├── formatNumber.ts         # formatNumber
+│   │   ├── formatTime.ts           # formatTime
+│   │   └── getTimeUntilReset.ts    # getTimeUntilReset
+│   ├── git/
+│   │   ├── index.ts                # barrel re-export
+│   │   ├── branch.ts               # getBranchCached
+│   │   ├── changes.ts              # getGitChangesCached
+│   │   └── pr.ts                   # getPrUrlCached
+│   ├── usage/
+│   │   ├── index.ts                # barrel re-export
+│   │   ├── token.ts                # getAccessToken, getAccessTokenCached
+│   │   └── api.ts                  # fetchUsageFromAPI, usageResponseToBlockUsage, getUsageCached
+│   └── __tests__/                  # 테스트 파일
+│       ├── pure.test.ts            # 순수 함수 테스트
+│       ├── cached.test.ts          # 캐시 메커니즘 테스트
+│       ├── cli.test.ts             # CLI 파싱 테스트
+│       ├── main.test.ts            # renderStatusLine 테스트
+│       ├── async.test.ts           # 비동기 함수 통합 테스트
+│       ├── integration.test.ts     # main 함수 통합 테스트
+│       └── stdin.test.ts           # readStdin 테스트
 ├── bunfig.toml        # Bun 테스트 설정
 ├── package.json
 ├── tsconfig.json
@@ -99,6 +118,7 @@ bun test --coverage
 - `cached.test.ts`: 캐시 TTL 및 메커니즘
 - `cli.test.ts`: CLI 인자 파싱 (--show-usage)
 - `main.test.ts`: renderStatusLine 순수 함수 (의존성 주입 방식)
+- `usage-api.test.ts`: usageResponseToBlockUsage 단위 테스트
 - `async.test.ts`: 비동기 함수 통합 테스트 (실제 git/gh/API 호출)
 - `integration.test.ts`: main 함수 E2E 테스트
 - `stdin.test.ts`: stdin 읽기 테스트
@@ -113,4 +133,5 @@ bun test --coverage
 
 - 300ms마다 실행되므로 성능 중요
 - 공식 JSON input structure 참조: https://code.claude.com/docs/en/statusline
+- Usage API 응답 구조 참조: https://codelynx.dev/posts/claude-code-usage-limits-statusline
 - Usage API 결과는 120초 캐시 TTL 적용

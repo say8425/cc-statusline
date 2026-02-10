@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { readStdin } from "../lib.ts";
+import { readStdin } from "../stdin.ts";
 
 describe("readStdin", () => {
 	test("reads and concatenates chunks from stdin stream", async () => {
