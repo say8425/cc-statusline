@@ -1,11 +1,10 @@
 import { afterEach, describe, expect, setSystemTime, test } from "bun:test";
+import { C, getUsageColor } from "../colors.ts";
 import {
-	C,
 	formatNumber,
 	formatTime,
 	getTimeUntilReset,
-	getUsageColor,
-} from "../lib.ts";
+} from "../format/index.ts";
 
 describe("getUsageColor", () => {
 	test("returns WHITE for 0%", () => {

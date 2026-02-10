@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { parseCliArgs } from "../lib.ts";
+import { parseCliArgs } from "../cli.ts";
 
 describe("parseCliArgs", () => {
 	test("returns showUsage false by default", () => {

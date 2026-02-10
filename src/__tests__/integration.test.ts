@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, spyOn, test } from "bun:test";
-import { main, resetCache } from "../lib.ts";
+import { resetCache } from "../cache.ts";
+import { main } from "../index.ts";
 
 describe("main function (integration)", () => {
 	let consoleLogSpy: ReturnType<typeof spyOn>;
