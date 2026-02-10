@@ -37,21 +37,10 @@ Claude Code를 위한 커스텀 상태표시줄.
 
 ![scenario3_diff_pr](scenario3_diff_pr.png)
 
-### Context 정상 (< 50%)
-
-![정상 컨텍스트 사용량(50% 미만)의 상태표시줄 스크린샷](context_normal.png)
-
-### Context 경고 (50-80%)
-
-![경고 컨텍스트 사용량(50%-80%)의 상태표시줄 스크린샷](context_warning.png)
-
-### Context 위험 (> 80%)
-
-![위험 컨텍스트 사용량(80% 초과)의 상태표시줄 스크린샷](context_critical.png)
 
 ### 사용량 지표
 
-![제한 리셋 타이머가 포함된 상태표시줄 스크린샷](limit_reset.png)
+![사용량 지표가 포함된 상태표시줄 스크린샷](usage_metrics.png)
 
 ## 기능
 
