@@ -2,7 +2,6 @@ import { afterEach, describe, expect, setSystemTime, test } from "bun:test";
 import {
 	C,
 	type ClaudeStatusInput,
-	COST_LIMITS,
 	type RenderContext,
 	renderStatusLine,
 } from "../lib.ts";
@@ -52,8 +51,7 @@ function createRenderContext(
 		},
 		prUrl: overrides.prUrl ?? null,
 		blockUsage: overrides.blockUsage ?? null,
-		noUsage: overrides.noUsage ?? true,
-		blockCostLimit: overrides.blockCostLimit ?? COST_LIMITS.pro,
+		showUsage: overrides.showUsage ?? false,
 	};
 }
 
@@ -185,15 +183,14 @@ describe("renderStatusLine", () => {
 		});
 	});
 
-	describe("--no-usage flag", () => {
-		test("skips usage line when noUsage is true", () => {
+	describe("--show-usage flag", () => {
+		test("skips usage line when showUsage is false (default)", () => {
 			const ctx = createRenderContext({
-				noUsage: true,
+				showUsage: false,
 				blockUsage: {
 					resetTime: new Date(),
-					blockTokens: 10000,
-					blockCostUSD: 5.0,
-					blockStartTime: Date.now() - 600000,
+					utilization: 56,
+					sevenDayUtilization: 37,
 				},
 			});
 			const lines = renderStatusLine(ctx);
@@ -203,17 +200,16 @@ describe("renderStatusLine", () => {
 			expect(allOutput).not.toContain("📊");
 		});
 
-		test("shows usage line when noUsage is false", () => {
+		test("shows usage line when showUsage is true", () => {
 			const now = Date.now();
 			setSystemTime(now);
 
 			const ctx = createRenderContext({
-				noUsage: false,
+				showUsage: true,
 				blockUsage: {
 					resetTime: new Date(now + 3600000), // 1 hour later
-					blockTokens: 100000,
-					blockCostUSD: 5.0,
-					blockStartTime: now - 600000, // 10 minutes ago
+					utilization: 56,
+					sevenDayUtilization: 37,
 				},
 			});
 			const lines = renderStatusLine(ctx);
@@ -230,12 +226,11 @@ describe("renderStatusLine", () => {
 			setSystemTime(now);
 
 			const ctx = createRenderContext({
-				noUsage: false,
+				showUsage: true,
 				blockUsage: {
 					resetTime: new Date(now + 2 * 3600000 + 30 * 60000), // 2h 30m later
-					blockTokens: 50000,
-					blockCostUSD: 3.0,
-					blockStartTime: now - 600000,
+					utilization: 30,
+					sevenDayUtilization: null,
 				},
 			});
 			const lines = renderStatusLine(ctx);
@@ -244,63 +239,76 @@ describe("renderStatusLine", () => {
 			expect(lines[2]).toContain("02:30");
 		});
 
-		test("shows block usage as cost percentage", () => {
+		test("shows 5-hour utilization as percentage", () => {
 			const now = Date.now();
 			setSystemTime(now);
 
 			const ctx = createRenderContext({
-				noUsage: false,
-				blockCostLimit: COST_LIMITS.max5x, // $40
+				showUsage: true,
 				blockUsage: {
 					resetTime: new Date(now + 3600000),
-					blockTokens: 225000,
-					blockCostUSD: 20.0, // 50% of $40
-					blockStartTime: now - 600000,
+					utilization: 56,
+					sevenDayUtilization: null,
 				},
 			});
 			const lines = renderStatusLine(ctx);
 
 			expect(lines[2]).toContain("📊");
-			expect(lines[2]).toContain("$20.00/$40");
-			expect(lines[2]).toContain("50%");
+			expect(lines[2]).toContain("56%");
 		});
 
-		test("shows burn rate when > 0", () => {
+		test("shows 7-day utilization when available", () => {
 			const now = Date.now();
 			setSystemTime(now);
 
 			const ctx = createRenderContext({
-				noUsage: false,
+				showUsage: true,
 				blockUsage: {
 					resetTime: new Date(now + 3600000),
-					blockTokens: 50000, // 50K tokens
-					blockCostUSD: 5.0,
-					blockStartTime: now - 5 * 60000, // 5 minutes ago -> 10K/min
+					utilization: 56,
+					sevenDayUtilization: 37,
 				},
 			});
 			const lines = renderStatusLine(ctx);
 
-			expect(lines[2]).toContain("🔥");
-			expect(lines[2]).toContain("10K/min");
+			expect(lines[2]).toContain("📅");
+			expect(lines[2]).toContain("37%");
 		});
 
-		test("omits burn rate when elapsed time < 1 minute", () => {
+		test("omits 7-day utilization when null", () => {
 			const now = Date.now();
 			setSystemTime(now);
 
 			const ctx = createRenderContext({
-				noUsage: false,
+				showUsage: true,
 				blockUsage: {
 					resetTime: new Date(now + 3600000),
-					blockTokens: 50000,
-					blockCostUSD: 5.0,
-					blockStartTime: now - 30000, // 30 seconds ago
+					utilization: 56,
+					sevenDayUtilization: null,
 				},
 			});
 			const lines = renderStatusLine(ctx);
 
 			const allOutput = lines.join("\n");
-			expect(allOutput).not.toContain("🔥");
+			expect(allOutput).not.toContain("📅");
+		});
+
+		test("uses correct color for high utilization", () => {
+			const now = Date.now();
+			setSystemTime(now);
+
+			const ctx = createRenderContext({
+				showUsage: true,
+				blockUsage: {
+					resetTime: new Date(now + 3600000),
+					utilization: 85,
+					sevenDayUtilization: null,
+				},
+			});
+			const lines = renderStatusLine(ctx);
+
+			expect(lines[2]).toContain(C.RED);
+			expect(lines[2]).toContain("85%");
 		});
 	});
 
@@ -446,9 +454,9 @@ describe("renderStatusLine", () => {
 			expect(lines[1]).toContain("0 (0%)");
 		});
 
-		test("handles null blockUsage when noUsage is false", () => {
+		test("handles null blockUsage when showUsage is true", () => {
 			const ctx = createRenderContext({
-				noUsage: false,
+				showUsage: true,
 				blockUsage: null,
 			});
 
