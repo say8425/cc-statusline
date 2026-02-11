@@ -17,6 +17,7 @@ describe("usageResponseToBlockUsage", () => {
 		expect(result.utilization).toBe(56);
 		expect(result.resetTime).toEqual(new Date("2024-01-01T15:00:00Z"));
 		expect(result.sevenDayUtilization).toBeNull();
+		expect(result.sevenDayResetTime).toBeNull();
 	});
 
 	test("handles five_hour.resets_at being null", () => {
@@ -34,7 +35,7 @@ describe("usageResponseToBlockUsage", () => {
 		expect(result.resetTime).toBeNull();
 	});
 
-	test("extracts seven_day utilization", () => {
+	test("extracts seven_day utilization and resets_at", () => {
 		const data: UsageAPIResponse = {
 			five_hour: { utilization: 56, resets_at: "2024-01-01T15:00:00Z" },
 			seven_day: { utilization: 37, resets_at: "2024-01-07T00:00:00Z" },
@@ -47,6 +48,22 @@ describe("usageResponseToBlockUsage", () => {
 
 		expect(result.utilization).toBe(56);
 		expect(result.sevenDayUtilization).toBe(37);
+		expect(result.sevenDayResetTime).toEqual(new Date("2024-01-07T00:00:00Z"));
+	});
+
+	test("handles seven_day.resets_at being null", () => {
+		const data: UsageAPIResponse = {
+			five_hour: { utilization: 56, resets_at: "2024-01-01T15:00:00Z" },
+			seven_day: { utilization: 37, resets_at: null },
+			seven_day_oauth_apps: null,
+			seven_day_opus: null,
+			iguana_necktie: null,
+		};
+
+		const result = usageResponseToBlockUsage(data);
+
+		expect(result.sevenDayUtilization).toBe(37);
+		expect(result.sevenDayResetTime).toBeNull();
 	});
 
 	test("returns defaults when five_hour is null", () => {
@@ -63,6 +80,7 @@ describe("usageResponseToBlockUsage", () => {
 		expect(result.utilization).toBe(0);
 		expect(result.resetTime).toBeNull();
 		expect(result.sevenDayUtilization).toBe(20);
+		expect(result.sevenDayResetTime).toBeNull();
 	});
 
 	test("returns all defaults when both are null", () => {
@@ -79,5 +97,6 @@ describe("usageResponseToBlockUsage", () => {
 		expect(result.utilization).toBe(0);
 		expect(result.resetTime).toBeNull();
 		expect(result.sevenDayUtilization).toBeNull();
+		expect(result.sevenDayResetTime).toBeNull();
 	});
 });

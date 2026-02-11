@@ -140,6 +140,7 @@ describe("async functions (integration)", () => {
 					resetTime: null,
 					utilization: 56,
 					sevenDayUtilization: 37,
+					sevenDayResetTime: null,
 				},
 				timestamp: Date.now(),
 			};
