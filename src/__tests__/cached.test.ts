@@ -96,6 +96,7 @@ describe("cache mechanism", () => {
 				resetTime: new Date("2024-01-01T15:00:00Z"),
 				utilization: 56,
 				sevenDayUtilization: 37,
+				sevenDayResetTime: null,
 			};
 			cache.blockUsage = { value: blockUsageValue, timestamp: Date.now() };
 
@@ -114,6 +115,7 @@ describe("cache mechanism", () => {
 					resetTime: null,
 					utilization: 0,
 					sevenDayUtilization: null,
+					sevenDayResetTime: null,
 				},
 				timestamp: now - CACHE_TTL.blockUsage - 1000,
 			};
@@ -168,6 +170,7 @@ describe("cache mechanism", () => {
 					resetTime: new Date(),
 					utilization: 56,
 					sevenDayUtilization: 37,
+					sevenDayResetTime: null,
 				},
 				timestamp: Date.now(),
 			};

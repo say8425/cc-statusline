@@ -188,6 +188,7 @@ describe("renderStatusLine", () => {
 					resetTime: new Date(),
 					utilization: 56,
 					sevenDayUtilization: 37,
+					sevenDayResetTime: null,
 				},
 			});
 			const lines = renderStatusLine(ctx);
@@ -207,6 +208,7 @@ describe("renderStatusLine", () => {
 					resetTime: new Date(now + 3600000), // 1 hour later
 					utilization: 56,
 					sevenDayUtilization: 37,
+					sevenDayResetTime: null,
 				},
 			});
 			const lines = renderStatusLine(ctx);
@@ -218,22 +220,22 @@ describe("renderStatusLine", () => {
 	});
 
 	describe("block usage display", () => {
-		test("shows reset timer when resetTime is set", () => {
-			const now = Date.now();
-			setSystemTime(now);
+		test("shows reset time as absolute HH:MM", () => {
+			const resetTime = new Date(2024, 1, 15, 14, 30); // 14:30
 
 			const ctx = createRenderContext({
 				showUsage: true,
 				blockUsage: {
-					resetTime: new Date(now + 2 * 3600000 + 30 * 60000), // 2h 30m later
+					resetTime,
 					utilization: 30,
 					sevenDayUtilization: null,
+					sevenDayResetTime: null,
 				},
 			});
 			const lines = renderStatusLine(ctx);
 
 			expect(lines[2]).toContain("⏳");
-			expect(lines[2]).toContain("02:30");
+			expect(lines[2]).toContain("14:30");
 		});
 
 		test("shows 5-hour utilization as fraction", () => {
@@ -246,6 +248,7 @@ describe("renderStatusLine", () => {
 					resetTime: new Date(now + 3600000),
 					utilization: 56,
 					sevenDayUtilization: null,
+					sevenDayResetTime: null,
 				},
 			});
 			const lines = renderStatusLine(ctx);
@@ -264,6 +267,7 @@ describe("renderStatusLine", () => {
 					resetTime: new Date(now + 3600000),
 					utilization: 56,
 					sevenDayUtilization: 37,
+					sevenDayResetTime: null,
 				},
 			});
 			const lines = renderStatusLine(ctx);
@@ -282,12 +286,74 @@ describe("renderStatusLine", () => {
 					resetTime: new Date(now + 3600000),
 					utilization: 56,
 					sevenDayUtilization: null,
+					sevenDayResetTime: null,
 				},
 			});
 			const lines = renderStatusLine(ctx);
 
 			const allOutput = lines.join("\n");
 			expect(allOutput).not.toContain("📅");
+		});
+
+		test("shows weekly reset time when sevenDayResetTime is set", () => {
+			const now = Date.now();
+			setSystemTime(now);
+
+			const ctx = createRenderContext({
+				showUsage: true,
+				blockUsage: {
+					resetTime: new Date(now + 3600000),
+					utilization: 56,
+					sevenDayUtilization: 37,
+					sevenDayResetTime: new Date("2024-02-15T09:00:00+09:00"),
+				},
+			});
+			const lines = renderStatusLine(ctx);
+
+			const allOutput = lines.join("\n");
+			expect(allOutput).toContain("⏰");
+		});
+
+		test("omits weekly reset time when sevenDayResetTime is null", () => {
+			const now = Date.now();
+			setSystemTime(now);
+
+			const ctx = createRenderContext({
+				showUsage: true,
+				blockUsage: {
+					resetTime: new Date(now + 3600000),
+					utilization: 56,
+					sevenDayUtilization: 37,
+					sevenDayResetTime: null,
+				},
+			});
+			const lines = renderStatusLine(ctx);
+
+			const allOutput = lines.join("\n");
+			expect(allOutput).not.toContain("⏰");
+		});
+
+		test("weekly reset time appears between 📊 and 📅", () => {
+			const now = Date.now();
+			setSystemTime(now);
+
+			const ctx = createRenderContext({
+				showUsage: true,
+				blockUsage: {
+					resetTime: new Date(now + 3600000),
+					utilization: 56,
+					sevenDayUtilization: 37,
+					sevenDayResetTime: new Date("2024-02-15T09:00:00+09:00"),
+				},
+			});
+			const lines = renderStatusLine(ctx);
+
+			const usageLine = lines[2];
+			const clockIdx = usageLine.indexOf("⏰");
+			const chartIdx = usageLine.indexOf("📊");
+			const calendarIdx = usageLine.indexOf("📅");
+			expect(clockIdx).toBeGreaterThan(chartIdx);
+			expect(clockIdx).toBeLessThan(calendarIdx);
 		});
 
 		test("uses correct color for high utilization", () => {
@@ -300,6 +366,7 @@ describe("renderStatusLine", () => {
 					resetTime: new Date(now + 3600000),
 					utilization: 85,
 					sevenDayUtilization: null,
+					sevenDayResetTime: null,
 				},
 			});
 			const lines = renderStatusLine(ctx);

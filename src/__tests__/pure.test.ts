@@ -2,6 +2,7 @@ import { afterEach, describe, expect, setSystemTime, test } from "bun:test";
 import { C, getUsageColor } from "../colors.ts";
 import {
 	formatNumber,
+	formatResetDate,
 	formatTime,
 	getTimeUntilReset,
 } from "../format/index.ts";
@@ -61,6 +62,28 @@ describe("formatTime", () => {
 
 	test("formats (12, 45) as 12:45", () => {
 		expect(formatTime(12, 45)).toBe("12:45");
+	});
+});
+
+describe("formatResetDate", () => {
+	test("formats date as MM/DD HH:MM", () => {
+		const date = new Date(2024, 1, 15, 17, 0);
+		expect(formatResetDate(date)).toBe("02/15 17:00");
+	});
+
+	test("zero-pads month, day, hours, minutes", () => {
+		const date = new Date(2024, 0, 5, 3, 7);
+		expect(formatResetDate(date)).toBe("01/05 03:07");
+	});
+
+	test("handles midnight", () => {
+		const date = new Date(2024, 2, 1, 0, 0);
+		expect(formatResetDate(date)).toBe("03/01 00:00");
+	});
+
+	test("handles end of day", () => {
+		const date = new Date(2024, 11, 31, 23, 59);
+		expect(formatResetDate(date)).toBe("12/31 23:59");
 	});
 });
 
