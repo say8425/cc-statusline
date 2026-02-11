@@ -49,8 +49,9 @@ Add the following to `~/.claude/settings.json`:
 - **Git Diff**: File count, insertions, deletions
 - **PR URL**: Clickable OSC 8 hyperlink
 - **TrueColor**: Dynamic colors based on thresholds
-- **Limit Reset Timer**: Countdown to usage limit reset
+- **Limit Reset Time**: Reset time display (HH:MM)
 - **Block Usage**: 5-hour utilization percentage (from server API)
+- **Weekly Reset Timer**: Weekly limit reset time (MM/DD HH:MM)
 - **Weekly Usage**: 7-day utilization percentage (from server API)
 
 ## Emoji Guide
@@ -62,8 +63,9 @@ Add the following to `~/.claude/settings.json`:
 | ⏱️    | Session elapsed time     |
 | 💰    | Session cost in USD      |
 | 🧠    | Context window usage     |
-| ⏳    | Limit reset countdown    |
+| ⏳    | Limit reset time         |
 | 📊    | 5-hour utilization %     |
+| ⏰    | Weekly limit reset time  |
 | 📅    | 7-day utilization %      |
 | ✏️    | Uncommitted changes      |
 | 📎    | Pull request link        |
@@ -84,7 +86,8 @@ Calls the Anthropic Usage API (`/api/oauth/usage`) using the OAuth access token 
 
 1. **5-hour utilization** - Server-calculated usage percentage for the current billing block
 2. **7-day utilization** - Server-calculated weekly usage percentage
-3. **Reset timer** - Exact reset time from the server (`resets_at`)
+3. **Reset timer** - Exact reset time from the server (`five_hour.resets_at`)
+4. **Weekly reset timer** - Weekly limit reset time (`seven_day.resets_at`), shown as `MM/DD HH:MM` (e.g., `02/15 17:00`)
 
 ### Enable
 

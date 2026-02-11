@@ -50,8 +50,9 @@ Agrega lo siguiente a `~/.claude/settings.json`:
 - **Git Diff**: Cantidad de archivos, inserciones, eliminaciones
 - **PR URL**: Hipervínculo OSC 8 clickeable
 - **TrueColor**: Colores dinámicos basados en umbrales
-- **Temporizador de reinicio**: Tiempo restante hasta el reinicio del límite
+- **Hora de reinicio**: Hora de reinicio del límite de 5 horas (HH:MM)
 - **Uso del bloque**: Porcentaje de utilización de 5 horas (desde API del servidor)
+- **Temporizador de reinicio semanal**: Tiempo de reinicio del límite semanal (MM/DD HH:MM)
 - **Uso semanal**: Porcentaje de utilización de 7 días (desde API del servidor)
 
 ## Guía de Emojis
@@ -63,8 +64,9 @@ Agrega lo siguiente a `~/.claude/settings.json`:
 | ⏱️    | Tiempo transcurrido de sesión        |
 | 💰    | Costo de sesión en USD               |
 | 🧠    | Uso de ventana de contexto           |
-| ⏳    | Cuenta regresiva de reinicio         |
+| ⏳    | Hora de reinicio                     |
 | 📊    | Utilización de 5 horas %             |
+| ⏰    | Tiempo de reinicio semanal           |
 | 📅    | Utilización de 7 días %              |
 | ✏️    | Cambios sin confirmar                |
 | 📎    | Enlace de Pull Request               |
@@ -85,7 +87,8 @@ Llama a la API de Uso de Anthropic (`/api/oauth/usage`) usando el token de acces
 
 1. **Utilización de 5 horas** - Porcentaje de uso calculado por el servidor para el bloque de facturación actual
 2. **Utilización de 7 días** - Porcentaje de uso semanal calculado por el servidor
-3. **Temporizador de reinicio** - Tiempo exacto de reinicio desde el servidor (`resets_at`)
+3. **Temporizador de reinicio** - Tiempo exacto de reinicio desde el servidor (`five_hour.resets_at`)
+4. **Temporizador de reinicio semanal** - Tiempo de reinicio del límite semanal (`seven_day.resets_at`), formato `MM/DD HH:MM` (ej., `02/15 17:00`)
 
 ### Activar
 
