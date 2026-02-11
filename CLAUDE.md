@@ -17,6 +17,7 @@ cc-statusline/
 │   ├── format/
 │   │   ├── index.ts                # barrel re-export
 │   │   ├── formatNumber.ts         # formatNumber
+│   │   ├── formatResetDate.ts      # formatResetDate
 │   │   ├── formatTime.ts           # formatTime
 │   │   └── getTimeUntilReset.ts    # getTimeUntilReset
 │   ├── git/
@@ -56,7 +57,8 @@ cc-statusline/
 | Git diff | `git diff --shortstat` |
 | PR URL | `gh pr view` |
 | 블록 사용량 | Anthropic Usage API (`/api/oauth/usage`, OAuth 토큰) |
-| 리셋 타이머 | Anthropic Usage API `resets_at` |
+| 리셋 타이머 | Anthropic Usage API `five_hour.resets_at` |
+| 주간 리셋 시간 | Anthropic Usage API `seven_day.resets_at` |
 
 ## WHY
 
@@ -65,7 +67,8 @@ Claude Code 기본 statusbar에 다음 정보를 추가로 표시:
 - Context window 토큰 사용량 및 사용률 (%)
 - Git diff 통계 (파일 수, +insertions, -deletions)
 - PR URL (클릭 가능한 OSC 8 하이퍼링크)
-- 리셋 타이머 (5시간 사용량 리셋까지 남은 시간)
+- 리셋 시각 (5시간 사용량 리셋 시각, HH:MM)
+- 주간 리셋 시간 (7일 사용량 리셋 시각, MM/DD HH:MM)
 - 블록 사용량 (서버 API 기반 5시간/7일 utilization %)
 - TrueColor 동적 색상 (임계값 기반 경고)
 
@@ -114,7 +117,7 @@ bun test --coverage
 ```
 
 **테스트 구조**:
-- `pure.test.ts`: 순수 함수 (getUsageColor, formatNumber, formatTime, getTimeUntilReset)
+- `pure.test.ts`: 순수 함수 (getUsageColor, formatNumber, formatTime, formatResetDate, getTimeUntilReset)
 - `cached.test.ts`: 캐시 TTL 및 메커니즘
 - `cli.test.ts`: CLI 인자 파싱 (--show-usage)
 - `main.test.ts`: renderStatusLine 순수 함수 (의존성 주입 방식)
