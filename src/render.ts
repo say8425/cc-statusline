@@ -1,5 +1,5 @@
 import { C, getUsageColor } from "./colors.ts";
-import { formatNumber, formatTime, getTimeUntilReset } from "./format/index.ts";
+import { formatNumber, formatResetDate, formatTime } from "./format/index.ts";
 import type { RenderContext } from "./types.ts";
 
 // 상태 라인 렌더링 (순수 함수 - 테스트 가능)
@@ -51,12 +51,11 @@ export function renderStatusLine(ctx: RenderContext): string[] {
 	if (ctx.showUsage && ctx.blockUsage) {
 		const parts: string[] = [];
 
-		// 리셋 타이머
+		// 리셋 시각
 		if (ctx.blockUsage.resetTime) {
-			const resetTime = getTimeUntilReset(ctx.blockUsage.resetTime);
-			parts.push(
-				`${C.WHITE}⏳ ${formatTime(resetTime.hours, resetTime.minutes)}${C.RESET}`,
-			);
+			const h = ctx.blockUsage.resetTime.getHours();
+			const m = ctx.blockUsage.resetTime.getMinutes();
+			parts.push(`${C.WHITE}⏳ ${formatTime(h, m)}${C.RESET}`);
 		}
 
 		// 5시간 사용량 (서버 utilization 그대로)
@@ -64,6 +63,13 @@ export function renderStatusLine(ctx: RenderContext): string[] {
 		parts.push(
 			`${usageColor}📊 ${Math.round(ctx.blockUsage.utilization)}/100${C.RESET}`,
 		);
+
+		// 7일 리셋 시간
+		if (ctx.blockUsage.sevenDayResetTime) {
+			parts.push(
+				`${C.WHITE}⏰ ${formatResetDate(ctx.blockUsage.sevenDayResetTime)}${C.RESET}`,
+			);
+		}
 
 		// 7일 사용량
 		if (ctx.blockUsage.sevenDayUtilization !== null) {

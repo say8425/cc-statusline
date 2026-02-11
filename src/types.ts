@@ -39,6 +39,7 @@ export interface BlockUsageInfo {
 	resetTime: Date | null;
 	utilization: number; // 0-100+ (서버 계산 %)
 	sevenDayUtilization: number | null;
+	sevenDayResetTime: Date | null;
 }
 
 // CLI 파싱 결과 타입
