@@ -36,6 +36,7 @@ export function usageResponseToBlockUsage(
 		resetTime: null,
 		utilization: 0,
 		sevenDayUtilization: null,
+		sevenDayResetTime: null,
 	};
 
 	if (data.five_hour) {
@@ -47,6 +48,9 @@ export function usageResponseToBlockUsage(
 
 	if (data.seven_day) {
 		result.sevenDayUtilization = data.seven_day.utilization;
+		if (data.seven_day.resets_at) {
+			result.sevenDayResetTime = new Date(data.seven_day.resets_at);
+		}
 	}
 
 	return result;
