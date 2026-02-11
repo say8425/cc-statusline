@@ -29,6 +29,5 @@
 		"lint": "biome check src/",
 		"typecheck": "tsc --noEmit"
 	},
-	"type": "module",
-	"dependencies": {}
+	"type": "module"
 }
