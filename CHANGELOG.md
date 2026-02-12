@@ -1,17 +1,5 @@
 # Changelog
 
-## [2.0.0](https://github.com/say8425/cc-statusline/compare/v1.4.0...v2.0.0) (2026-02-12)
-
-
-### Features
-
-* 리셋 시각 표시 변경 및 7일 리셋 시간 추가 ([6671578](https://github.com/say8425/cc-statusline/commit/6671578b7050508ac677a5299495635b57b2c16d))
-
-
-### Bug Fixes
-
-* align block cost calculation with /usage by correcting pricing and limits ([7362c7c](https://github.com/say8425/cc-statusline/commit/7362c7c22021892c7f9b55cb4d4e521b26ab4434))
-
 ## [1.4.0](https://github.com/say8425/cc-statusline/compare/v1.3.0...v1.4.0) (2026-02-03)
 
 
