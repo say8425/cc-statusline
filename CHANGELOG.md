@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.0.1](https://github.com/say8425/cc-statusline/compare/v2.0.0...v2.0.1) (2026-02-13)
+
+
+### Bug Fixes
+
+* use dist/index.js as bin entry for bunx compatibility ([f4c744d](https://github.com/say8425/cc-statusline/commit/f4c744df15916226a77b18ae5512cc1f382ae932)), closes [#28](https://github.com/say8425/cc-statusline/issues/28)
+
 ## [2.0.0](https://github.com/say8425/cc-statusline/compare/v2.0.0...v2.0.0) (2026-02-12)
 
 
