@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.0.2](https://github.com/say8425/cc-statusline/compare/v2.0.1...v2.0.2) (2026-02-13)
+
+
+### Bug Fixes
+
+* add build step before npm publish ([9e0eced](https://github.com/say8425/cc-statusline/commit/9e0ecedcb86f1e4376be7275e9bbad3a1faca462))
+
 ## [2.0.1](https://github.com/say8425/cc-statusline/compare/v2.0.0...v2.0.1) (2026-02-13)
 
 
