@@ -49,6 +49,7 @@ function createRenderContext(
 		prUrl: overrides.prUrl ?? null,
 		blockUsage: overrides.blockUsage ?? null,
 		showUsage: overrides.showUsage ?? false,
+		mainProjectName: overrides.mainProjectName ?? null,
 	};
 }
 
@@ -112,6 +113,44 @@ describe("renderStatusLine", () => {
 			expect(lines[1]).toContain("🧠");
 			// 50000 + 10000 + 5000 + 2000 = 67000
 			expect(lines[1]).toContain("67,000");
+		});
+	});
+
+	describe("worktree display", () => {
+		test("shows project name with worktree emoji when mainProjectName is set", () => {
+			const ctx = createRenderContext({
+				mainProjectName: "cc-statusline",
+				claudeJson: {
+					workspace: {
+						project_dir:
+							"/Users/penguin/dev/cc-statusline/.claude/worktrees/rosy-floating-thimble",
+						current_dir:
+							"/Users/penguin/dev/cc-statusline/.claude/worktrees/rosy-floating-thimble",
+					},
+				} as Partial<ClaudeStatusInput>,
+			});
+			const lines = renderStatusLine(ctx);
+
+			expect(lines[0]).toContain("📁");
+			expect(lines[0]).toContain("cc-statusline");
+			expect(lines[0]).toContain("🌲");
+			expect(lines[0]).toContain("rosy-floating-thimble");
+		});
+
+		test("shows only folder name when mainProjectName is null", () => {
+			const ctx = createRenderContext({
+				mainProjectName: null,
+				claudeJson: {
+					workspace: {
+						project_dir: "/Users/test/my-project",
+						current_dir: "/Users/test/my-project",
+					},
+				} as Partial<ClaudeStatusInput>,
+			});
+			const lines = renderStatusLine(ctx);
+
+			expect(lines[0]).toContain("my-project");
+			expect(lines[0]).not.toContain("(");
 		});
 	});
 
