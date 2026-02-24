@@ -55,4 +55,5 @@ export interface RenderContext {
 	prUrl: string | null;
 	blockUsage: BlockUsageInfo | null;
 	showUsage: boolean;
+	mainProjectName: string | null;
 }
