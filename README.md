@@ -48,6 +48,7 @@ Add the following to `~/.claude/settings.json`:
 - **Context**: Token usage with percentage (color-coded)
 - **Git Diff**: File count, insertions, deletions
 - **PR URL**: Clickable OSC 8 hyperlink
+- **Worktree Support**: Shows real project name when running in a `cc --worktree` session
 - **TrueColor**: Dynamic colors based on thresholds
 - **Limit Reset Time**: Reset time display (HH:MM)
 - **Block Usage**: 5-hour utilization percentage (from server API)
@@ -59,6 +60,7 @@ Add the following to `~/.claude/settings.json`:
 | Emoji | Description              |
 | ----- | ------------------------ |
 | 📁    | Project folder name      |
+| 🌲    | Worktree name (shown in worktree sessions) |
 | 🌿    | Current Git branch       |
 | ⏱️    | Session elapsed time     |
 | 💰    | Session cost in USD      |
