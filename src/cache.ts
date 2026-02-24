@@ -10,6 +10,7 @@ export const cache = {
 		timestamp: 0,
 	},
 	accessToken: { value: null as string | null, timestamp: 0 },
+	mainProjectName: { value: null as string | null, timestamp: 0 },
 };
 
 // 캐시 초기화 (테스트용)
@@ -19,6 +20,7 @@ export function resetCache(): void {
 	cache.prUrl = { value: null, timestamp: 0 };
 	cache.blockUsage = { value: null, timestamp: 0 };
 	cache.accessToken = { value: null, timestamp: 0 };
+	cache.mainProjectName = { value: null, timestamp: 0 };
 }
 
 // 캐시 TTL (ms)
@@ -28,4 +30,5 @@ export const CACHE_TTL = {
 	prUrl: 30000, // 30초
 	blockUsage: 120000, // 120초 (API 호출 빈도 제한)
 	accessToken: 300000, // 5분 (토큰은 세션 중 바뀌지 않음)
+	mainProjectName: 300000, // 5분 (워크트리는 세션 중 불변)
 };
