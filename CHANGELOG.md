@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.1.0](https://github.com/say8425/cc-statusline/compare/v2.0.2...v2.1.0) (2026-02-24)
+
+
+### Features
+
+* add worktree detection with git-common-dir ([f9e2a7d](https://github.com/say8425/cc-statusline/commit/f9e2a7df06f4d79ce190454ddd5269f0841a98d0))
+* display worktree name with dedicated 🌲 emoji ([894be35](https://github.com/say8425/cc-statusline/commit/894be35200eb3d13b5e3f7787f5fe7293c160d7a))
+
 ## [2.0.2](https://github.com/say8425/cc-statusline/compare/v2.0.1...v2.0.2) (2026-02-13)
 
 
