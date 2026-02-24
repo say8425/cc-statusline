@@ -24,7 +24,8 @@ cc-statusline/
 │   │   ├── index.ts                # barrel re-export
 │   │   ├── branch.ts               # getBranchCached
 │   │   ├── changes.ts              # getGitChangesCached
-│   │   └── pr.ts                   # getPrUrlCached
+│   │   ├── pr.ts                   # getPrUrlCached
+│   │   └── worktree.ts             # getMainProjectNameCached
 │   ├── usage/
 │   │   ├── index.ts                # barrel re-export
 │   │   ├── token.ts                # getAccessToken, getAccessTokenCached
@@ -56,6 +57,7 @@ cc-statusline/
 | Git 브랜치 | `git branch --show-current` |
 | Git diff | `git diff --shortstat` |
 | PR URL | `gh pr view` |
+| 메인 프로젝트명 | `git rev-parse --git-common-dir` (워크트리) |
 | 블록 사용량 | Anthropic Usage API (`/api/oauth/usage`, OAuth 토큰) |
 | 리셋 타이머 | Anthropic Usage API `five_hour.resets_at` |
 | 주간 리셋 시간 | Anthropic Usage API `seven_day.resets_at` |
