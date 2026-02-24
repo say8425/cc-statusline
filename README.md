@@ -37,6 +37,14 @@ Add the following to `~/.claude/settings.json`:
 
 ![scenario3_diff_pr](docs/scenario3_diff_pr.png)
 
+### Worktree
+
+![worktree_diff](docs/worktree_diff.png)
+
+### Worktree + Usage Metrics
+
+![worktree_usage](docs/worktree_usage.png)
+
 ### Usage Metrics
 
 ![Screenshot of status line with usage metrics](docs/usage_metrics.png)
