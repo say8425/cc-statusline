@@ -33,8 +33,14 @@ export function renderStatusLine(ctx: RenderContext): string[] {
 	const contextPct = Math.round((totalTokens / contextSize) * 100);
 	const ctxColor = getUsageColor(contextPct);
 
-	// 1번째 줄: 폴더 | 브랜치
-	let line1 = `${C.WHITE}📁 ${folder}${C.RESET}`;
+	// 1번째 줄: 폴더 | 워크트리 | 브랜치
+	let line1: string;
+	if (ctx.mainProjectName) {
+		// 워크트리: "📁 cc-statusline | 🌲 rosy-floating-thimble"
+		line1 = `${C.WHITE}📁 ${ctx.mainProjectName}${C.RESET} | ${C.WHITE}🌲 ${folder}${C.RESET}`;
+	} else {
+		line1 = `${C.WHITE}📁 ${folder}${C.RESET}`;
+	}
 	if (ctx.branch) {
 		line1 += ` | ${C.WHITE}🌿 ${ctx.branch}${C.RESET}`;
 	}

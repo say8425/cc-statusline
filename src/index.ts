@@ -4,6 +4,7 @@ import { parseCliArgs } from "./cli.ts";
 import {
 	getBranchCached,
 	getGitChangesCached,
+	getMainProjectNameCached,
 	getPrUrlCached,
 } from "./git/index.ts";
 import { renderStatusLine } from "./render.ts";
@@ -21,12 +22,14 @@ export async function main(cliArgs?: string[]): Promise<void> {
 	const claudeJson: ClaudeStatusInput = JSON.parse((await readStdin()) || "{}");
 
 	// 2. Git 정보 + 사용량 (캐싱, 병렬 실행)
-	const [branch, gitChanges, prUrl, blockUsage] = await Promise.all([
-		getBranchCached(),
-		getGitChangesCached(),
-		getPrUrlCached(),
-		showUsage ? getUsageCached() : Promise.resolve(null),
-	]);
+	const [branch, gitChanges, prUrl, blockUsage, mainProjectName] =
+		await Promise.all([
+			getBranchCached(),
+			getGitChangesCached(),
+			getPrUrlCached(),
+			showUsage ? getUsageCached() : Promise.resolve(null),
+			getMainProjectNameCached(),
+		]);
 
 	// 3. 렌더링 및 출력
 	const lines = renderStatusLine({
@@ -36,6 +39,7 @@ export async function main(cliArgs?: string[]): Promise<void> {
 		prUrl,
 		blockUsage,
 		showUsage,
+		mainProjectName,
 	});
 
 	for (const line of lines) {
