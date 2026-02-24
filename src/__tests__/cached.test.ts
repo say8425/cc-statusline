@@ -154,6 +154,40 @@ describe("cache mechanism", () => {
 		});
 	});
 
+	describe("mainProjectName cache", () => {
+		test("cache hit when timestamp is fresh", () => {
+			cache.mainProjectName = {
+				value: "cc-statusline",
+				timestamp: Date.now(),
+			};
+
+			const isFresh =
+				Date.now() - cache.mainProjectName.timestamp <
+				CACHE_TTL.mainProjectName;
+			expect(isFresh).toBe(true);
+			expect(cache.mainProjectName.value).toBe("cc-statusline");
+		});
+
+		test("cache miss when timestamp is stale", () => {
+			const now = Date.now();
+			setSystemTime(now);
+
+			cache.mainProjectName = {
+				value: "cc-statusline",
+				timestamp: now - CACHE_TTL.mainProjectName - 1000,
+			};
+
+			const isFresh =
+				now - cache.mainProjectName.timestamp < CACHE_TTL.mainProjectName;
+			expect(isFresh).toBe(false);
+		});
+
+		test("cache stores null for non-worktree repo", () => {
+			cache.mainProjectName = { value: null, timestamp: Date.now() };
+			expect(cache.mainProjectName.value).toBeNull();
+		});
+	});
+
 	describe("resetCache", () => {
 		test("resets all cache values to defaults", () => {
 			// Populate all caches
@@ -175,6 +209,10 @@ describe("cache mechanism", () => {
 				timestamp: Date.now(),
 			};
 			cache.accessToken = { value: "test-token", timestamp: Date.now() };
+			cache.mainProjectName = {
+				value: "cc-statusline",
+				timestamp: Date.now(),
+			};
 
 			resetCache();
 
@@ -188,6 +226,7 @@ describe("cache mechanism", () => {
 			expect(cache.prUrl).toEqual({ value: null, timestamp: 0 });
 			expect(cache.blockUsage).toEqual({ value: null, timestamp: 0 });
 			expect(cache.accessToken).toEqual({ value: null, timestamp: 0 });
+			expect(cache.mainProjectName).toEqual({ value: null, timestamp: 0 });
 		});
 	});
 });
@@ -211,5 +250,9 @@ describe("CACHE_TTL values", () => {
 
 	test("accessToken TTL is 300 seconds (5 minutes)", () => {
 		expect(CACHE_TTL.accessToken).toBe(300000);
+	});
+
+	test("mainProjectName TTL is 300 seconds (5 minutes)", () => {
+		expect(CACHE_TTL.mainProjectName).toBe(300000);
 	});
 });
