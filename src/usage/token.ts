@@ -7,7 +7,12 @@ export function parseCredentialString(raw: string): string | null {
 	if (text.length === 0) return null;
 
 	// macOS security -w outputs hex when password has non-printable chars
-	if (/^[0-9a-fA-F]+$/.test(text) && text.length > 0) {
+	// Require even length and min length to avoid false positives (e.g. "face")
+	if (
+		text.length > 10 &&
+		text.length % 2 === 0 &&
+		/^[0-9a-fA-F]+$/.test(text)
+	) {
 		text = Buffer.from(text, "hex").toString("utf-8");
 	}
 
