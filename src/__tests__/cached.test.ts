@@ -90,70 +90,6 @@ describe("cache mechanism", () => {
 		});
 	});
 
-	describe("blockUsage cache", () => {
-		test("cache hit when timestamp is fresh", () => {
-			const blockUsageValue = {
-				resetTime: new Date("2024-01-01T15:00:00Z"),
-				utilization: 56,
-				sevenDayUtilization: 37,
-				sevenDayResetTime: null,
-			};
-			cache.blockUsage = { value: blockUsageValue, timestamp: Date.now() };
-
-			const isFresh =
-				Date.now() - cache.blockUsage.timestamp < CACHE_TTL.blockUsage;
-			expect(isFresh).toBe(true);
-			expect(cache.blockUsage.value).toEqual(blockUsageValue);
-		});
-
-		test("cache miss when timestamp is stale", () => {
-			const now = Date.now();
-			setSystemTime(now);
-
-			cache.blockUsage = {
-				value: {
-					resetTime: null,
-					utilization: 0,
-					sevenDayUtilization: null,
-					sevenDayResetTime: null,
-				},
-				timestamp: now - CACHE_TTL.blockUsage - 1000,
-			};
-
-			const isFresh = now - cache.blockUsage.timestamp < CACHE_TTL.blockUsage;
-			expect(isFresh).toBe(false);
-		});
-	});
-
-	describe("accessToken cache", () => {
-		test("cache hit when timestamp is fresh", () => {
-			cache.accessToken = { value: "test-token-123", timestamp: Date.now() };
-
-			const isFresh =
-				Date.now() - cache.accessToken.timestamp < CACHE_TTL.accessToken;
-			expect(isFresh).toBe(true);
-			expect(cache.accessToken.value).toBe("test-token-123");
-		});
-
-		test("cache miss when timestamp is stale", () => {
-			const now = Date.now();
-			setSystemTime(now);
-
-			cache.accessToken = {
-				value: "old-token",
-				timestamp: now - CACHE_TTL.accessToken - 1000,
-			};
-
-			const isFresh = now - cache.accessToken.timestamp < CACHE_TTL.accessToken;
-			expect(isFresh).toBe(false);
-		});
-
-		test("cache stores null when no token available", () => {
-			cache.accessToken = { value: null, timestamp: Date.now() };
-			expect(cache.accessToken.value).toBeNull();
-		});
-	});
-
 	describe("mainProjectName cache", () => {
 		test("cache hit when timestamp is fresh", () => {
 			cache.mainProjectName = {
@@ -199,16 +135,6 @@ describe("cache mechanism", () => {
 				timestamp: Date.now(),
 			};
 			cache.prUrl = { value: "https://example.com", timestamp: Date.now() };
-			cache.blockUsage = {
-				value: {
-					resetTime: new Date(),
-					utilization: 56,
-					sevenDayUtilization: 37,
-					sevenDayResetTime: null,
-				},
-				timestamp: Date.now(),
-			};
-			cache.accessToken = { value: "test-token", timestamp: Date.now() };
 			cache.mainProjectName = {
 				value: "cc-statusline",
 				timestamp: Date.now(),
@@ -224,8 +150,6 @@ describe("cache mechanism", () => {
 				timestamp: 0,
 			});
 			expect(cache.prUrl).toEqual({ value: null, timestamp: 0 });
-			expect(cache.blockUsage).toEqual({ value: null, timestamp: 0 });
-			expect(cache.accessToken).toEqual({ value: null, timestamp: 0 });
 			expect(cache.mainProjectName).toEqual({ value: null, timestamp: 0 });
 		});
 	});
@@ -242,14 +166,6 @@ describe("CACHE_TTL values", () => {
 
 	test("prUrl TTL is 30 seconds", () => {
 		expect(CACHE_TTL.prUrl).toBe(30000);
-	});
-
-	test("blockUsage TTL is 120 seconds", () => {
-		expect(CACHE_TTL.blockUsage).toBe(120000);
-	});
-
-	test("accessToken TTL is 300 seconds (5 minutes)", () => {
-		expect(CACHE_TTL.accessToken).toBe(300000);
 	});
 
 	test("mainProjectName TTL is 300 seconds (5 minutes)", () => {

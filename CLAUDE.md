@@ -11,7 +11,6 @@ cc-statusline/
 │   ├── types.ts                    # 모든 shared 인터페이스
 │   ├── cache.ts                    # cache, CACHE_TTL, resetCache
 │   ├── colors.ts                   # C 상수, getUsageColor
-│   ├── cli.ts                      # parseCliArgs
 │   ├── render.ts                   # renderStatusLine
 │   ├── stdin.ts                    # readStdin
 │   ├── format/
@@ -26,14 +25,9 @@ cc-statusline/
 │   │   ├── changes.ts              # getGitChangesCached
 │   │   ├── pr.ts                   # getPrUrlCached
 │   │   └── worktree.ts             # getMainProjectNameCached
-│   ├── usage/
-│   │   ├── index.ts                # barrel re-export
-│   │   ├── token.ts                # getAccessToken, getAccessTokenCached
-│   │   └── api.ts                  # fetchUsageFromAPI, usageResponseToBlockUsage, getUsageCached
 │   └── __tests__/                  # 테스트 파일
 │       ├── pure.test.ts            # 순수 함수 테스트
 │       ├── cached.test.ts          # 캐시 메커니즘 테스트
-│       ├── cli.test.ts             # CLI 파싱 테스트
 │       ├── main.test.ts            # renderStatusLine 테스트
 │       ├── async.test.ts           # 비동기 함수 통합 테스트
 │       ├── integration.test.ts     # main 함수 통합 테스트
@@ -58,9 +52,10 @@ cc-statusline/
 | Git diff | `git diff --shortstat` |
 | PR URL | `gh pr view` |
 | 메인 프로젝트명 | `git rev-parse --git-common-dir` (워크트리) |
-| 블록 사용량 | Anthropic Usage API (`/api/oauth/usage`, OAuth 토큰) |
-| 리셋 타이머 | Anthropic Usage API `five_hour.resets_at` |
-| 주간 리셋 시간 | Anthropic Usage API `seven_day.resets_at` |
+| 블록 사용량 | stdin `rate_limits.five_hour.used_percentage` |
+| 리셋 타이머 | stdin `rate_limits.five_hour.resets_at` |
+| 주간 사용량 | stdin `rate_limits.seven_day.used_percentage` |
+| 주간 리셋 시간 | stdin `rate_limits.seven_day.resets_at` |
 
 ## WHY
 
@@ -71,7 +66,7 @@ Claude Code 기본 statusbar에 다음 정보를 추가로 표시:
 - PR URL (클릭 가능한 OSC 8 하이퍼링크)
 - 리셋 시각 (5시간 사용량 리셋 시각, HH:MM)
 - 주간 리셋 시간 (7일 사용량 리셋 시각, MM/DD HH:MM)
-- 블록 사용량 (서버 API 기반 5시간/7일 utilization %)
+- 블록 사용량 (stdin rate_limits 기반 5시간/7일 사용률 %)
 - TrueColor 동적 색상 (임계값 기반 경고)
 
 ## HOW
@@ -104,7 +99,11 @@ echo '{
     "context_window_size":200000,
     "current_usage":{"input_tokens":50000,"output_tokens":10000,"cache_creation_input_tokens":5000,"cache_read_input_tokens":2000}
   },
-  "workspace":{"project_dir":"/Users/penguin/dev/cc-statusline"}
+  "workspace":{"project_dir":"/Users/penguin/dev/cc-statusline"},
+  "rate_limits":{
+    "five_hour":{"used_percentage":56,"resets_at":"2024-01-01T15:00:00Z"},
+    "seven_day":{"used_percentage":37,"resets_at":"2024-01-07T00:00:00Z"}
+  }
 }' | bun src/index.ts
 ```
 
@@ -121,22 +120,16 @@ bun test --coverage
 **테스트 구조**:
 - `pure.test.ts`: 순수 함수 (getUsageColor, formatNumber, formatTime, formatResetDate, getTimeUntilReset)
 - `cached.test.ts`: 캐시 TTL 및 메커니즘
-- `cli.test.ts`: CLI 인자 파싱 (--show-usage)
 - `main.test.ts`: renderStatusLine 순수 함수 (의존성 주입 방식)
-- `usage-api.test.ts`: usageResponseToBlockUsage 단위 테스트
-- `async.test.ts`: 비동기 함수 통합 테스트 (실제 git/gh/API 호출)
+- `async.test.ts`: 비동기 함수 통합 테스트 (실제 git/gh 호출)
 - `integration.test.ts`: main 함수 E2E 테스트
 - `stdin.test.ts`: stdin 읽기 테스트
 
 **커버리지**: 함수 100%, 라인 97%+
 
-### CLI 옵션
-
-- `--show-usage`: 사용량 지표 줄 표시 (기본: 숨김). 리셋 타이머, 5시간/7일 사용량을 Anthropic Usage API에서 가져와 표시
-
 ### 수정 시 주의사항
 
 - 300ms마다 실행되므로 성능 중요
 - 공식 JSON input structure 참조: https://code.claude.com/docs/en/statusline
-- Usage API 응답 구조 참조: https://codelynx.dev/posts/claude-code-usage-limits-statusline
-- Usage API 결과는 120초 캐시 TTL 적용
+- `rate_limits`는 stdin JSON에 포함되어 전달됨 (Claude Code CLI 2.1.80+)
+- `rate_limits`가 없으면 사용량 줄이 표시되지 않음
