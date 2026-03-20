@@ -47,8 +47,7 @@ function createRenderContext(
 			deletions: 0,
 		},
 		prUrl: overrides.prUrl ?? null,
-		blockUsage: overrides.blockUsage ?? null,
-		showUsage: overrides.showUsage ?? false,
+		rateLimits: overrides.rateLimits ?? null,
 		mainProjectName: overrides.mainProjectName ?? null,
 	};
 }
@@ -219,16 +218,10 @@ describe("renderStatusLine", () => {
 		});
 	});
 
-	describe("--show-usage flag", () => {
-		test("skips usage line when showUsage is false (default)", () => {
+	describe("rate_limits display", () => {
+		test("skips usage line when rateLimits is null", () => {
 			const ctx = createRenderContext({
-				showUsage: false,
-				blockUsage: {
-					resetTime: new Date(),
-					utilization: 56,
-					sevenDayUtilization: 37,
-					sevenDayResetTime: null,
-				},
+				rateLimits: null,
 			});
 			const lines = renderStatusLine(ctx);
 
@@ -237,17 +230,20 @@ describe("renderStatusLine", () => {
 			expect(allOutput).not.toContain("📊");
 		});
 
-		test("shows usage line when showUsage is true", () => {
+		test("shows usage line when rateLimits is provided", () => {
 			const now = Date.now();
 			setSystemTime(now);
 
 			const ctx = createRenderContext({
-				showUsage: true,
-				blockUsage: {
-					resetTime: new Date(now + 3600000), // 1 hour later
-					utilization: 56,
-					sevenDayUtilization: 37,
-					sevenDayResetTime: null,
+				rateLimits: {
+					five_hour: {
+						used_percentage: 56,
+						resets_at: new Date(now + 3600000).toISOString(),
+					},
+					seven_day: {
+						used_percentage: 37,
+						resets_at: new Date(now + 86400000).toISOString(),
+					},
 				},
 			});
 			const lines = renderStatusLine(ctx);
@@ -263,12 +259,11 @@ describe("renderStatusLine", () => {
 			const resetTime = new Date(2024, 1, 15, 14, 30); // 14:30
 
 			const ctx = createRenderContext({
-				showUsage: true,
-				blockUsage: {
-					resetTime,
-					utilization: 30,
-					sevenDayUtilization: null,
-					sevenDayResetTime: null,
+				rateLimits: {
+					five_hour: {
+						used_percentage: 30,
+						resets_at: resetTime.toISOString(),
+					},
 				},
 			});
 			const lines = renderStatusLine(ctx);
@@ -282,12 +277,11 @@ describe("renderStatusLine", () => {
 			setSystemTime(now);
 
 			const ctx = createRenderContext({
-				showUsage: true,
-				blockUsage: {
-					resetTime: new Date(now + 3600000),
-					utilization: 56,
-					sevenDayUtilization: null,
-					sevenDayResetTime: null,
+				rateLimits: {
+					five_hour: {
+						used_percentage: 56,
+						resets_at: new Date(now + 3600000).toISOString(),
+					},
 				},
 			});
 			const lines = renderStatusLine(ctx);
@@ -301,12 +295,15 @@ describe("renderStatusLine", () => {
 			setSystemTime(now);
 
 			const ctx = createRenderContext({
-				showUsage: true,
-				blockUsage: {
-					resetTime: new Date(now + 3600000),
-					utilization: 56,
-					sevenDayUtilization: 37,
-					sevenDayResetTime: null,
+				rateLimits: {
+					five_hour: {
+						used_percentage: 56,
+						resets_at: new Date(now + 3600000).toISOString(),
+					},
+					seven_day: {
+						used_percentage: 37,
+						resets_at: new Date(now + 86400000).toISOString(),
+					},
 				},
 			});
 			const lines = renderStatusLine(ctx);
@@ -315,17 +312,16 @@ describe("renderStatusLine", () => {
 			expect(lines[2]).toContain("37/100");
 		});
 
-		test("omits 7-day utilization when null", () => {
+		test("omits 7-day utilization when not present", () => {
 			const now = Date.now();
 			setSystemTime(now);
 
 			const ctx = createRenderContext({
-				showUsage: true,
-				blockUsage: {
-					resetTime: new Date(now + 3600000),
-					utilization: 56,
-					sevenDayUtilization: null,
-					sevenDayResetTime: null,
+				rateLimits: {
+					five_hour: {
+						used_percentage: 56,
+						resets_at: new Date(now + 3600000).toISOString(),
+					},
 				},
 			});
 			const lines = renderStatusLine(ctx);
@@ -334,17 +330,20 @@ describe("renderStatusLine", () => {
 			expect(allOutput).not.toContain("📅");
 		});
 
-		test("shows weekly reset time when sevenDayResetTime is set", () => {
+		test("shows weekly reset time when seven_day resets_at is set", () => {
 			const now = Date.now();
 			setSystemTime(now);
 
 			const ctx = createRenderContext({
-				showUsage: true,
-				blockUsage: {
-					resetTime: new Date(now + 3600000),
-					utilization: 56,
-					sevenDayUtilization: 37,
-					sevenDayResetTime: new Date("2024-02-15T09:00:00+09:00"),
+				rateLimits: {
+					five_hour: {
+						used_percentage: 56,
+						resets_at: new Date(now + 3600000).toISOString(),
+					},
+					seven_day: {
+						used_percentage: 37,
+						resets_at: new Date("2024-02-15T09:00:00+09:00").toISOString(),
+					},
 				},
 			});
 			const lines = renderStatusLine(ctx);
@@ -353,36 +352,20 @@ describe("renderStatusLine", () => {
 			expect(allOutput).toContain("⏰");
 		});
 
-		test("omits weekly reset time when sevenDayResetTime is null", () => {
-			const now = Date.now();
-			setSystemTime(now);
-
-			const ctx = createRenderContext({
-				showUsage: true,
-				blockUsage: {
-					resetTime: new Date(now + 3600000),
-					utilization: 56,
-					sevenDayUtilization: 37,
-					sevenDayResetTime: null,
-				},
-			});
-			const lines = renderStatusLine(ctx);
-
-			const allOutput = lines.join("\n");
-			expect(allOutput).not.toContain("⏰");
-		});
-
 		test("weekly reset time appears between 📊 and 📅", () => {
 			const now = Date.now();
 			setSystemTime(now);
 
 			const ctx = createRenderContext({
-				showUsage: true,
-				blockUsage: {
-					resetTime: new Date(now + 3600000),
-					utilization: 56,
-					sevenDayUtilization: 37,
-					sevenDayResetTime: new Date("2024-02-15T09:00:00+09:00"),
+				rateLimits: {
+					five_hour: {
+						used_percentage: 56,
+						resets_at: new Date(now + 3600000).toISOString(),
+					},
+					seven_day: {
+						used_percentage: 37,
+						resets_at: new Date("2024-02-15T09:00:00+09:00").toISOString(),
+					},
 				},
 			});
 			const lines = renderStatusLine(ctx);
@@ -400,12 +383,11 @@ describe("renderStatusLine", () => {
 			setSystemTime(now);
 
 			const ctx = createRenderContext({
-				showUsage: true,
-				blockUsage: {
-					resetTime: new Date(now + 3600000),
-					utilization: 85,
-					sevenDayUtilization: null,
-					sevenDayResetTime: null,
+				rateLimits: {
+					five_hour: {
+						used_percentage: 85,
+						resets_at: new Date(now + 3600000).toISOString(),
+					},
 				},
 			});
 			const lines = renderStatusLine(ctx);
@@ -557,10 +539,9 @@ describe("renderStatusLine", () => {
 			expect(lines[1]).toContain("0 (0%)");
 		});
 
-		test("handles null blockUsage when showUsage is true", () => {
+		test("handles null rateLimits", () => {
 			const ctx = createRenderContext({
-				showUsage: true,
-				blockUsage: null,
+				rateLimits: null,
 			});
 
 			// Should not throw and should have 2 lines (no usage line)

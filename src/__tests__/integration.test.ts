@@ -20,7 +20,7 @@ describe("main function (integration)", () => {
 		consoleLogSpy.mockRestore();
 	});
 
-	test("main function outputs status lines with valid input (default: no usage)", async () => {
+	test("main function outputs status lines with valid input (no rate_limits)", async () => {
 		const testInput = JSON.stringify({
 			cost: { total_duration_ms: 3600000, total_cost_usd: 0.5 },
 			context_window: {
@@ -53,9 +53,9 @@ describe("main function (integration)", () => {
 		Bun.stdin.stream = () => stream;
 
 		try {
-			await main([]);
+			await main();
 
-			// Should have at least 2 lines of output (no usage line by default)
+			// Should have at least 2 lines of output (no usage line without rate_limits)
 			expect(logs.length).toBeGreaterThanOrEqual(2);
 
 			// First line should contain project name
@@ -70,7 +70,7 @@ describe("main function (integration)", () => {
 		}
 	});
 
-	test("main function parses --show-usage correctly", async () => {
+	test("main function shows usage when rate_limits is provided in stdin", async () => {
 		const testInput = JSON.stringify({
 			cost: { total_duration_ms: 0, total_cost_usd: 0 },
 			context_window: {
@@ -85,6 +85,16 @@ describe("main function (integration)", () => {
 			workspace: {
 				project_dir: "/test",
 				current_dir: "/test",
+			},
+			rate_limits: {
+				five_hour: {
+					used_percentage: 56,
+					resets_at: "2024-01-01T15:00:00Z",
+				},
+				seven_day: {
+					used_percentage: 37,
+					resets_at: "2024-01-07T00:00:00Z",
+				},
 			},
 		});
 
@@ -101,11 +111,15 @@ describe("main function (integration)", () => {
 		Bun.stdin.stream = () => stream;
 
 		try {
-			await main(["--show-usage"]);
+			await main();
 
-			// Should have at least 2 lines
-			// Usage line depends on whether API call succeeds
-			expect(logs.length).toBeGreaterThanOrEqual(2);
+			// Should have at least 3 lines (folder, session, usage)
+			expect(logs.length).toBeGreaterThanOrEqual(3);
+
+			// Usage line should contain rate limit info
+			const allOutput = logs.join("\n");
+			expect(allOutput).toContain("📊");
+			expect(allOutput).toContain("56/100");
 		} finally {
 			// @ts-expect-error - restoring stdin
 			Bun.stdin.stream = originalStream;

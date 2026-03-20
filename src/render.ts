@@ -53,36 +53,36 @@ export function renderStatusLine(ctx: RenderContext): string[] {
 		` | ${ctxColor}🧠 ${formatNumber(totalTokens)} (${contextPct}%)${C.RESET}`;
 	lines.push(line2);
 
-	// 3번째 줄: 리셋 타이머 | 5시간 사용량 | 7일 사용량 (--show-usage일 때)
-	if (ctx.showUsage && ctx.blockUsage) {
+	// 3번째 줄: 리셋 타이머 | 5시간 사용량 | 7일 사용량 (rate_limits가 있을 때)
+	if (ctx.rateLimits) {
 		const parts: string[] = [];
 
-		// 리셋 시각
-		if (ctx.blockUsage.resetTime) {
-			const h = ctx.blockUsage.resetTime.getHours();
-			const m = ctx.blockUsage.resetTime.getMinutes();
+		// 5시간 리셋 시각
+		if (ctx.rateLimits.five_hour?.resets_at) {
+			const resetTime = new Date(ctx.rateLimits.five_hour.resets_at);
+			const h = resetTime.getHours();
+			const m = resetTime.getMinutes();
 			parts.push(`${C.WHITE}⏳ ${formatTime(h, m)}${C.RESET}`);
 		}
 
-		// 5시간 사용량 (서버 utilization 그대로)
-		const usageColor = getUsageColor(ctx.blockUsage.utilization);
-		parts.push(
-			`${usageColor}📊 ${Math.round(ctx.blockUsage.utilization)}/100${C.RESET}`,
-		);
+		// 5시간 사용량
+		if (ctx.rateLimits.five_hour) {
+			const pct = ctx.rateLimits.five_hour.used_percentage;
+			const usageColor = getUsageColor(pct);
+			parts.push(`${usageColor}📊 ${Math.round(pct)}/100${C.RESET}`);
+		}
 
 		// 7일 리셋 시간
-		if (ctx.blockUsage.sevenDayResetTime) {
-			parts.push(
-				`${C.WHITE}⏰ ${formatResetDate(ctx.blockUsage.sevenDayResetTime)}${C.RESET}`,
-			);
+		if (ctx.rateLimits.seven_day?.resets_at) {
+			const resetTime = new Date(ctx.rateLimits.seven_day.resets_at);
+			parts.push(`${C.WHITE}⏰ ${formatResetDate(resetTime)}${C.RESET}`);
 		}
 
 		// 7일 사용량
-		if (ctx.blockUsage.sevenDayUtilization !== null) {
-			const weekColor = getUsageColor(ctx.blockUsage.sevenDayUtilization);
-			parts.push(
-				`${weekColor}📅 ${Math.round(ctx.blockUsage.sevenDayUtilization)}/100${C.RESET}`,
-			);
+		if (ctx.rateLimits.seven_day) {
+			const pct = ctx.rateLimits.seven_day.used_percentage;
+			const weekColor = getUsageColor(pct);
+			parts.push(`${weekColor}📅 ${Math.round(pct)}/100${C.RESET}`);
 		}
 
 		if (parts.length > 0) {

@@ -5,11 +5,6 @@ import {
 	getGitChangesCached,
 	getPrUrlCached,
 } from "../git/index.ts";
-import {
-	getAccessToken,
-	getAccessTokenCached,
-	getUsageCached,
-} from "../usage/index.ts";
 
 // 이 테스트들은 실제 git/gh 명령어를 실행합니다.
 // CI 환경에서는 git repo가 있어야 하고, gh가 설치되어 있어야 합니다.
@@ -88,68 +83,6 @@ describe("async functions (integration)", () => {
 
 			await getPrUrlCached();
 			const timestamp2 = cache.prUrl.timestamp;
-
-			expect(timestamp1).toBe(timestamp2);
-		});
-	});
-
-	describe("getAccessToken", () => {
-		test("returns a string or null", async () => {
-			const token = await getAccessToken();
-			expect(token === null || typeof token === "string").toBe(true);
-		});
-	});
-
-	describe("getAccessTokenCached", () => {
-		test("returns a string or null", async () => {
-			const token = await getAccessTokenCached();
-			expect(token === null || typeof token === "string").toBe(true);
-		});
-
-		test("caches result on subsequent calls", async () => {
-			// Pre-populate cache to avoid Keychain call
-			cache.accessToken = { value: "test-token-123", timestamp: Date.now() };
-
-			await getAccessTokenCached();
-			const timestamp1 = cache.accessToken.timestamp;
-
-			await getAccessTokenCached();
-			const timestamp2 = cache.accessToken.timestamp;
-
-			expect(timestamp1).toBe(timestamp2);
-			expect(cache.accessToken.value).toBe("test-token-123");
-		});
-	});
-
-	describe("getUsageCached", () => {
-		test("returns BlockUsageInfo or null", async () => {
-			const usage = await getUsageCached();
-
-			// Should return BlockUsageInfo object or null (if no token/API fails)
-			if (usage !== null) {
-				expect(usage).toHaveProperty("utilization");
-				expect(usage).toHaveProperty("sevenDayUtilization");
-				expect(usage).toHaveProperty("resetTime");
-			}
-		});
-
-		test("caches result on subsequent calls", async () => {
-			// Pre-populate cache to avoid API call
-			cache.blockUsage = {
-				value: {
-					resetTime: null,
-					utilization: 56,
-					sevenDayUtilization: 37,
-					sevenDayResetTime: null,
-				},
-				timestamp: Date.now(),
-			};
-
-			await getUsageCached();
-			const timestamp1 = cache.blockUsage.timestamp;
-
-			await getUsageCached();
-			const timestamp2 = cache.blockUsage.timestamp;
 
 			expect(timestamp1).toBe(timestamp2);
 		});
