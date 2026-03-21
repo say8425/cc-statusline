@@ -1,5 +1,19 @@
 # Changelog
 
+## [2.1.1](https://github.com/say8425/cc-statusline/compare/v2.1.0...v2.1.1) (2026-03-21)
+
+
+### Bug Fixes
+
+* add min length and even length check for hex detection ([7e0815c](https://github.com/say8425/cc-statusline/commit/7e0815ce610e2595898dda306db41db16a0fd677))
+* parse hex-encoded macOS Keychain credentials for --show-usage ([b890984](https://github.com/say8425/cc-statusline/commit/b89098453f1130944b5dc9aa07fd5c674fff00e1)), closes [#37](https://github.com/say8425/cc-statusline/issues/37)
+* use Unix timestamp for resets_at and bump to 3.0.0 ([e330847](https://github.com/say8425/cc-statusline/commit/e3308475f62805fdbb17238f99a2eb59b3ea8bb4))
+
+
+### Reverts
+
+* restore version to 2.1.0 for release-please ([d6e679b](https://github.com/say8425/cc-statusline/commit/d6e679bcffe186f596167104f8a2336a852a50f0))
+
 ## [2.1.0](https://github.com/say8425/cc-statusline/compare/v2.0.2...v2.1.0) (2026-02-24)
 
 
