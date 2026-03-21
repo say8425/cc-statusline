@@ -1,7 +1,7 @@
 // rate_limits 윈도우 구조 (stdin에서 전달)
 export interface RateLimitWindow {
 	used_percentage: number;
-	resets_at: string;
+	resets_at: number; // Unix timestamp (초 단위)
 }
 
 // rate_limits 구조 (stdin에서 전달)

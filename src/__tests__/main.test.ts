@@ -238,11 +238,11 @@ describe("renderStatusLine", () => {
 				rateLimits: {
 					five_hour: {
 						used_percentage: 56,
-						resets_at: new Date(now + 3600000).toISOString(),
+						resets_at: Math.floor((now + 3600000) / 1000),
 					},
 					seven_day: {
 						used_percentage: 37,
-						resets_at: new Date(now + 86400000).toISOString(),
+						resets_at: Math.floor((now + 86400000) / 1000),
 					},
 				},
 			});
@@ -262,7 +262,7 @@ describe("renderStatusLine", () => {
 				rateLimits: {
 					five_hour: {
 						used_percentage: 30,
-						resets_at: resetTime.toISOString(),
+						resets_at: Math.floor(resetTime.getTime() / 1000),
 					},
 				},
 			});
@@ -280,7 +280,7 @@ describe("renderStatusLine", () => {
 				rateLimits: {
 					five_hour: {
 						used_percentage: 56,
-						resets_at: new Date(now + 3600000).toISOString(),
+						resets_at: Math.floor((now + 3600000) / 1000),
 					},
 				},
 			});
@@ -298,11 +298,11 @@ describe("renderStatusLine", () => {
 				rateLimits: {
 					five_hour: {
 						used_percentage: 56,
-						resets_at: new Date(now + 3600000).toISOString(),
+						resets_at: Math.floor((now + 3600000) / 1000),
 					},
 					seven_day: {
 						used_percentage: 37,
-						resets_at: new Date(now + 86400000).toISOString(),
+						resets_at: Math.floor((now + 86400000) / 1000),
 					},
 				},
 			});
@@ -320,7 +320,7 @@ describe("renderStatusLine", () => {
 				rateLimits: {
 					five_hour: {
 						used_percentage: 56,
-						resets_at: new Date(now + 3600000).toISOString(),
+						resets_at: Math.floor((now + 3600000) / 1000),
 					},
 				},
 			});
@@ -338,11 +338,13 @@ describe("renderStatusLine", () => {
 				rateLimits: {
 					five_hour: {
 						used_percentage: 56,
-						resets_at: new Date(now + 3600000).toISOString(),
+						resets_at: Math.floor((now + 3600000) / 1000),
 					},
 					seven_day: {
 						used_percentage: 37,
-						resets_at: new Date("2024-02-15T09:00:00+09:00").toISOString(),
+						resets_at: Math.floor(
+							new Date("2024-02-15T09:00:00+09:00").getTime() / 1000,
+						),
 					},
 				},
 			});
@@ -360,11 +362,13 @@ describe("renderStatusLine", () => {
 				rateLimits: {
 					five_hour: {
 						used_percentage: 56,
-						resets_at: new Date(now + 3600000).toISOString(),
+						resets_at: Math.floor((now + 3600000) / 1000),
 					},
 					seven_day: {
 						used_percentage: 37,
-						resets_at: new Date("2024-02-15T09:00:00+09:00").toISOString(),
+						resets_at: Math.floor(
+							new Date("2024-02-15T09:00:00+09:00").getTime() / 1000,
+						),
 					},
 				},
 			});
@@ -386,7 +390,7 @@ describe("renderStatusLine", () => {
 				rateLimits: {
 					five_hour: {
 						used_percentage: 85,
-						resets_at: new Date(now + 3600000).toISOString(),
+						resets_at: Math.floor((now + 3600000) / 1000),
 					},
 				},
 			});

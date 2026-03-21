@@ -93,6 +93,7 @@ Claude Code 기본 statusbar에 다음 정보를 추가로 표시:
 ### 수동 테스트
 
 ```bash
+# rate_limits 포함 (사용량 줄 표시)
 echo '{
   "cost":{"total_duration_ms":3600000,"total_cost_usd":0.50},
   "context_window":{
@@ -101,9 +102,19 @@ echo '{
   },
   "workspace":{"project_dir":"/Users/penguin/dev/cc-statusline"},
   "rate_limits":{
-    "five_hour":{"used_percentage":56,"resets_at":"2024-01-01T15:00:00Z"},
-    "seven_day":{"used_percentage":37,"resets_at":"2024-01-07T00:00:00Z"}
+    "five_hour":{"used_percentage":56,"resets_at":1704114000},
+    "seven_day":{"used_percentage":37,"resets_at":1704585600}
   }
+}' | bun src/index.ts
+
+# rate_limits 없음 (사용량 줄 미표시)
+echo '{
+  "cost":{"total_duration_ms":3600000,"total_cost_usd":0.50},
+  "context_window":{
+    "context_window_size":200000,
+    "current_usage":{"input_tokens":50000,"output_tokens":10000,"cache_creation_input_tokens":5000,"cache_read_input_tokens":2000}
+  },
+  "workspace":{"project_dir":"/Users/penguin/dev/cc-statusline"}
 }' | bun src/index.ts
 ```
 
@@ -132,4 +143,5 @@ bun test --coverage
 - 300ms마다 실행되므로 성능 중요
 - 공식 JSON input structure 참조: https://code.claude.com/docs/en/statusline
 - `rate_limits`는 stdin JSON에 포함되어 전달됨 (Claude Code CLI 2.1.80+)
+- `rate_limits.resets_at`는 Unix timestamp (초 단위, number)
 - `rate_limits`가 없으면 사용량 줄이 표시되지 않음
