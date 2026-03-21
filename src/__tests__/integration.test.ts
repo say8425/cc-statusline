@@ -89,11 +89,11 @@ describe("main function (integration)", () => {
 			rate_limits: {
 				five_hour: {
 					used_percentage: 56,
-					resets_at: "2024-01-01T15:00:00Z",
+					resets_at: 1704114000,
 				},
 				seven_day: {
 					used_percentage: 37,
-					resets_at: "2024-01-07T00:00:00Z",
+					resets_at: 1704585600,
 				},
 			},
 		});

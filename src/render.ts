@@ -59,7 +59,7 @@ export function renderStatusLine(ctx: RenderContext): string[] {
 
 		// 5시간 리셋 시각
 		if (ctx.rateLimits.five_hour?.resets_at) {
-			const resetTime = new Date(ctx.rateLimits.five_hour.resets_at);
+			const resetTime = new Date(ctx.rateLimits.five_hour.resets_at * 1000);
 			const h = resetTime.getHours();
 			const m = resetTime.getMinutes();
 			parts.push(`${C.WHITE}⏳ ${formatTime(h, m)}${C.RESET}`);
@@ -74,7 +74,7 @@ export function renderStatusLine(ctx: RenderContext): string[] {
 
 		// 7일 리셋 시간
 		if (ctx.rateLimits.seven_day?.resets_at) {
-			const resetTime = new Date(ctx.rateLimits.seven_day.resets_at);
+			const resetTime = new Date(ctx.rateLimits.seven_day.resets_at * 1000);
 			parts.push(`${C.WHITE}⏰ ${formatResetDate(resetTime)}${C.RESET}`);
 		}
 
