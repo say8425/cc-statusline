@@ -57,32 +57,30 @@ export function renderStatusLine(ctx: RenderContext): string[] {
 	if (ctx.rateLimits) {
 		const parts: string[] = [];
 
-		// 5시간 리셋 시각
-		if (ctx.rateLimits.five_hour?.resets_at) {
-			const resetTime = new Date(ctx.rateLimits.five_hour.resets_at * 1000);
-			const h = resetTime.getHours();
-			const m = resetTime.getMinutes();
-			parts.push(`${C.WHITE}⏳ ${formatTime(h, m)}${C.RESET}`);
-		}
-
-		// 5시간 사용량
+		// 5시간 사용량 및 리셋 시각
 		if (ctx.rateLimits.five_hour) {
-			const pct = ctx.rateLimits.five_hour.used_percentage;
-			const usageColor = getUsageColor(pct);
-			parts.push(`${usageColor}📊 ${Math.round(pct)}/100${C.RESET}`);
+			const { resets_at, used_percentage } = ctx.rateLimits.five_hour;
+			if (resets_at) {
+				const resetTime = new Date(resets_at * 1000);
+				const h = resetTime.getHours();
+				const m = resetTime.getMinutes();
+				parts.push(`${C.WHITE}⏳ ${formatTime(h, m)}${C.RESET}`);
+			}
+			const usageColor = getUsageColor(used_percentage);
+			parts.push(
+				`${usageColor}📊 ${Math.round(used_percentage)}/100${C.RESET}`,
+			);
 		}
 
-		// 7일 리셋 시간
-		if (ctx.rateLimits.seven_day?.resets_at) {
-			const resetTime = new Date(ctx.rateLimits.seven_day.resets_at * 1000);
-			parts.push(`${C.WHITE}⏰ ${formatResetDate(resetTime)}${C.RESET}`);
-		}
-
-		// 7일 사용량
+		// 7일 사용량 및 리셋 시각
 		if (ctx.rateLimits.seven_day) {
-			const pct = ctx.rateLimits.seven_day.used_percentage;
-			const weekColor = getUsageColor(pct);
-			parts.push(`${weekColor}📅 ${Math.round(pct)}/100${C.RESET}`);
+			const { resets_at, used_percentage } = ctx.rateLimits.seven_day;
+			if (resets_at) {
+				const resetTime = new Date(resets_at * 1000);
+				parts.push(`${C.WHITE}⏰ ${formatResetDate(resetTime)}${C.RESET}`);
+			}
+			const weekColor = getUsageColor(used_percentage);
+			parts.push(`${weekColor}📅 ${Math.round(used_percentage)}/100${C.RESET}`);
 		}
 
 		if (parts.length > 0) {
