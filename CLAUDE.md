@@ -51,7 +51,7 @@ cc-statusline/
 | Git 브랜치 | `git branch --show-current` |
 | Git diff | `git diff --shortstat` |
 | PR URL | `gh pr view` |
-| 메인 프로젝트명 | `workspace.git_worktree` (2.1.98+) → `git rev-parse --git-common-dir` (폴백) |
+| 메인 프로젝트명 | `git rev-parse --git-common-dir` (워크트리) |
 | 블록 사용량 | stdin `rate_limits.five_hour.used_percentage` |
 | 리셋 타이머 | stdin `rate_limits.five_hour.resets_at` |
 | 주간 사용량 | stdin `rate_limits.seven_day.used_percentage` |

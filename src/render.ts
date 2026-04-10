@@ -18,20 +18,6 @@ export function renderStatusLine(ctx: RenderContext): string[] {
 	// 3. 비용
 	const costUsd = ctx.claudeJson.cost?.total_cost_usd || 0;
 
-	// 4. Context 토큰 및 사용률 (used_percentage가 없으면 표시 안 함)
-	const usage = ctx.claudeJson.context_window?.current_usage;
-	const usedPercentage = ctx.claudeJson.context_window?.used_percentage;
-	const hasContextInfo = usedPercentage != null;
-
-	const totalTokens = usage
-		? usage.input_tokens +
-			usage.output_tokens +
-			usage.cache_creation_input_tokens +
-			usage.cache_read_input_tokens
-		: 0;
-	const contextPct = hasContextInfo ? Math.round(usedPercentage) : 0;
-	const ctxColor = getUsageColor(contextPct);
-
 	// 1번째 줄: 폴더 | 워크트리 | 브랜치
 	let line1: string;
 	if (ctx.mainProjectName) {
@@ -49,7 +35,17 @@ export function renderStatusLine(ctx: RenderContext): string[] {
 	let line2 =
 		`${C.WHITE}⏱️ ${formatTime(sessionHrs, sessionMins)}${C.RESET}` +
 		` | ${C.WHITE}💰 $${costUsd.toFixed(2)}${C.RESET}`;
-	if (hasContextInfo) {
+	const usedPercentage = ctx.claudeJson.context_window?.used_percentage;
+	if (usedPercentage != null) {
+		const usage = ctx.claudeJson.context_window?.current_usage;
+		const totalTokens = usage
+			? usage.input_tokens +
+				usage.output_tokens +
+				usage.cache_creation_input_tokens +
+				usage.cache_read_input_tokens
+			: 0;
+		const contextPct = Math.round(usedPercentage);
+		const ctxColor = getUsageColor(contextPct);
 		line2 += ` | ${ctxColor}🧠 ${formatNumber(totalTokens)} (${contextPct}%)${C.RESET}`;
 	}
 	lines.push(line2);

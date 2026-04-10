@@ -200,6 +200,30 @@ describe("renderStatusLine", () => {
 			expect(lines[1]).not.toContain("%");
 		});
 
+		test("shows context segment when used_percentage is 0", () => {
+			// Guard against `!usedPercentage` truthy-check regression
+			const ctx = createRenderContext({
+				fullClaudeJson: {
+					cost: { total_duration_ms: 0, total_cost_usd: 0 },
+					context_window: {
+						context_window_size: 200000,
+						used_percentage: 0,
+						current_usage: {
+							input_tokens: 0,
+							output_tokens: 0,
+							cache_creation_input_tokens: 0,
+							cache_read_input_tokens: 0,
+						},
+					},
+					workspace: { project_dir: "/test", current_dir: "/test" },
+				},
+			});
+			const lines = renderStatusLine(ctx);
+
+			expect(lines[1]).toContain("🧠");
+			expect(lines[1]).toContain("0 (0%)");
+		});
+
 		test("omits context segment when used_percentage is null", () => {
 			const ctx = createRenderContext({
 				fullClaudeJson: {
