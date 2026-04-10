@@ -30,7 +30,7 @@ export interface ClaudeStatusInput {
 		current_dir: string;
 		project_dir: string;
 		// Claude Code 2.1.98+ — linked git worktree name. Declared for type
-		// completeness; main project name is still derived via git_rev-parse
+		// completeness; main project name is still derived via git rev-parse
 		// because this field carries a name, not a path.
 		git_worktree?: string;
 	};
