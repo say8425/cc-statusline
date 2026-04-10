@@ -18,6 +18,7 @@ export interface ClaudeStatusInput {
 	};
 	context_window: {
 		context_window_size: number;
+		used_percentage?: number;
 		current_usage: {
 			input_tokens: number;
 			output_tokens: number;
@@ -28,6 +29,7 @@ export interface ClaudeStatusInput {
 	workspace: {
 		current_dir: string;
 		project_dir: string;
+		git_worktree?: string;
 	};
 	rate_limits?: RateLimits;
 }
