@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.2.0](https://github.com/say8425/cc-statusline/compare/v2.1.1...v2.2.0) (2026-04-10)
+
+
+### Features
+
+* use workspace.git_worktree and context_window.used_percentage from JSON input ([635383a](https://github.com/say8425/cc-statusline/commit/635383ab6feb0f5cf5d544b11f52c045ac5c5679)), closes [#42](https://github.com/say8425/cc-statusline/issues/42)
+
 ## [2.1.1](https://github.com/say8425/cc-statusline/compare/v2.1.0...v2.1.1) (2026-03-21)
 
 
