@@ -47,11 +47,11 @@ cc-statusline/
 | 세션 시간 | `cost.total_duration_ms` |
 | 세션 비용 | `cost.total_cost_usd` |
 | Context 토큰 | `context_window.current_usage.*` |
-| Context % | `current_usage / context_window_size` |
+| Context % | `context_window.used_percentage` (없으면 미표시) |
 | Git 브랜치 | `git branch --show-current` |
 | Git diff | `git diff --shortstat` |
 | PR URL | `gh pr view` |
-| 메인 프로젝트명 | `git rev-parse --git-common-dir` (워크트리) |
+| 메인 프로젝트명 | `workspace.git_worktree` (2.1.98+) → `git rev-parse --git-common-dir` (폴백) |
 | 블록 사용량 | stdin `rate_limits.five_hour.used_percentage` |
 | 리셋 타이머 | stdin `rate_limits.five_hour.resets_at` |
 | 주간 사용량 | stdin `rate_limits.seven_day.used_percentage` |

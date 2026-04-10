@@ -70,6 +70,91 @@ describe("main function (integration)", () => {
 		}
 	});
 
+	test("main function accepts workspace.git_worktree field in input", async () => {
+		const testInput = JSON.stringify({
+			cost: { total_duration_ms: 0, total_cost_usd: 0 },
+			context_window: {
+				context_window_size: 200000,
+				current_usage: {
+					input_tokens: 0,
+					output_tokens: 0,
+					cache_creation_input_tokens: 0,
+					cache_read_input_tokens: 0,
+				},
+			},
+			workspace: {
+				project_dir: "/test/project",
+				current_dir: "/test/project",
+				git_worktree: "rosy-thimble",
+			},
+		});
+
+		const encoder = new TextEncoder();
+		const stream = new ReadableStream({
+			start(controller) {
+				controller.enqueue(encoder.encode(testInput));
+				controller.close();
+			},
+		});
+
+		const originalStream = Bun.stdin.stream;
+		// @ts-expect-error - mocking stdin
+		Bun.stdin.stream = () => stream;
+
+		try {
+			await main();
+
+			// Should not throw and should output at least 2 lines
+			expect(logs.length).toBeGreaterThanOrEqual(2);
+			expect(logs[0]).toContain("project");
+		} finally {
+			// @ts-expect-error - restoring stdin
+			Bun.stdin.stream = originalStream;
+		}
+	});
+
+	test("main function uses used_percentage from context_window", async () => {
+		const testInput = JSON.stringify({
+			cost: { total_duration_ms: 3600000, total_cost_usd: 0.5 },
+			context_window: {
+				context_window_size: 200000,
+				used_percentage: 42,
+				current_usage: {
+					input_tokens: 50000,
+					output_tokens: 10000,
+					cache_creation_input_tokens: 5000,
+					cache_read_input_tokens: 2000,
+				},
+			},
+			workspace: {
+				project_dir: "/test/project",
+				current_dir: "/test/project",
+			},
+		});
+
+		const encoder = new TextEncoder();
+		const stream = new ReadableStream({
+			start(controller) {
+				controller.enqueue(encoder.encode(testInput));
+				controller.close();
+			},
+		});
+
+		const originalStream = Bun.stdin.stream;
+		// @ts-expect-error - mocking stdin
+		Bun.stdin.stream = () => stream;
+
+		try {
+			await main();
+
+			// Should use pre-calculated 42% instead of manual calculation (34%)
+			expect(logs[1]).toContain("42%");
+		} finally {
+			// @ts-expect-error - restoring stdin
+			Bun.stdin.stream = originalStream;
+		}
+	});
+
 	test("main function shows usage when rate_limits is provided in stdin", async () => {
 		const testInput = JSON.stringify({
 			cost: { total_duration_ms: 0, total_cost_usd: 0 },

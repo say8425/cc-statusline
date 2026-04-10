@@ -15,6 +15,7 @@ function createClaudeInput(
 		},
 		context_window: {
 			context_window_size: 200000,
+			used_percentage: 34,
 			current_usage: {
 				input_tokens: 50000,
 				output_tokens: 10000,
@@ -153,12 +154,82 @@ describe("renderStatusLine", () => {
 		});
 	});
 
+	describe("used_percentage from JSON", () => {
+		test("shows context segment when used_percentage is provided", () => {
+			const ctx = createRenderContext({
+				fullClaudeJson: {
+					cost: { total_duration_ms: 0, total_cost_usd: 0 },
+					context_window: {
+						context_window_size: 200000,
+						used_percentage: 42,
+						current_usage: {
+							input_tokens: 50000,
+							output_tokens: 10000,
+							cache_creation_input_tokens: 5000,
+							cache_read_input_tokens: 2000,
+						},
+					},
+					workspace: { project_dir: "/test", current_dir: "/test" },
+				},
+			});
+			const lines = renderStatusLine(ctx);
+
+			expect(lines[1]).toContain("🧠");
+			expect(lines[1]).toContain("42%");
+		});
+
+		test("omits context segment when used_percentage is absent", () => {
+			const ctx = createRenderContext({
+				fullClaudeJson: {
+					cost: { total_duration_ms: 0, total_cost_usd: 0 },
+					context_window: {
+						context_window_size: 200000,
+						current_usage: {
+							input_tokens: 50000,
+							output_tokens: 10000,
+							cache_creation_input_tokens: 5000,
+							cache_read_input_tokens: 2000,
+						},
+					},
+					workspace: { project_dir: "/test", current_dir: "/test" },
+				},
+			});
+			const lines = renderStatusLine(ctx);
+
+			expect(lines[1]).not.toContain("🧠");
+			expect(lines[1]).not.toContain("%");
+		});
+
+		test("omits context segment when used_percentage is null", () => {
+			const ctx = createRenderContext({
+				fullClaudeJson: {
+					cost: { total_duration_ms: 0, total_cost_usd: 0 },
+					context_window: {
+						context_window_size: 200000,
+						used_percentage: null as unknown as number,
+						current_usage: {
+							input_tokens: 100000,
+							output_tokens: 0,
+							cache_creation_input_tokens: 0,
+							cache_read_input_tokens: 0,
+						},
+					},
+					workspace: { project_dir: "/test", current_dir: "/test" },
+				},
+			});
+			const lines = renderStatusLine(ctx);
+
+			expect(lines[1]).not.toContain("🧠");
+		});
+	});
+
 	describe("context usage colors", () => {
 		test("uses WHITE for low usage (< 50%)", () => {
 			const ctx = createRenderContext({
 				claudeJson: {
 					context_window: {
 						context_window_size: 200000,
+						used_percentage: 20,
 						current_usage: {
 							input_tokens: 40000,
 							output_tokens: 0,
@@ -170,7 +241,6 @@ describe("renderStatusLine", () => {
 			});
 			const lines = renderStatusLine(ctx);
 
-			// 40000 / 200000 = 20%
 			expect(lines[1]).toContain(C.WHITE);
 			expect(lines[1]).toContain("20%");
 		});
@@ -180,6 +250,7 @@ describe("renderStatusLine", () => {
 				claudeJson: {
 					context_window: {
 						context_window_size: 200000,
+						used_percentage: 60,
 						current_usage: {
 							input_tokens: 120000,
 							output_tokens: 0,
@@ -191,7 +262,6 @@ describe("renderStatusLine", () => {
 			});
 			const lines = renderStatusLine(ctx);
 
-			// 120000 / 200000 = 60%
 			expect(lines[1]).toContain(C.YELLOW);
 			expect(lines[1]).toContain("60%");
 		});
@@ -201,6 +271,7 @@ describe("renderStatusLine", () => {
 				claudeJson: {
 					context_window: {
 						context_window_size: 200000,
+						used_percentage: 90,
 						current_usage: {
 							input_tokens: 180000,
 							output_tokens: 0,
@@ -212,7 +283,6 @@ describe("renderStatusLine", () => {
 			});
 			const lines = renderStatusLine(ctx);
 
-			// 180000 / 200000 = 90%
 			expect(lines[1]).toContain(C.RED);
 			expect(lines[1]).toContain("90%");
 		});
@@ -540,7 +610,8 @@ describe("renderStatusLine", () => {
 			});
 
 			const lines = renderStatusLine(ctx);
-			expect(lines[1]).toContain("0 (0%)");
+			// used_percentage가 없으므로 context 세그먼트 표시 안 함
+			expect(lines[1]).not.toContain("🧠");
 		});
 
 		test("handles null rateLimits", () => {
