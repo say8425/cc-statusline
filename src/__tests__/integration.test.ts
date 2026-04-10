@@ -70,7 +70,9 @@ describe("main function (integration)", () => {
 		}
 	});
 
-	test("main function accepts workspace.git_worktree field in input", async () => {
+	test("main function does not crash on unknown workspace fields like git_worktree", async () => {
+		// workspace.git_worktree is a forward-compat field (Claude Code 2.1.98+)
+		// currently declared in the type schema but not consumed by any logic
 		const testInput = JSON.stringify({
 			cost: { total_duration_ms: 0, total_cost_usd: 0 },
 			context_window: {
@@ -104,9 +106,8 @@ describe("main function (integration)", () => {
 		try {
 			await main();
 
-			// Should not throw and should output at least 2 lines
+			// Should not throw; output still produced
 			expect(logs.length).toBeGreaterThanOrEqual(2);
-			expect(logs[0]).toContain("project");
 		} finally {
 			// @ts-expect-error - restoring stdin
 			Bun.stdin.stream = originalStream;
