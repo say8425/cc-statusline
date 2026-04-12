@@ -59,9 +59,9 @@ Add the following to `~/.claude/settings.json`:
 - **Worktree Support**: Shows real project name when running in a `cc --worktree` session
 - **TrueColor**: Dynamic colors based on thresholds
 - **Limit Reset Time**: Reset time display (HH:MM)
-- **Block Usage**: 5-hour utilization percentage (from server API)
+- **Block Usage**: 5-hour utilization percentage
 - **Weekly Reset Timer**: Weekly limit reset time (MM/DD HH:MM)
-- **Weekly Usage**: 7-day utilization percentage (from server API)
+- **Weekly Usage**: 7-day utilization percentage
 
 ## Emoji Guide
 
@@ -82,36 +82,21 @@ Add the following to `~/.claude/settings.json`:
 
 ## Usage Metrics
 
-Shows usage information from the Anthropic Usage API.
-
-> [!WARNING]
-> The `--show-usage` feature uses an unofficial, reverse-engineered Anthropic API endpoint to retrieve usage data. This is not an officially supported API, and may break or change at any time without notice. **Use at your own risk.** The author assumes no responsibility for any consequences, including but not limited to account restrictions or service disruptions, that may arise from the use of this feature.
-
-> [!NOTE]
-> This feature is **macOS only** as it reads the OAuth token from macOS Keychain (`Claude Code-credentials`).
+Shows usage information from Claude Code's stdin JSON input.
 
 ### How It Works
 
-Calls the Anthropic Usage API (`/api/oauth/usage`) using the OAuth access token from macOS Keychain to retrieve:
+Claude Code passes `rate_limits` in the stdin JSON input (CLI 2.1.80+):
 
-1. **5-hour utilization** - Server-calculated usage percentage for the current billing block
-2. **7-day utilization** - Server-calculated weekly usage percentage
-3. **Reset timer** - Exact reset time from the server (`five_hour.resets_at`)
-4. **Weekly reset timer** - Weekly limit reset time (`seven_day.resets_at`), shown as `MM/DD HH:MM` (e.g., `02/15 17:00`)
+1. **5-hour utilization** - Usage percentage for the current billing block (`rate_limits.five_hour.used_percentage`)
+2. **7-day utilization** - Weekly usage percentage (`rate_limits.seven_day.used_percentage`)
+3. **Reset timer** - Exact reset time (`rate_limits.five_hour.resets_at`), shown as `HH:MM`
+4. **Weekly reset timer** - Weekly limit reset time (`rate_limits.seven_day.resets_at`), shown as `MM/DD HH:MM` (e.g., `02/15 17:00`)
 
-### Enable
+Usage metrics are **automatically displayed** when `rate_limits` is present in the stdin JSON. No additional flags or configuration needed.
 
-Usage metrics are **hidden by default**. To enable, use the `--show-usage` flag:
-
-```json
-{
-  "statusLine": {
-    "type": "command",
-    "command": "bunx @say8425/cc-statusline --show-usage",
-    "padding": 0
-  }
-}
-```
+> [!NOTE]
+> `rate_limits` is only available for Claude.ai subscribers (Pro/Max) after the first API response. See the [official statusline docs](https://code.claude.com/docs/en/statusline) for the full JSON schema.
 
 ## Dependencies
 

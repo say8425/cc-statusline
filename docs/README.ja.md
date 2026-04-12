@@ -37,6 +37,13 @@ Claude Code用カスタムステータスライン。
 
 ![scenario3_diff_pr](scenario3_diff_pr.png)
 
+### ワークツリー
+
+![worktree_diff](worktree_diff.png)
+
+### ワークツリー + 使用量メトリクス
+
+![worktree_usage](worktree_usage.png)
 
 ### 使用量メトリクス
 
@@ -51,15 +58,17 @@ Claude Code用カスタムステータスライン。
 - **PR URL**: クリック可能なOSC 8ハイパーリンク
 - **TrueColor**: しきい値に基づく動的カラー
 - **リセット時刻**: 5時間使用量リセット時刻（HH:MM）
-- **ブロック使用量**: 5時間使用率（サーバーAPI基準）
+- **ワークツリーサポート**: `cc --worktree`セッションで実際のプロジェクト名を表示
+- **ブロック使用量**: 5時間使用率
 - **週間リセットタイマー**: 7日使用量リセット時刻（MM/DD HH:MM）
-- **週間使用量**: 7日使用率（サーバーAPI基準）
+- **週間使用量**: 7日使用率
 
 ## 絵文字ガイド
 
 | 絵文字 | 説明                         |
 | ------ | ---------------------------- |
 | 📁     | プロジェクトフォルダ名       |
+| 🌲     | ワークツリー名（ワークツリーセッションで表示） |
 | 🌿     | 現在のGitブランチ            |
 | ⏱️     | セッション経過時間           |
 | 💰     | セッションコスト（USD）      |
@@ -73,36 +82,21 @@ Claude Code用カスタムステータスライン。
 
 ## 使用量メトリクス
 
-Anthropic Usage APIから使用量情報を取得して表示します。
-
-> [!WARNING]
-> `--show-usage`機能は、非公式にリバースエンジニアリングされたAnthropic APIエンドポイントを使用して使用量データを取得します。これは公式にサポートされたAPIではなく、予告なく変更または廃止される可能性があります。**自己責任でご使用ください。**この機能の使用により発生するアカウント制限やサービス中断等のいかなる結果についても、作者は責任を負いません。
-
-> [!NOTE]
-> この機能はmacOS Keychain（`Claude Code-credentials`）からOAuthトークンを読み取るため、**macOS専用**です。
+Claude Codeのstdin JSON入力から使用量情報を表示します。
 
 ### 動作方法
 
-macOS KeychainのOAuthアクセストークンを使用してAnthropic Usage API（`/api/oauth/usage`）を呼び出します：
+Claude CodeがJSON入力で`rate_limits`を渡します（CLI 2.1.80+）：
 
-1. **5時間使用率** - 現在のビリングブロックのサーバー計算使用パーセンテージ
-2. **7日使用率** - サーバー計算の週間使用パーセンテージ
-3. **リセットタイマー** - サーバーから提供される正確なリセット時間（`five_hour.resets_at`）
-4. **週間リセットタイマー** - 7日使用量リセット時刻（`seven_day.resets_at`）、`MM/DD HH:MM`形式（例：`02/15 17:00`）
+1. **5時間使用率** - 現在のビリングブロックの使用パーセンテージ（`rate_limits.five_hour.used_percentage`）
+2. **7日使用率** - 週間使用パーセンテージ（`rate_limits.seven_day.used_percentage`）
+3. **リセットタイマー** - 正確なリセット時刻（`rate_limits.five_hour.resets_at`）、`HH:MM`形式
+4. **週間リセットタイマー** - 週間制限リセット時刻（`rate_limits.seven_day.resets_at`）、`MM/DD HH:MM`形式（例：`02/15 17:00`）
 
-### 有効化
+使用量メトリクスはstdin JSONに`rate_limits`が含まれている場合、**自動的に表示**されます。追加のフラグや設定は不要です。
 
-使用量メトリクスは**デフォルトで非表示**です。有効にするには、`--show-usage`フラグを使用してください：
-
-```json
-{
-  "statusLine": {
-    "type": "command",
-    "command": "bunx @say8425/cc-statusline --show-usage",
-    "padding": 0
-  }
-}
-```
+> [!NOTE]
+> `rate_limits`はClaude.aiサブスクライバー（Pro/Max）のみ、最初のAPIレスポンス後に提供されます。完全なJSONスキーマは[公式statuslineドキュメント](https://code.claude.com/docs/en/statusline)を参照してください。
 
 ## 依存関係
 
