@@ -37,6 +37,13 @@ Agrega lo siguiente a `~/.claude/settings.json`:
 
 ![scenario3_diff_pr](scenario3_diff_pr.png)
 
+### Worktree
+
+![worktree_diff](worktree_diff.png)
+
+### Worktree + Métricas de Uso
+
+![worktree_usage](worktree_usage.png)
 
 ### Métricas de Uso
 
@@ -51,15 +58,17 @@ Agrega lo siguiente a `~/.claude/settings.json`:
 - **PR URL**: Hipervínculo OSC 8 clickeable
 - **TrueColor**: Colores dinámicos basados en umbrales
 - **Hora de reinicio**: Hora de reinicio del límite de 5 horas (HH:MM)
-- **Uso del bloque**: Porcentaje de utilización de 5 horas (desde API del servidor)
+- **Soporte de Worktree**: Muestra el nombre real del proyecto en sesiones `cc --worktree`
+- **Uso del bloque**: Porcentaje de utilización de 5 horas
 - **Temporizador de reinicio semanal**: Tiempo de reinicio del límite semanal (MM/DD HH:MM)
-- **Uso semanal**: Porcentaje de utilización de 7 días (desde API del servidor)
+- **Uso semanal**: Porcentaje de utilización de 7 días
 
 ## Guía de Emojis
 
 | Emoji | Descripción                          |
 | ----- | ------------------------------------ |
 | 📁    | Nombre de la carpeta del proyecto    |
+| 🌲    | Nombre del worktree (en sesiones worktree) |
 | 🌿    | Rama Git actual                      |
 | ⏱️    | Tiempo transcurrido de sesión        |
 | 💰    | Costo de sesión en USD               |
@@ -73,36 +82,21 @@ Agrega lo siguiente a `~/.claude/settings.json`:
 
 ## Métricas de Uso
 
-Muestra información de uso desde la API de Uso de Anthropic.
-
-> [!WARNING]
-> La función `--show-usage` utiliza un endpoint no oficial de la API de Anthropic, obtenido mediante ingeniería inversa, para recuperar datos de uso. Esta no es una API oficialmente soportada y puede cambiar o dejar de funcionar en cualquier momento sin previo aviso. **Úselo bajo su propio riesgo.** El autor no asume responsabilidad por ninguna consecuencia, incluyendo pero no limitado a restricciones de cuenta o interrupciones del servicio, que puedan surgir del uso de esta función.
-
-> [!NOTE]
-> Esta función es **solo para macOS** ya que lee el token OAuth del macOS Keychain (`Claude Code-credentials`).
+Muestra información de uso desde la entrada JSON stdin de Claude Code.
 
 ### Cómo Funciona
 
-Llama a la API de Uso de Anthropic (`/api/oauth/usage`) usando el token de acceso OAuth del macOS Keychain para obtener:
+Claude Code pasa `rate_limits` en la entrada JSON stdin (CLI 2.1.80+):
 
-1. **Utilización de 5 horas** - Porcentaje de uso calculado por el servidor para el bloque de facturación actual
-2. **Utilización de 7 días** - Porcentaje de uso semanal calculado por el servidor
-3. **Temporizador de reinicio** - Tiempo exacto de reinicio desde el servidor (`five_hour.resets_at`)
-4. **Temporizador de reinicio semanal** - Tiempo de reinicio del límite semanal (`seven_day.resets_at`), formato `MM/DD HH:MM` (ej., `02/15 17:00`)
+1. **Utilización de 5 horas** - Porcentaje de uso del bloque de facturación actual (`rate_limits.five_hour.used_percentage`)
+2. **Utilización de 7 días** - Porcentaje de uso semanal (`rate_limits.seven_day.used_percentage`)
+3. **Temporizador de reinicio** - Tiempo exacto de reinicio (`rate_limits.five_hour.resets_at`), formato `HH:MM`
+4. **Temporizador de reinicio semanal** - Tiempo de reinicio del límite semanal (`rate_limits.seven_day.resets_at`), formato `MM/DD HH:MM` (ej., `02/15 17:00`)
 
-### Activar
+Las métricas de uso se **muestran automáticamente** cuando `rate_limits` está presente en el JSON stdin. No se necesitan flags ni configuración adicional.
 
-Las métricas de uso están **ocultas por defecto**. Para activarlas, use la bandera `--show-usage`:
-
-```json
-{
-  "statusLine": {
-    "type": "command",
-    "command": "bunx @say8425/cc-statusline --show-usage",
-    "padding": 0
-  }
-}
-```
+> [!NOTE]
+> `rate_limits` solo está disponible para suscriptores de Claude.ai (Pro/Max) después de la primera respuesta de la API. Consulte la [documentación oficial de statusline](https://code.claude.com/docs/en/statusline) para el esquema JSON completo.
 
 ## Dependencias
 

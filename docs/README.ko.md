@@ -37,6 +37,13 @@ Claude Code를 위한 커스텀 상태표시줄.
 
 ![scenario3_diff_pr](scenario3_diff_pr.png)
 
+### 워크트리
+
+![worktree_diff](worktree_diff.png)
+
+### 워크트리 + 사용량 지표
+
+![worktree_usage](worktree_usage.png)
 
 ### 사용량 지표
 
@@ -51,15 +58,17 @@ Claude Code를 위한 커스텀 상태표시줄.
 - **PR URL**: 클릭 가능한 OSC 8 하이퍼링크
 - **TrueColor**: 임계값에 따른 동적 색상
 - **리셋 시각**: 5시간 사용량 리셋 시각 (HH:MM)
-- **블록 사용량**: 5시간 사용률 (서버 API 기반)
+- **워크트리 지원**: `cc --worktree` 세션에서 실제 프로젝트 이름 표시
+- **블록 사용량**: 5시간 사용률
 - **주간 리셋 타이머**: 7일 사용량 리셋 시각 (MM/DD HH:MM)
-- **주간 사용량**: 7일 사용률 (서버 API 기반)
+- **주간 사용량**: 7일 사용률
 
 ## Emoji 가이드
 
 | Emoji | 설명                   |
 | ----- | ---------------------- |
 | 📁    | 프로젝트 폴더명        |
+| 🌲    | 워크트리 이름 (워크트리 세션에서 표시) |
 | 🌿    | 현재 Git 브랜치        |
 | ⏱️    | 세션 경과 시간         |
 | 💰    | 세션 비용 (USD)        |
@@ -73,36 +82,21 @@ Claude Code를 위한 커스텀 상태표시줄.
 
 ## 사용량 지표
 
-Anthropic Usage API에서 사용량 정보를 가져와 표시합니다.
-
-> [!WARNING]
-> `--show-usage` 기능은 비공식적으로 리버스 엔지니어링된 Anthropic API 엔드포인트를 사용하여 사용량 데이터를 가져옵니다. 이는 공식 지원 API가 아니며, 예고 없이 변경되거나 중단될 수 있습니다. **사용에 따른 책임은 본인에게 있습니다.** 이 기능 사용으로 인해 발생할 수 있는 계정 제한이나 서비스 중단 등 모든 결과에 대해 저자는 책임을 지지 않습니다.
-
-> [!NOTE]
-> 이 기능은 macOS Keychain(`Claude Code-credentials`)에서 OAuth 토큰을 읽기 때문에 **macOS 전용**입니다.
+Claude Code의 stdin JSON 입력에서 사용량 정보를 표시합니다.
 
 ### 동작 방식
 
-macOS Keychain의 OAuth 액세스 토큰을 사용하여 Anthropic Usage API(`/api/oauth/usage`)를 호출합니다:
+Claude Code가 stdin JSON 입력으로 `rate_limits`를 전달합니다 (CLI 2.1.80+):
 
-1. **5시간 사용률** - 현재 빌링 블록의 서버 계산 사용 백분율
-2. **7일 사용률** - 서버 계산 주간 사용 백분율
-3. **리셋 타이머** - 서버에서 제공하는 정확한 리셋 시간 (`five_hour.resets_at`)
-4. **주간 리셋 타이머** - 7일 사용량 리셋 시각 (`seven_day.resets_at`), `MM/DD HH:MM` 포맷 (예: `02/15 17:00`)
+1. **5시간 사용률** - 현재 빌링 블록의 사용 백분율 (`rate_limits.five_hour.used_percentage`)
+2. **7일 사용률** - 주간 사용 백분율 (`rate_limits.seven_day.used_percentage`)
+3. **리셋 타이머** - 정확한 리셋 시각 (`rate_limits.five_hour.resets_at`), `HH:MM` 포맷
+4. **주간 리셋 타이머** - 주간 제한 리셋 시각 (`rate_limits.seven_day.resets_at`), `MM/DD HH:MM` 포맷 (예: `02/15 17:00`)
 
-### 활성화
+사용량 지표는 stdin JSON에 `rate_limits`가 포함되어 있으면 **자동으로 표시**됩니다. 추가 플래그나 설정이 필요 없습니다.
 
-사용량 지표는 **기본적으로 숨겨져 있습니다**. 활성화하려면 `--show-usage` 플래그를 사용하세요:
-
-```json
-{
-  "statusLine": {
-    "type": "command",
-    "command": "bunx @say8425/cc-statusline --show-usage",
-    "padding": 0
-  }
-}
-```
+> [!NOTE]
+> `rate_limits`는 Claude.ai 구독자(Pro/Max)에게만 첫 API 응답 이후 제공됩니다. 전체 JSON 스키마는 [공식 statusline 문서](https://code.claude.com/docs/en/statusline)를 참조하세요.
 
 ## 의존성
 

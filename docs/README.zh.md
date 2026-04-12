@@ -37,6 +37,13 @@ Claude Code 自定义状态栏。
 
 ![scenario3_diff_pr](scenario3_diff_pr.png)
 
+### 工作树
+
+![worktree_diff](worktree_diff.png)
+
+### 工作树 + 使用量指标
+
+![worktree_usage](worktree_usage.png)
 
 ### 使用量指标
 
@@ -51,15 +58,17 @@ Claude Code 自定义状态栏。
 - **PR URL**: 可点击的 OSC 8 超链接
 - **TrueColor**: 基于阈值的动态颜色
 - **重置时间**: 5小时使用量重置时间（HH:MM）
-- **块使用量**: 5小时使用率（来自服务器 API）
+- **工作树支持**: 在 `cc --worktree` 会话中显示真实项目名称
+- **块使用量**: 5小时使用率
 - **每周重置计时器**: 7天使用量重置时间（MM/DD HH:MM）
-- **周使用量**: 7天使用率（来自服务器 API）
+- **周使用量**: 7天使用率
 
 ## 表情符号指南
 
 | 表情 | 说明                |
 | ---- | ------------------- |
 | 📁   | 项目文件夹名        |
+| 🌲   | 工作树名称（工作树会话中显示） |
 | 🌿   | 当前 Git 分支       |
 | ⏱️   | 会话经过时间        |
 | 💰   | 会话费用（美元）    |
@@ -73,36 +82,21 @@ Claude Code 自定义状态栏。
 
 ## 使用量指标
 
-从 Anthropic Usage API 获取并显示使用量信息。
-
-> [!WARNING]
-> `--show-usage` 功能使用非官方的逆向工程 Anthropic API 端点来获取使用量数据。这不是官方支持的 API，可能随时变更或停止，恕不另行通知。**使用风险自负。**作者对因使用此功能而可能导致的任何后果（包括但不限于账户限制或服务中断）不承担任何责任。
-
-> [!NOTE]
-> 此功能需要从 macOS Keychain（`Claude Code-credentials`）读取 OAuth 令牌，因此**仅限 macOS**。
+显示来自 Claude Code stdin JSON 输入的使用量信息。
 
 ### 工作原理
 
-使用 macOS Keychain 中的 OAuth 访问令牌调用 Anthropic Usage API（`/api/oauth/usage`）：
+Claude Code 通过 stdin JSON 输入传递 `rate_limits`（CLI 2.1.80+）：
 
-1. **5小时使用率** - 当前计费块的服务器计算使用百分比
-2. **7天使用率** - 服务器计算的周使用百分比
-3. **重置计时器** - 服务器提供的精确重置时间（`five_hour.resets_at`）
-4. **每周重置计时器** - 7天使用量重置时间（`seven_day.resets_at`），`MM/DD HH:MM` 格式（如 `02/15 17:00`）
+1. **5小时使用率** - 当前计费块的使用百分比（`rate_limits.five_hour.used_percentage`）
+2. **7天使用率** - 周使用百分比（`rate_limits.seven_day.used_percentage`）
+3. **重置计时器** - 精确重置时间（`rate_limits.five_hour.resets_at`），`HH:MM` 格式
+4. **每周重置计时器** - 周限制重置时间（`rate_limits.seven_day.resets_at`），`MM/DD HH:MM` 格式（如 `02/15 17:00`）
 
-### 启用
+当 stdin JSON 中包含 `rate_limits` 时，使用量指标会**自动显示**。无需额外标志或配置。
 
-使用量指标**默认隐藏**。要启用，请使用 `--show-usage` 标志：
-
-```json
-{
-  "statusLine": {
-    "type": "command",
-    "command": "bunx @say8425/cc-statusline --show-usage",
-    "padding": 0
-  }
-}
-```
+> [!NOTE]
+> `rate_limits` 仅在 Claude.ai 订阅用户（Pro/Max）首次 API 响应后提供。完整 JSON schema 请参阅[官方 statusline 文档](https://code.claude.com/docs/en/statusline)。
 
 ## 依赖项
 
