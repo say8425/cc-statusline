@@ -40,7 +40,7 @@ cc-statusline/
 
 **기술 스택**: Bun, TypeScript, gh CLI
 
-**데이터 소스**:
+**데이터 소스** (stdin JSON을 우선 참조, 공식 스키마: https://code.claude.com/docs/en/statusline):
 | 데이터 | 출처 |
 |--------|------|
 | 프로젝트 폴더 | `workspace.project_dir` |
@@ -48,14 +48,14 @@ cc-statusline/
 | 세션 비용 | `cost.total_cost_usd` |
 | Context 토큰 | `context_window.current_usage.*` |
 | Context % | `context_window.used_percentage` (없으면 미표시) |
+| 블록 사용량 | `rate_limits.five_hour.used_percentage` |
+| 리셋 타이머 | `rate_limits.five_hour.resets_at` |
+| 주간 사용량 | `rate_limits.seven_day.used_percentage` |
+| 주간 리셋 시간 | `rate_limits.seven_day.resets_at` |
 | Git 브랜치 | `git branch --show-current` |
 | Git diff | `git diff --shortstat` |
 | PR URL | `gh pr view` |
 | 메인 프로젝트명 | `git rev-parse --git-common-dir` (워크트리) |
-| 블록 사용량 | stdin `rate_limits.five_hour.used_percentage` |
-| 리셋 타이머 | stdin `rate_limits.five_hour.resets_at` |
-| 주간 사용량 | stdin `rate_limits.seven_day.used_percentage` |
-| 주간 리셋 시간 | stdin `rate_limits.seven_day.resets_at` |
 
 ## WHY
 
@@ -141,7 +141,10 @@ bun test --coverage
 ### 수정 시 주의사항
 
 - 300ms마다 실행되므로 성능 중요
+- 모든 데이터는 Claude Code가 stdin으로 전달하는 JSON을 우선 참조
 - 공식 JSON input structure 참조: https://code.claude.com/docs/en/statusline
+- 새로운 필드 추가나 구조 변경 시 공식 문서의 "Available data" 섹션과 "Full JSON schema"를 먼저 확인
 - `rate_limits`는 stdin JSON에 포함되어 전달됨 (Claude Code CLI 2.1.80+)
+- `rate_limits`는 Claude.ai 구독자(Pro/Max)에게만 첫 API 응답 이후 제공됨
 - `rate_limits.resets_at`는 Unix timestamp (초 단위, number)
 - `rate_limits`가 없으면 사용량 줄이 표시되지 않음
