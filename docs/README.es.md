@@ -56,9 +56,9 @@ Agrega lo siguiente a `~/.claude/settings.json`:
 - **Contexto**: Uso de tokens con porcentaje (codificado por colores)
 - **Git Diff**: Cantidad de archivos, inserciones, eliminaciones
 - **PR URL**: Hipervínculo OSC 8 clickeable
+- **Soporte de Worktree**: Muestra el nombre real del proyecto en sesiones `cc --worktree`
 - **TrueColor**: Colores dinámicos basados en umbrales
 - **Hora de reinicio**: Hora de reinicio del límite de 5 horas (HH:MM)
-- **Soporte de Worktree**: Muestra el nombre real del proyecto en sesiones `cc --worktree`
 - **Uso del bloque**: Porcentaje de utilización de 5 horas
 - **Temporizador de reinicio semanal**: Tiempo de reinicio del límite semanal (MM/DD HH:MM)
 - **Uso semanal**: Porcentaje de utilización de 7 días
