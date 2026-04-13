@@ -1,5 +1,16 @@
 # Changelog
 
+## [3.0.0](https://github.com/say8425/cc-statusline/compare/v2.2.0...v3.0.0) (2026-04-13)
+
+
+### ⚠ BREAKING CHANGES
+
+* TypeScript upgraded from v5 to v6. Contributors must use TypeScript 6+ for type checking.
+
+### Miscellaneous Chores
+
+* upgrade dev dependencies ([#46](https://github.com/say8425/cc-statusline/issues/46)) ([6b0880d](https://github.com/say8425/cc-statusline/commit/6b0880d99e362eb16e485b35f46f39ffd6cb52f1))
+
 ## [2.2.0](https://github.com/say8425/cc-statusline/compare/v2.1.1...v2.2.0) (2026-04-10)
 
 
