@@ -138,6 +138,12 @@ bun test --coverage
 
 **커버리지**: 함수 100%, 라인 97%+
 
+### 릴리스
+
+[릴리스 가이드](docs/RELEASE_GUIDE.md) 참조. release-please + Conventional Commits 기반 자동 릴리스.
+- `fix:` → patch, `feat:` → minor, `feat!:` / `BREAKING CHANGE:` → major
+- `chore`, `docs`, `test`, `ci` 등은 릴리스를 트리거하지 않음
+
 ### 수정 시 주의사항
 
 - 300ms마다 실행되므로 성능 중요
