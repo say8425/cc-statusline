@@ -9,7 +9,7 @@ import { readTokenSync } from "./token.ts";
 
 type Env = Record<string, string | undefined>;
 type EnsureResult = { port: number; token: string } | null;
-type SpawnFn = (port: number) => void;
+type SpawnFn = (port: number, env: Env) => void;
 
 const ENSURE_TTL_MS = 5_000;
 const LOCK_STALE_MS = 30_000;
@@ -33,7 +33,7 @@ async function probeOurServer(port: number): Promise<boolean> {
 
 function acquireSpawnLock(env: Env): boolean {
 	const lock = join(getCacheDir(env), "diff-server.lock");
-	mkdirSync(getCacheDir(env), { recursive: true });
+	mkdirSync(getCacheDir(env), { recursive: true, mode: 0o700 });
 	try {
 		mkdirSync(lock);
 		return true;
@@ -49,7 +49,7 @@ function acquireSpawnLock(env: Env): boolean {
 	}
 }
 
-function spawnDaemon(port: number): void {
+function spawnDaemon(port: number, env: Env): void {
 	const execPath = process.execPath;
 	const selfPath = Bun.main;
 	// nohup + & fully detaches so the daemon outlives this statusline process.
@@ -62,7 +62,7 @@ function spawnDaemon(port: number): void {
 			selfPath,
 		],
 		{
-			env: { ...process.env, CC_STATUSLINE_DIFF_PORT: String(port) },
+			env: { ...process.env, ...env, CC_STATUSLINE_DIFF_PORT: String(port) },
 			stdin: "ignore",
 			stdout: "ignore",
 			stderr: "ignore",
@@ -75,21 +75,22 @@ async function maybeSpawn(
 	env: Env,
 	spawn: SpawnFn = spawnDaemon,
 ): Promise<void> {
-	if (await probeOurServer(port)) return;
-	if (!acquireSpawnLock(env)) return;
 	try {
-		spawn(port);
+		if (await probeOurServer(port)) return;
+		if (!acquireSpawnLock(env)) return;
+		spawn(port, env);
 	} catch {
-		// Bun.spawn throws synchronously on failure (missing shell, sandboxed
-		// fork/exec, EMFILE/ENOMEM, ...). This call is fire-and-forget from
-		// ensureDiffServer (bare `void`, no `.catch`), so an uncaught throw here
-		// would surface as an unhandled rejection and crash the statusline hot
-		// path. Degrade to a silent no-op instead.
+		// Any failure in this fire-and-forget path — the probe, lock-dir/lock
+		// creation (mkdirSync can throw), or Bun.spawn itself (missing shell,
+		// sandboxed fork/exec, EMFILE/ENOMEM, ...) — must never surface as an
+		// unhandled rejection. This is called as bare `void maybeSpawn(...)`
+		// from ensureDiffServer with no `.catch`, so an uncaught throw here
+		// would crash the statusline hot path. Degrade to a silent no-op.
 	}
 }
 
 export async function ensureDiffServer(
-	repo: string,
+	_repo: string,
 	env: Env = process.env,
 	spawn: SpawnFn = spawnDaemon,
 ): Promise<EnsureResult> {

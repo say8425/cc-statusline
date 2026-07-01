@@ -82,4 +82,46 @@ describe("diff server", () => {
 		const res = await fetch(`${base}/../../etc/passwd`);
 		expect([403, 404]).toContain(res.status);
 	});
+
+	test("blocks an un-normalized absolute path with a real 403 over the wire", async () => {
+		// fetch() normalizes "/../../etc/passwd" client-side before it ever hits
+		// the server, so the request above never reaches the 403 branch in
+		// createHandler (it 404s on a literal "../../etc/passwd" file instead).
+		// A raw socket lets us send a path Bun's URL parser won't collapse:
+		// a double leading slash. `url.pathname` keeps it as "//etc/passwd", so
+		// `rel` becomes the absolute path "/etc/passwd", and
+		// `path.resolve(viewerRoot, "/etc/passwd")` escapes viewerRoot entirely,
+		// exercising the real traversal guard.
+		const response = await new Promise<string>(
+			(resolvePromise, rejectPromise) => {
+				let buffer = "";
+				Bun.connect({
+					hostname: "127.0.0.1",
+					port: handle.server.port,
+					socket: {
+						open(socket) {
+							socket.write(
+								"GET //etc/passwd HTTP/1.1\r\nHost: 127.0.0.1\r\nConnection: close\r\n\r\n",
+							);
+						},
+						data(_socket, data) {
+							buffer += data.toString();
+						},
+						close() {
+							resolvePromise(buffer);
+						},
+						error(_socket, error) {
+							rejectPromise(error);
+						},
+						connectError(_socket, error) {
+							rejectPromise(error);
+						},
+					},
+				}).catch(rejectPromise);
+			},
+		);
+
+		const statusLine = response.split("\r\n")[0] ?? "";
+		expect(statusLine).toContain("403");
+	});
 });

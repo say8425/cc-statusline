@@ -25,7 +25,7 @@ export function ensureToken(env: Env = process.env): string {
 	const existing = readTokenSync(env);
 	if (existing) return existing;
 	const token = generateToken();
-	mkdirSync(getCacheDir(env), { recursive: true });
-	writeFileSync(getTokenPath(env), token);
+	mkdirSync(getCacheDir(env), { recursive: true, mode: 0o700 });
+	writeFileSync(getTokenPath(env), token, { mode: 0o600 });
 	return token;
 }
