@@ -39,4 +39,23 @@ describe("ensureDiffServer", () => {
 		const result = await ensureDiffServer("/some/repo", env);
 		expect(result).toEqual({ port: 59999, token });
 	});
+
+	test("does not throw/reject when the injected spawner throws (spawn failure)", async () => {
+		cacheHome = mkdtempSync(join(tmpdir(), "cc-ensure-"));
+		const env = { XDG_CACHE_HOME: cacheHome, CC_STATUSLINE_DIFF_PORT: "59997" };
+		const throwingSpawn = () => {
+			throw new Error("spawn EMFILE: simulated spawn failure");
+		};
+
+		// Must resolve (not throw) even though the injected spawner always throws,
+		// and the fire-and-forget probe/spawn promise must never surface as an
+		// unhandled rejection.
+		const result = await ensureDiffServer("/some/repo", env, throwingSpawn);
+		expect(result).toBeNull();
+
+		// Give the fire-and-forget maybeSpawn() microtask a chance to run so a
+		// regression (missing try/catch) would show up as an unhandled rejection
+		// during this test rather than leaking into a later one.
+		await new Promise((resolve) => setTimeout(resolve, 10));
+	});
 });

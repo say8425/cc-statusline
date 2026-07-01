@@ -9,6 +9,7 @@ import { readTokenSync } from "./token.ts";
 
 type Env = Record<string, string | undefined>;
 type EnsureResult = { port: number; token: string } | null;
+type SpawnFn = (port: number) => void;
 
 const ENSURE_TTL_MS = 5_000;
 const LOCK_STALE_MS = 30_000;
@@ -69,14 +70,28 @@ function spawnDaemon(port: number): void {
 	).unref();
 }
 
-async function maybeSpawn(port: number, env: Env): Promise<void> {
+async function maybeSpawn(
+	port: number,
+	env: Env,
+	spawn: SpawnFn = spawnDaemon,
+): Promise<void> {
 	if (await probeOurServer(port)) return;
-	if (acquireSpawnLock(env)) spawnDaemon(port);
+	if (!acquireSpawnLock(env)) return;
+	try {
+		spawn(port);
+	} catch {
+		// Bun.spawn throws synchronously on failure (missing shell, sandboxed
+		// fork/exec, EMFILE/ENOMEM, ...). This call is fire-and-forget from
+		// ensureDiffServer (bare `void`, no `.catch`), so an uncaught throw here
+		// would surface as an unhandled rejection and crash the statusline hot
+		// path. Degrade to a silent no-op instead.
+	}
 }
 
 export async function ensureDiffServer(
 	repo: string,
 	env: Env = process.env,
+	spawn: SpawnFn = spawnDaemon,
 ): Promise<EnsureResult> {
 	if (isDiffViewerDisabled(env)) return null;
 	const port = resolveDiffPort(env);
@@ -85,7 +100,7 @@ export async function ensureDiffServer(
 	if (now - checkedAt >= ENSURE_TTL_MS) {
 		checkedAt = now;
 		// Fire-and-forget: never block the statusline hot path on the probe/spawn.
-		void maybeSpawn(port, env);
+		void maybeSpawn(port, env, spawn);
 	}
 
 	const token = readTokenSync(env);
