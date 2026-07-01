@@ -7,6 +7,8 @@
 	},
 	"devDependencies": {
 		"@biomejs/biome": "^2.4.11",
+		"@pierre/diffs": "^1.2.12",
+		"@pierre/trees": "^1.0.0-beta.5",
 		"@types/bun": "^1.3.12",
 		"typescript": "^6.0.2"
 	},
@@ -15,7 +17,8 @@
 	},
 	"description": "Custom statusline for Claude Code",
 	"files": [
-		"dist/index.js"
+		"dist/index.js",
+		"dist/viewer"
 	],
 	"publishConfig": {
 		"registry": "https://registry.npmjs.org"
