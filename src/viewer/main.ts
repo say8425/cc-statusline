@@ -56,6 +56,14 @@ function renderFiles(files: FileDiffMetadata[]): void {
 		files.map((f) => ({ id: f.name, type: "diff" as const, fileDiff: f })),
 	);
 	codeView.render();
+	// 첫 페인트 안정화: 가상화된 CodeView는 컨테이너 크기가 측정된 뒤에야
+	// 보이는 범위를 채운다. 초기 mount 직후엔 비어 보일 수 있으므로 다음
+	// 프레임들에서 다시 렌더해 확실히 그리게 한다.
+	const cv = codeView;
+	requestAnimationFrame(() => {
+		cv.render();
+		requestAnimationFrame(() => cv.render());
+	});
 }
 
 async function load(): Promise<void> {
