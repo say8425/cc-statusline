@@ -63,6 +63,7 @@ Claude Code 기본 statusbar에 다음 정보를 추가로 표시:
 - 세션 시간 및 비용
 - Context window 토큰 사용량 및 사용률 (%)
 - Git diff 통계 (파일 수, +insertions, -deletions)
+- 클릭 가능한 diff 뷰어: `✏️` 클릭 시 로컬 diff 뷰어(Pierre `@pierre/diffs`+`@pierre/trees`)를 `127.0.0.1:49573`에 띄워 브라우저로 표시
 - PR URL (클릭 가능한 OSC 8 하이퍼링크)
 - 리셋 시각 (5시간 사용량 리셋 시각, HH:MM)
 - 주간 리셋 시간 (7일 사용량 리셋 시각, MM/DD HH:MM)
@@ -136,7 +137,7 @@ bun test --coverage
 - `integration.test.ts`: main 함수 E2E 테스트
 - `stdin.test.ts`: stdin 읽기 테스트
 
-**커버리지**: 함수 100%, 라인 97%+
+**커버리지**: 함수 98%+, 라인 94%+ (diff-server 데몬 spawn/에러 경로 등 일부 브랜치 제외)
 
 ### 릴리스
 
@@ -154,3 +155,5 @@ bun test --coverage
 - `rate_limits`는 Claude.ai 구독자(Pro/Max)에게만 첫 API 응답 이후 제공됨
 - `rate_limits.resets_at`는 Unix timestamp (초 단위, number)
 - `rate_limits`가 없으면 사용량 줄이 표시되지 않음
+- diff 뷰어 데몬은 statusline이 spawn-if-not-running으로 관리 (env `CC_STATUSLINE_DIFF_PORT` 기본 49573, `CC_STATUSLINE_DIFF_DISABLE=1`로 비활성)
+- Pierre 컴포넌트는 devDependency이며 `build.ts`가 `dist/viewer/`로 프리번들 (런타임 `dist/index.js`엔 미포함)
