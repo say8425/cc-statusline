@@ -93,7 +93,14 @@ export function renderStatusLine(ctx: RenderContext): string[] {
 	if (hasGitChanges || ctx.prUrl) {
 		let line4 = "";
 		if (hasGitChanges) {
-			const changesText = `✏️ ${C.WHITE}${ctx.gitChanges.files} files${C.RESET} ${C.GREEN}+${ctx.gitChanges.insertions}${C.RESET} ${C.RED}-${ctx.gitChanges.deletions}${C.RESET}`;
+			// 클릭 가능할 때(diffViewerUrl 존재)는 밑줄로 표시 (PR 링크와 동일).
+			// C.RESET가 밑줄을 지우므로 각 색상 세그먼트에 밑줄을 함께 적용해
+			// 연속된 밑줄을 만든다. 링크가 아니면 u=""로 기존 출력과 동일.
+			const u = ctx.diffViewerUrl ? C.UNDERLINE : "";
+			const changesText =
+				`✏️ ${u}${C.WHITE}${ctx.gitChanges.files} files${C.RESET}` +
+				`${u} ${C.GREEN}+${ctx.gitChanges.insertions}${C.RESET}` +
+				`${u} ${C.RED}-${ctx.gitChanges.deletions}${C.RESET}`;
 			// OSC 8 하이퍼링크 (PR 링크와 동일 방식) — diffViewerUrl이 있을 때만
 			line4 += ctx.diffViewerUrl
 				? `\x1b]8;;${ctx.diffViewerUrl}\x07${changesText}\x1b]8;;\x07`

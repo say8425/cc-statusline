@@ -615,6 +615,7 @@ describe("renderStatusLine", () => {
 			expect(line).toContain(`\x1b]8;;${url}\x07`);
 			expect(line).toContain("\x1b]8;;\x07");
 			expect(line).toContain("3 files");
+			expect(line).toContain("\x1b[4m");
 		});
 
 		test("renders plain changes text when diffViewerUrl is null", () => {
@@ -627,6 +628,7 @@ describe("renderStatusLine", () => {
 
 			expect(line).toBeDefined();
 			expect(line).not.toContain("\x1b]8;;http://");
+			expect(line).not.toContain("\x1b[4m");
 		});
 	});
 
