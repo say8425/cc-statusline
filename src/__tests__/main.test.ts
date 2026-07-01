@@ -601,6 +601,35 @@ describe("renderStatusLine", () => {
 		});
 	});
 
+	describe("diff viewer OSC 8 link", () => {
+		test("wraps the changes text in a hyperlink when diffViewerUrl is set", () => {
+			const url = "http://127.0.0.1:49573/?repo=%2Fx&token=abc";
+			const ctx = createRenderContext({
+				gitChanges: { files: 3, insertions: 86, deletions: 3 },
+				diffViewerUrl: url,
+			});
+			const lines = renderStatusLine(ctx);
+			const line = lines.find((l) => l.includes("3 files"));
+
+			expect(line).toBeDefined();
+			expect(line).toContain(`\x1b]8;;${url}\x07`);
+			expect(line).toContain("\x1b]8;;\x07");
+			expect(line).toContain("3 files");
+		});
+
+		test("renders plain changes text when diffViewerUrl is null", () => {
+			const ctx = createRenderContext({
+				gitChanges: { files: 3, insertions: 86, deletions: 3 },
+				diffViewerUrl: null,
+			});
+			const lines = renderStatusLine(ctx);
+			const line = lines.find((l) => l.includes("3 files"));
+
+			expect(line).toBeDefined();
+			expect(line).not.toContain("\x1b]8;;http://");
+		});
+	});
+
 	describe("edge cases", () => {
 		test("handles missing workspace gracefully", () => {
 			const ctx = createRenderContext({

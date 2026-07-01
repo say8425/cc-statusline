@@ -93,7 +93,11 @@ export function renderStatusLine(ctx: RenderContext): string[] {
 	if (hasGitChanges || ctx.prUrl) {
 		let line4 = "";
 		if (hasGitChanges) {
-			line4 += `✏️ ${C.WHITE}${ctx.gitChanges.files} files${C.RESET} ${C.GREEN}+${ctx.gitChanges.insertions}${C.RESET} ${C.RED}-${ctx.gitChanges.deletions}${C.RESET}`;
+			const changesText = `✏️ ${C.WHITE}${ctx.gitChanges.files} files${C.RESET} ${C.GREEN}+${ctx.gitChanges.insertions}${C.RESET} ${C.RED}-${ctx.gitChanges.deletions}${C.RESET}`;
+			// OSC 8 하이퍼링크 (PR 링크와 동일 방식) — diffViewerUrl이 있을 때만
+			line4 += ctx.diffViewerUrl
+				? `\x1b]8;;${ctx.diffViewerUrl}\x07${changesText}\x1b]8;;\x07`
+				: changesText;
 		}
 		if (ctx.prUrl) {
 			// GitHub Enterprise 지원을 위해 정규식으로 도메인 제거
