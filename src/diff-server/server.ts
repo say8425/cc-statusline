@@ -1,0 +1,91 @@
+import { resolve } from "node:path";
+import type { Server } from "bun";
+import { getDiff, isGitRepo } from "./diff.ts";
+import { ensureToken } from "./token.ts";
+
+type Env = Record<string, string | undefined>;
+
+export interface DiffServerHandle {
+	server: Server<undefined>;
+	token: string;
+	stop(): void;
+}
+
+function createHandler(cfg: { viewerDir: string; token: string }) {
+	const viewerRoot = resolve(cfg.viewerDir);
+	return async (req: Request): Promise<Response> => {
+		const url = new URL(req.url);
+
+		if (url.pathname === "/api/ping") {
+			return new Response(null, {
+				status: 204,
+				headers: { "x-cc-statusline": "1" },
+			});
+		}
+
+		if (url.pathname === "/api/diff") {
+			if (url.searchParams.get("token") !== cfg.token) {
+				return new Response("forbidden", { status: 403 });
+			}
+			const repo = url.searchParams.get("repo") ?? "";
+			if (!repo || !(await isGitRepo(repo))) {
+				return new Response("not a git repository", { status: 400 });
+			}
+			const untracked = url.searchParams.get("untracked") === "1";
+			const diff = await getDiff(repo, { untracked });
+			// NOTE: intentionally no Access-Control-Allow-Origin — cross-origin pages must not read this.
+			return new Response(diff, {
+				headers: { "content-type": "text/plain; charset=utf-8" },
+			});
+		}
+
+		const rel = url.pathname === "/" ? "index.html" : url.pathname.slice(1);
+		const filePath = resolve(viewerRoot, rel);
+		if (filePath !== viewerRoot && !filePath.startsWith(`${viewerRoot}/`)) {
+			return new Response("forbidden", { status: 403 });
+		}
+		const file = Bun.file(filePath);
+		if (await file.exists()) return new Response(file);
+		return new Response("not found", { status: 404 });
+	};
+}
+
+export function startDiffServer(opts: {
+	port: number;
+	viewerDir: string;
+	env?: Env;
+	idleTimeoutMs?: number;
+}): DiffServerHandle {
+	const env = opts.env ?? process.env;
+	const token = ensureToken(env);
+	let lastActivity = Date.now();
+	const handler = createHandler({ viewerDir: opts.viewerDir, token });
+
+	const server = Bun.serve({
+		hostname: "127.0.0.1",
+		port: opts.port,
+		fetch: (req) => {
+			lastActivity = Date.now();
+			return handler(req);
+		},
+	});
+
+	let idleTimer: ReturnType<typeof setInterval> | undefined;
+	const idleTimeoutMs = opts.idleTimeoutMs;
+	if (idleTimeoutMs && idleTimeoutMs > 0) {
+		idleTimer = setInterval(() => {
+			if (Date.now() - lastActivity > idleTimeoutMs) {
+				stop();
+				process.exit(0);
+			}
+		}, 60_000);
+		idleTimer.unref?.();
+	}
+
+	function stop(): void {
+		if (idleTimer) clearInterval(idleTimer);
+		server.stop(true);
+	}
+
+	return { server, token, stop };
+}
