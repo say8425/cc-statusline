@@ -1,32 +1,98 @@
-// TEMPORARY walking-skeleton spike: proves @pierre/diffs + @pierre/trees (+ Shiki)
-// bundle offline via `Bun.build` (target browser) and render in a browser.
-// Task 11 replaces this entire file with the real viewer implementation.
-import { CodeView, parsePatchFiles } from "@pierre/diffs";
+import {
+	CodeView,
+	type FileDiffMetadata,
+	parsePatchFiles,
+} from "@pierre/diffs";
 import { FileTree } from "@pierre/trees";
+import { changeTypeToGitStatus } from "./mapStatus.ts";
 
-const SAMPLE = `diff --git a/hello.ts b/hello.ts
-index 0000001..0000002 100644
---- a/hello.ts
-+++ b/hello.ts
-@@ -1,2 +1,2 @@
--const greeting = "hi";
-+const greeting = "hello";
- console.log(greeting);
-`;
+const params = new URLSearchParams(location.search);
+const repo = params.get("repo") ?? "";
+const token = params.get("token") ?? "";
 
-const files = parsePatchFiles(SAMPLE).flatMap((p) => p.files);
+const treeMount = document.getElementById("tree") as HTMLElement;
+const diffMount = document.getElementById("diff") as HTMLElement;
+const statusEl = document.getElementById("status") as HTMLElement;
 
-const tree = new FileTree({
-	paths: files.map((f) => f.name),
-	initialExpansion: "open",
+let diffStyle: "unified" | "split" = "unified";
+let includeUntracked = false;
+let codeView: CodeView | null = null;
+let fileTree: FileTree | null = null;
+
+function renderFiles(files: FileDiffMetadata[]): void {
+	treeMount.replaceChildren();
+	diffMount.replaceChildren();
+
+	if (files.length === 0) {
+		diffMount.innerHTML = '<div id="empty">No changes.</div>';
+		statusEl.textContent = "";
+		return;
+	}
+	statusEl.textContent = `${files.length} file(s)`;
+
+	fileTree = new FileTree({
+		paths: files.map((f) => f.name),
+		gitStatus: files.map((f) => ({
+			path: f.name,
+			status: changeTypeToGitStatus(f.type),
+		})),
+		initialExpansion: "open",
+		flattenEmptyDirectories: true,
+		search: true,
+		onSelectionChange: (selected) => {
+			const path = selected[0];
+			if (path && codeView) codeView.scrollTo({ type: "item", id: path });
+		},
+	});
+	fileTree.render({ containerWrapper: treeMount });
+
+	codeView = new CodeView({
+		diffStyle,
+		themeType: "dark",
+		stickyHeaders: true,
+	});
+	codeView.setup(diffMount);
+	codeView.setItems(
+		files.map((f) => ({ id: f.name, type: "diff" as const, fileDiff: f })),
+	);
+	codeView.render();
+}
+
+async function load(): Promise<void> {
+	statusEl.textContent = "Loading…";
+	try {
+		const query = new URLSearchParams({
+			repo,
+			token,
+			untracked: includeUntracked ? "1" : "0",
+		});
+		const res = await fetch(`/api/diff?${query.toString()}`);
+		if (!res.ok) {
+			diffMount.innerHTML = `<div id="empty">Error: ${res.status}</div>`;
+			return;
+		}
+		const patch = await res.text();
+		renderFiles(parsePatchFiles(patch).flatMap((p) => p.files));
+	} catch (err) {
+		diffMount.innerHTML = `<div id="empty">Failed to load diff.</div>`;
+		console.error(err);
+	}
+}
+
+document.getElementById("toggle-style")?.addEventListener("click", () => {
+	diffStyle = diffStyle === "unified" ? "split" : "unified";
+	void load();
 });
-tree.render({
-	containerWrapper: document.getElementById("tree") as HTMLElement,
+const untrackedInput = document.getElementById(
+	"toggle-untracked",
+) as HTMLInputElement;
+untrackedInput?.addEventListener("change", () => {
+	includeUntracked = untrackedInput.checked;
+	void load();
 });
+document
+	.getElementById("refresh")
+	?.addEventListener("click", () => void load());
+window.addEventListener("focus", () => void load());
 
-const codeView = new CodeView({ diffStyle: "unified", themeType: "dark" });
-codeView.setup(document.getElementById("diff") as HTMLElement);
-codeView.setItems(
-	files.map((f) => ({ id: f.name, type: "diff", fileDiff: f })),
-);
-codeView.render();
+void load();
