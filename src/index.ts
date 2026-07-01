@@ -1,5 +1,9 @@
 #!/usr/bin/env bun
 
+import { join } from "node:path";
+import { resolveDiffPort } from "./diff-server/config.ts";
+import { ensureDiffServer } from "./diff-server/ensure.ts";
+import { buildDiffViewerUrl } from "./diff-server/link.ts";
 import {
 	getBranchCached,
 	getGitChangesCached,
@@ -23,7 +27,28 @@ export async function main(): Promise<void> {
 		getMainProjectNameCached(),
 	]);
 
-	// 3. 렌더링 및 출력
+	// 3. diff 뷰어 링크 (변경사항이 있을 때만; 데몬 ensure는 fire-and-forget)
+	let diffViewerUrl: string | null = null;
+	const repo =
+		claudeJson.workspace?.project_dir ||
+		claudeJson.workspace?.current_dir ||
+		"";
+	const hasChanges =
+		gitChanges.files > 0 ||
+		gitChanges.insertions > 0 ||
+		gitChanges.deletions > 0;
+	if (hasChanges && repo) {
+		const ensured = await ensureDiffServer(repo);
+		if (ensured) {
+			diffViewerUrl = buildDiffViewerUrl({
+				port: ensured.port,
+				repo,
+				token: ensured.token,
+			});
+		}
+	}
+
+	// 4. 렌더링 및 출력
 	const lines = renderStatusLine({
 		claudeJson,
 		branch,
@@ -31,6 +56,7 @@ export async function main(): Promise<void> {
 		prUrl,
 		rateLimits: claudeJson.rate_limits ?? null,
 		mainProjectName,
+		diffViewerUrl,
 	});
 
 	for (const line of lines) {
@@ -39,5 +65,15 @@ export async function main(): Promise<void> {
 }
 
 if (import.meta.main) {
-	main().catch(console.error);
+	if (process.argv.includes("--diff-server")) {
+		const { startDiffServer } = await import("./diff-server/server.ts");
+		startDiffServer({
+			port: resolveDiffPort(),
+			viewerDir: join(import.meta.dir, "viewer"),
+			idleTimeoutMs: 15 * 60 * 1000,
+		});
+		// Bun.serve keeps the process alive.
+	} else {
+		main().catch(console.error);
+	}
 }

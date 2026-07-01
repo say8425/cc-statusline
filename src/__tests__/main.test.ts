@@ -50,6 +50,7 @@ function createRenderContext(
 		prUrl: overrides.prUrl ?? null,
 		rateLimits: overrides.rateLimits ?? null,
 		mainProjectName: overrides.mainProjectName ?? null,
+		diffViewerUrl: overrides.diffViewerUrl ?? null,
 	};
 }
 
