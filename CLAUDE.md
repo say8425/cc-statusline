@@ -25,13 +25,31 @@ cc-statusline/
 │   │   ├── changes.ts              # getGitChangesCached
 │   │   ├── pr.ts                   # getPrUrlCached
 │   │   └── worktree.ts             # getMainProjectNameCached
+│   ├── diff-server/
+│   │   ├── config.ts               # getCacheDir, resolveDiffPort, isDiffViewerDisabled
+│   │   ├── link.ts                 # buildDiffViewerUrl
+│   │   ├── token.ts                # ensureToken, readTokenSync
+│   │   ├── diff.ts                 # getDiff, isGitRepo
+│   │   ├── server.ts               # startDiffServer (로컬 diff 뷰어 HTTP 서버)
+│   │   └── ensure.ts               # ensureDiffServer (spawn-if-not-running 데몬)
+│   ├── viewer/
+│   │   ├── main.ts                 # 뷰어 프론트엔드 엔트리포인트
+│   │   ├── mapStatus.ts            # git status 코드 매핑
+│   │   └── index.html              # 뷰어 HTML 셸
 │   └── __tests__/                  # 테스트 파일
 │       ├── pure.test.ts            # 순수 함수 테스트
 │       ├── cached.test.ts          # 캐시 메커니즘 테스트
 │       ├── main.test.ts            # renderStatusLine 테스트
 │       ├── async.test.ts           # 비동기 함수 통합 테스트
 │       ├── integration.test.ts     # main 함수 통합 테스트
-│       └── stdin.test.ts           # readStdin 테스트
+│       ├── stdin.test.ts           # readStdin 테스트
+│       ├── diff-config.test.ts     # diff-server/config 테스트
+│       ├── diff-token.test.ts      # diff-server/token 테스트
+│       ├── diff-command.test.ts    # diff-server/diff 테스트
+│       ├── diff-server.test.ts     # diff-server/server 테스트 (403 경로 탐색 포함)
+│       ├── diff-ensure.test.ts     # diff-server/ensure 테스트
+│       ├── diff-link.test.ts       # diff-server/link 테스트
+│       └── map-status.test.ts      # viewer/mapStatus 테스트
 ├── bunfig.toml        # Bun 테스트 설정
 ├── package.json
 ├── tsconfig.json
