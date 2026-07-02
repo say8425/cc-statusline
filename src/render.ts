@@ -90,7 +90,7 @@ export function renderStatusLine(ctx: RenderContext): string[] {
 		ctx.gitChanges.files > 0 ||
 		ctx.gitChanges.insertions > 0 ||
 		ctx.gitChanges.deletions > 0;
-	if (hasGitChanges || ctx.prUrl) {
+	if (hasGitChanges || ctx.baseChanges || ctx.prUrl) {
 		let line4 = "";
 		if (hasGitChanges) {
 			// 클릭 가능할 때(diffViewerUrl 존재)는 밑줄로 표시 (PR 링크와 동일).
@@ -105,6 +105,17 @@ export function renderStatusLine(ctx: RenderContext): string[] {
 			line4 += ctx.diffViewerUrl
 				? `\x1b]8;;${ctx.diffViewerUrl}\x07${changesText}\x1b]8;;\x07`
 				: changesText;
+		} else if (ctx.baseChanges) {
+			// working이 clean이면 base 대비 변경을 대신 표시 (커밋 후에도 진입점 유지).
+			const bc = ctx.baseChanges;
+			const u = ctx.baseDiffViewerUrl ? C.UNDERLINE : "";
+			const baseText =
+				`✏️ ${u}vs ${bc.base} ${C.WHITE}${bc.files} files${C.RESET}` +
+				`${u} ${C.GREEN}+${bc.insertions}${C.RESET}` +
+				`${u} ${C.RED}-${bc.deletions}${C.RESET}`;
+			line4 += ctx.baseDiffViewerUrl
+				? `\x1b]8;;${ctx.baseDiffViewerUrl}\x07${baseText}\x1b]8;;\x07`
+				: baseText;
 		}
 		if (ctx.prUrl) {
 			// GitHub Enterprise 지원을 위해 정규식으로 도메인 제거

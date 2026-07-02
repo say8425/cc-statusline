@@ -46,4 +46,11 @@ export interface RenderContext {
 	rateLimits: RateLimits | null;
 	mainProjectName: string | null;
 	diffViewerUrl: string | null;
+	baseChanges: {
+		base: string;
+		files: number;
+		insertions: number;
+		deletions: number;
+	} | null;
+	baseDiffViewerUrl: string | null;
 }

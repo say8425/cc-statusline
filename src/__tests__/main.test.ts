@@ -51,6 +51,8 @@ function createRenderContext(
 		rateLimits: overrides.rateLimits ?? null,
 		mainProjectName: overrides.mainProjectName ?? null,
 		diffViewerUrl: overrides.diffViewerUrl ?? null,
+		baseChanges: overrides.baseChanges ?? null,
+		baseDiffViewerUrl: overrides.baseDiffViewerUrl ?? null,
 	};
 }
 
@@ -598,6 +600,43 @@ describe("renderStatusLine", () => {
 			const lines = renderStatusLine(ctx);
 
 			expect(lines[1]).toContain("12:45");
+		});
+	});
+
+	describe("adaptive edit segment", () => {
+		test("shows working changes with a link when present", () => {
+			const url = "http://127.0.0.1:49573/?repo=%2Fx&token=abc&mode=working";
+			const ctx = createRenderContext({
+				gitChanges: { files: 3, insertions: 86, deletions: 3 },
+				diffViewerUrl: url,
+			});
+			const line = renderStatusLine(ctx).find((l) => l.includes("3 files"));
+			expect(line).toBeDefined();
+			expect(line).toContain(`\x1b]8;;${url}\x07`);
+			expect(line).not.toContain("vs ");
+		});
+
+		test("shows vs-base stat when working tree is clean but branch is ahead", () => {
+			const url = "http://127.0.0.1:49573/?repo=%2Fx&token=abc&mode=base";
+			const ctx = createRenderContext({
+				gitChanges: { files: 0, insertions: 0, deletions: 0 },
+				baseChanges: { base: "main", files: 2, insertions: 10, deletions: 1 },
+				baseDiffViewerUrl: url,
+			});
+			const line = renderStatusLine(ctx).find((l) => l.includes("2 files"));
+			expect(line).toBeDefined();
+			expect(line).toContain("vs main");
+			expect(line).toContain(`\x1b]8;;${url}\x07`);
+			expect(line).toContain("\x1b[4m");
+		});
+
+		test("shows nothing when neither working nor base changes", () => {
+			const ctx = createRenderContext({
+				gitChanges: { files: 0, insertions: 0, deletions: 0 },
+				baseChanges: null,
+			});
+			const line = renderStatusLine(ctx).find((l) => l.includes("✏️"));
+			expect(line).toBeUndefined();
 		});
 	});
 

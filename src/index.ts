@@ -5,6 +5,7 @@ import { resolveDiffPort } from "./diff-server/config.ts";
 import { ensureDiffServer } from "./diff-server/ensure.ts";
 import { buildDiffViewerUrl } from "./diff-server/link.ts";
 import {
+	getBaseChangesCached,
 	getBranchCached,
 	getGitChangesCached,
 	getMainProjectNameCached,
@@ -27,8 +28,8 @@ export async function main(): Promise<void> {
 		getMainProjectNameCached(),
 	]);
 
-	// 3. diff 뷰어 링크 (변경사항이 있을 때만; 데몬 ensure는 fire-and-forget)
-	let diffViewerUrl: string | null = null;
+	// 3. diff 뷰어 링크 — working 변경이 있으면 working, 없으면 base 대비(브랜치가
+	//    base보다 앞설 때)로 진입점을 유지. 데몬 ensure는 볼 것이 있을 때만.
 	const repo =
 		claudeJson.workspace?.project_dir ||
 		claudeJson.workspace?.current_dir ||
@@ -37,14 +38,30 @@ export async function main(): Promise<void> {
 		gitChanges.files > 0 ||
 		gitChanges.insertions > 0 ||
 		gitChanges.deletions > 0;
-	if (hasChanges && repo) {
+	let diffViewerUrl: string | null = null;
+	let baseDiffViewerUrl: string | null = null;
+	let baseChanges: Awaited<ReturnType<typeof getBaseChangesCached>> = null;
+	if (!hasChanges && repo) {
+		baseChanges = await getBaseChangesCached();
+	}
+	if (repo && (hasChanges || baseChanges)) {
 		const ensured = await ensureDiffServer(repo);
 		if (ensured) {
-			diffViewerUrl = buildDiffViewerUrl({
-				port: ensured.port,
-				repo,
-				token: ensured.token,
-			});
+			if (hasChanges) {
+				diffViewerUrl = buildDiffViewerUrl({
+					port: ensured.port,
+					repo,
+					token: ensured.token,
+					mode: "working",
+				});
+			} else if (baseChanges) {
+				baseDiffViewerUrl = buildDiffViewerUrl({
+					port: ensured.port,
+					repo,
+					token: ensured.token,
+					mode: "base",
+				});
+			}
 		}
 	}
 
@@ -57,6 +74,8 @@ export async function main(): Promise<void> {
 		rateLimits: claudeJson.rate_limits ?? null,
 		mainProjectName,
 		diffViewerUrl,
+		baseChanges,
+		baseDiffViewerUrl,
 	});
 
 	for (const line of lines) {
