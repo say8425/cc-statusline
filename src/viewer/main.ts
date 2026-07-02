@@ -1,6 +1,13 @@
 import { CodeView, parsePatchFiles } from "@pierre/diffs";
 import { FileTree } from "@pierre/trees";
 import { changeTypeToGitStatus } from "./mapStatus.ts";
+import {
+	FLATTEN_KEY,
+	readFlatten,
+	readTreeSide,
+	TREE_SIDE_KEY,
+	type TreeSide,
+} from "./prefs.ts";
 
 const params = new URLSearchParams(location.search);
 const repo = params.get("repo") ?? "";
@@ -10,10 +17,13 @@ const treeMount = document.getElementById("tree") as HTMLElement;
 const diffMount = document.getElementById("diff") as HTMLElement;
 const statusEl = document.getElementById("status") as HTMLElement;
 const modeSelect = document.getElementById("diff-mode") as HTMLSelectElement;
+const appEl = document.getElementById("app") as HTMLElement;
 
 let diffStyle: "unified" | "split" = "unified";
 let includeUntracked = false;
 let diffMode: "working" | "base" = "working";
+let flattenDirs = readFlatten((k) => localStorage.getItem(k));
+let treeSide: TreeSide = readTreeSide((k) => localStorage.getItem(k));
 let codeView: CodeView | null = null;
 let fileTree: FileTree | null = null;
 
@@ -68,7 +78,7 @@ function renderPatch(patch: string): void {
 			paths,
 			gitStatus,
 			initialExpansion: "open",
-			flattenEmptyDirectories: true,
+			flattenEmptyDirectories: flattenDirs,
 			search: true,
 			onSelectionChange: (selected) => {
 				const path = selected[0];
@@ -202,6 +212,66 @@ if (urlMode === "base" || urlMode === "working") {
 	diffMode = "base";
 	modeSelect.value = "base";
 }
+
+// Apply persisted file-tree side and reflect stored prefs in the overflow menu.
+appEl.dataset.treeSide = treeSide;
+
+const flattenInput = document.getElementById(
+	"toggle-flatten",
+) as HTMLInputElement | null;
+if (flattenInput) flattenInput.checked = flattenDirs;
+
+const treeSideInput = document.getElementById(
+	"toggle-tree-side",
+) as HTMLInputElement | null;
+if (treeSideInput) treeSideInput.checked = treeSide === "right";
+
+treeSideInput?.addEventListener("change", () => {
+	treeSide = treeSideInput.checked ? "right" : "left";
+	appEl.dataset.treeSide = treeSide;
+	localStorage.setItem(TREE_SIDE_KEY, treeSide);
+});
+
+flattenInput?.addEventListener("change", () => {
+	flattenDirs = flattenInput.checked;
+	localStorage.setItem(FLATTEN_KEY, flattenDirs ? "1" : "0");
+	// flattenEmptyDirectories is a constructor option, so the tree must be
+	// recreated; force a rebuild on the next render and reload the diff.
+	fileTree?.cleanUp();
+	fileTree = null;
+	lastTreeKey = null;
+	void load();
+});
+
+// Overflow (⋯) menu: toggle on button click, close on outside click / Escape.
+const overflowBtn = document.getElementById(
+	"overflow-btn",
+) as HTMLElement | null;
+const overflowMenu = document.getElementById(
+	"overflow-menu",
+) as HTMLElement | null;
+
+function setOverflowOpen(open: boolean): void {
+	if (!overflowMenu || !overflowBtn) return;
+	overflowMenu.hidden = !open;
+	overflowBtn.setAttribute("aria-expanded", open ? "true" : "false");
+}
+
+overflowBtn?.addEventListener("click", (event) => {
+	event.stopPropagation();
+	if (overflowMenu) setOverflowOpen(Boolean(overflowMenu.hidden));
+});
+
+document.addEventListener("mousedown", (event) => {
+	if (!overflowMenu || overflowMenu.hidden) return;
+	const target = event.target as Node;
+	if (overflowMenu.contains(target) || overflowBtn?.contains(target)) return;
+	setOverflowOpen(false);
+});
+
+document.addEventListener("keydown", (event) => {
+	if (event.key === "Escape") setOverflowOpen(false);
+});
 
 void load();
 
