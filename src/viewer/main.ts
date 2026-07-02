@@ -59,10 +59,15 @@ function renderFiles(files: FileDiffMetadata[]): void {
 	// 첫 페인트 안정화: 가상화된 CodeView는 컨테이너 크기가 측정된 뒤에야
 	// 보이는 범위를 채운다. 초기 mount 직후엔 비어 보일 수 있으므로 다음
 	// 프레임들에서 다시 렌더해 확실히 그리게 한다.
+	// 이후 다른 렌더로 교체된 인스턴스라면 재렌더하지 않는다 (빠른 토글/refresh 시
+	// 이전 rAF가 orphaned CodeView를 건드리는 것을 방지).
 	const cv = codeView;
 	requestAnimationFrame(() => {
+		if (cv !== codeView) return;
 		cv.render();
-		requestAnimationFrame(() => cv.render());
+		requestAnimationFrame(() => {
+			if (cv === codeView) cv.render();
+		});
 	});
 }
 
