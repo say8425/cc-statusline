@@ -86,6 +86,8 @@ Claude Code 기본 statusbar에 다음 정보를 추가로 표시:
 - diff 뷰어 모드 전환: `Working tree`(HEAD 대비) / `vs <base>`(PR 타겟 또는 기본 브랜치 대비, merge-base vs 워킹트리) — 커밋해도 base 모드에선 변경이 유지됨 (base는 `gh pr view`→`origin/HEAD`→main/master로 결정, X-Diff-Base 헤더)
 - `✏️` 진입점 유지: working 변경이 없어도 브랜치가 base보다 앞서면 `✏️ vs <base> N files +X -Y`로 표시되고 클릭 시 뷰어가 base 모드로 열림 (URL `mode` 파라미터가 localStorage보다 우선) — 커밋 후에도 진입점 유지
 - diff 뷰어 chrome은 Pierre 다크 팔레트(#141415/#adadb1/#070707, accent #009fff)로 통일 (툴바·드롭다운·버튼·체크박스; 뷰어는 다크 전용이라 다크 값 하드코딩)
+- diff 뷰어 툴바는 좌(모드·Split/Unified·Refresh)/우(상태·⋯ 오버플로) 클러스터로 정렬; 저중요 컨트롤(Include untracked·Watch·Flatten·파일트리 좌/우)은 `⋯` 오버플로 메뉴에 위치
+- 파일트리 좌/우 배치(`data-tree-side`, localStorage `cc-statusline:tree-side`, 기본 left)와 flatten(빈 디렉터리 접기, localStorage `cc-statusline:flatten`, 기본 on)은 토글 가능; flatten 변경 시 FileTree 재생성. 파일트리 상단 padding은 diff의 8px(`--diffs-gap-fallback`)와 일치
 - PR URL (클릭 가능한 OSC 8 하이퍼링크)
 - 리셋 시각 (5시간 사용량 리셋 시각, HH:MM)
 - 주간 리셋 시간 (7일 사용량 리셋 시각, MM/DD HH:MM)
