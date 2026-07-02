@@ -103,6 +103,8 @@ function renderPatch(patch: string): void {
 			diffStyle,
 			themeType: "dark",
 			stickyHeaders: true,
+			hunkSeparators: "line-info",
+			expandUnchanged: true,
 		});
 		codeView.setup(diffMount);
 		codeView.setItems(items);
