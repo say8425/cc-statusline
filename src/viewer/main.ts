@@ -9,9 +9,11 @@ const token = params.get("token") ?? "";
 const treeMount = document.getElementById("tree") as HTMLElement;
 const diffMount = document.getElementById("diff") as HTMLElement;
 const statusEl = document.getElementById("status") as HTMLElement;
+const modeSelect = document.getElementById("diff-mode") as HTMLSelectElement;
 
 let diffStyle: "unified" | "split" = "unified";
 let includeUntracked = false;
+let diffMode: "working" | "base" = "working";
 let codeView: CodeView | null = null;
 let fileTree: FileTree | null = null;
 
@@ -115,16 +117,40 @@ function renderPatch(patch: string): void {
 	}
 }
 
-async function fetchPatch(): Promise<string | null> {
+// Reflect the resolved base name on the "vs base" option, and disable it
+// (falling back to working mode) when no base could be resolved.
+function updateBaseOption(base: string): void {
+	const opt = modeSelect?.querySelector<HTMLOptionElement>(
+		'option[value="base"]',
+	);
+	if (!opt) return;
+	if (base) {
+		opt.textContent = `vs ${base}`;
+		opt.disabled = false;
+		if (modeSelect.value !== diffMode) modeSelect.value = diffMode;
+	} else {
+		opt.textContent = "vs base (unavailable)";
+		opt.disabled = true;
+		if (diffMode === "base") {
+			diffMode = "working";
+			modeSelect.value = "working";
+			localStorage.setItem("cc-statusline:diff-mode", "working");
+		}
+	}
+}
+
+async function fetchDiff(): Promise<{ patch: string; base: string } | null> {
 	const query = new URLSearchParams({
 		repo,
 		token,
 		untracked: includeUntracked ? "1" : "0",
+		mode: diffMode,
 	});
 	try {
 		const res = await fetch(`/api/diff?${query.toString()}`);
 		if (!res.ok) return null;
-		return await res.text();
+		const patch = await res.text();
+		return { patch, base: res.headers.get("x-diff-base") ?? "" };
 	} catch (err) {
 		console.error(err);
 		return null;
@@ -133,13 +159,14 @@ async function fetchPatch(): Promise<string | null> {
 
 async function load(): Promise<void> {
 	statusEl.textContent = "Loading…";
-	const patch = await fetchPatch();
-	if (patch === null) {
+	const result = await fetchDiff();
+	if (result === null) {
 		diffMount.innerHTML = '<div id="empty">Failed to load diff.</div>';
 		return;
 	}
-	lastPatch = patch;
-	renderPatch(patch);
+	updateBaseOption(result.base);
+	lastPatch = result.patch;
+	renderPatch(result.patch);
 }
 
 document.getElementById("toggle-style")?.addEventListener("click", () => {
@@ -158,6 +185,19 @@ document
 	?.addEventListener("click", () => void load());
 window.addEventListener("focus", () => void load());
 
+modeSelect?.addEventListener("change", () => {
+	diffMode = modeSelect.value === "base" ? "base" : "working";
+	localStorage.setItem("cc-statusline:diff-mode", diffMode);
+	void load();
+});
+
+// Restore persisted diff mode before the initial load (updateBaseOption in
+// load() will revert to working if the base turns out to be unresolvable).
+if (localStorage.getItem("cc-statusline:diff-mode") === "base") {
+	diffMode = "base";
+	modeSelect.value = "base";
+}
+
 void load();
 
 const WATCH_STORAGE_KEY = "cc-statusline:diff-watch";
@@ -165,10 +205,12 @@ const WATCH_POLL_MS = 2000;
 let watchTimer: ReturnType<typeof setInterval> | null = null;
 
 async function poll(): Promise<void> {
-	const patch = await fetchPatch();
-	if (patch === null || patch === lastPatch) return;
-	lastPatch = patch;
-	renderPatch(patch);
+	const result = await fetchDiff();
+	if (result === null) return;
+	updateBaseOption(result.base);
+	if (result.patch === lastPatch) return;
+	lastPatch = result.patch;
+	renderPatch(result.patch);
 }
 
 function startWatch(): void {

@@ -20,6 +20,10 @@
 <body>
 <div id="app">
   <div id="toolbar">
+    <select id="diff-mode">
+      <option value="working">Working tree</option>
+      <option value="base" disabled>vs base</option>
+    </select>
     <button id="toggle-style" type="button">Split / Unified</button>
     <label><input type="checkbox" id="toggle-untracked" /> Include untracked</label>
     <button id="refresh" type="button">Refresh</button>
