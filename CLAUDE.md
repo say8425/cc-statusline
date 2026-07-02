@@ -85,6 +85,7 @@ Claude Code 기본 statusbar에 다음 정보를 추가로 표시:
 - diff 뷰어 Watch 토글: 켜면 ~2초 폴링으로 변경을 감지해 스크롤 유지한 채 자동 갱신 (localStorage에 상태 저장)
 - diff 뷰어 모드 전환: `Working tree`(HEAD 대비) / `vs <base>`(PR 타겟 또는 기본 브랜치 대비, merge-base vs 워킹트리) — 커밋해도 base 모드에선 변경이 유지됨 (base는 `gh pr view`→`origin/HEAD`→main/master로 결정, X-Diff-Base 헤더)
 - `✏️` 진입점 유지: working 변경이 없어도 브랜치가 base보다 앞서면 `✏️ vs <base> N files +X -Y`로 표시되고 클릭 시 뷰어가 base 모드로 열림 (URL `mode` 파라미터가 localStorage보다 우선) — 커밋 후에도 진입점 유지
+- diff 뷰어 chrome은 Pierre 다크 팔레트(#141415/#adadb1/#070707, accent #009fff)로 통일 (툴바·드롭다운·버튼·체크박스; 뷰어는 다크 전용이라 다크 값 하드코딩)
 - PR URL (클릭 가능한 OSC 8 하이퍼링크)
 - 리셋 시각 (5시간 사용량 리셋 시각, HH:MM)
 - 주간 리셋 시간 (7일 사용량 리셋 시각, MM/DD HH:MM)
