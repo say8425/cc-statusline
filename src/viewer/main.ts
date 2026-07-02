@@ -15,8 +15,10 @@ let includeUntracked = false;
 let codeView: CodeView | null = null;
 let fileTree: FileTree | null = null;
 
+let lastPatch: string | null = null;
 let lastTreeKey: string | null = null;
 let renderedDiffStyle: "unified" | "split" | null = null;
+let renderVersion = 0;
 
 function teardownViews(): void {
 	codeView?.cleanUp();
@@ -45,10 +47,14 @@ function renderPatch(patch: string): void {
 		path: f.name,
 		status: changeTypeToGitStatus(f.type),
 	}));
+	// Bump a monotonic version so CodeView's reconcile re-renders the diff
+	// content on reuse (it only updates a reused item when its version changes).
+	renderVersion += 1;
 	const items = files.map((f) => ({
 		id: f.name,
 		type: "diff" as const,
 		fileDiff: f,
+		version: renderVersion,
 	}));
 
 	// File tree: create once; afterwards update in place only when the file set
@@ -132,6 +138,7 @@ async function load(): Promise<void> {
 		diffMount.innerHTML = '<div id="empty">Failed to load diff.</div>';
 		return;
 	}
+	lastPatch = patch;
 	renderPatch(patch);
 }
 
@@ -152,3 +159,43 @@ document
 window.addEventListener("focus", () => void load());
 
 void load();
+
+const WATCH_STORAGE_KEY = "cc-statusline:diff-watch";
+const WATCH_POLL_MS = 2000;
+let watchTimer: ReturnType<typeof setInterval> | null = null;
+
+async function poll(): Promise<void> {
+	const patch = await fetchPatch();
+	if (patch === null || patch === lastPatch) return;
+	lastPatch = patch;
+	renderPatch(patch);
+}
+
+function startWatch(): void {
+	if (watchTimer !== null) return;
+	watchTimer = setInterval(() => void poll(), WATCH_POLL_MS);
+}
+
+function stopWatch(): void {
+	if (watchTimer !== null) {
+		clearInterval(watchTimer);
+		watchTimer = null;
+	}
+}
+
+const watchInput = document.getElementById("toggle-watch") as HTMLInputElement;
+watchInput?.addEventListener("change", () => {
+	if (watchInput.checked) {
+		localStorage.setItem(WATCH_STORAGE_KEY, "1");
+		startWatch();
+	} else {
+		localStorage.setItem(WATCH_STORAGE_KEY, "0");
+		stopWatch();
+	}
+});
+
+// 저장된 watch 상태 복원 (ON이면 폴링 시작)
+if (watchInput && localStorage.getItem(WATCH_STORAGE_KEY) === "1") {
+	watchInput.checked = true;
+	startWatch();
+}
