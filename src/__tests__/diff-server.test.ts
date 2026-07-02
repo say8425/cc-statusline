@@ -47,9 +47,10 @@ describe("diff server", () => {
 		expect(res.headers.get("x-cc-statusline")).toBe("1");
 	});
 
-	test("serves index.html at /", async () => {
+	test("serves index.html at / with no-store so the viewer is never stale", async () => {
 		const res = await fetch(`${base}/`);
 		expect(res.status).toBe(200);
+		expect(res.headers.get("cache-control")).toBe("no-store");
 		expect(await res.text()).toContain("viewer");
 	});
 

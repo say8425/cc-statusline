@@ -45,7 +45,11 @@ function createHandler(cfg: { viewerDir: string; token: string }) {
 			return new Response("forbidden", { status: 403 });
 		}
 		const file = Bun.file(filePath);
-		if (await file.exists()) return new Response(file);
+		// no-store: the viewer bundle is served from disk and changes on rebuild/
+		// package update; never let the browser run a stale cached copy.
+		if (await file.exists()) {
+			return new Response(file, { headers: { "cache-control": "no-store" } });
+		}
 		return new Response("not found", { status: 404 });
 	};
 }
