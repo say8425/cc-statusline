@@ -2,3 +2,4 @@ node_modules/
 dist/
 bun.lockb
 .DS_Store
+docs/superpowers/
