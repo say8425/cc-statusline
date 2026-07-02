@@ -82,6 +82,7 @@ Claude Code 기본 statusbar에 다음 정보를 추가로 표시:
 - Context window 토큰 사용량 및 사용률 (%)
 - Git diff 통계 (파일 수, +insertions, -deletions)
 - 클릭 가능한 diff 뷰어: `✏️` 클릭 시 로컬 diff 뷰어(Pierre `@pierre/diffs`+`@pierre/trees`)를 `127.0.0.1:49573`에 띄워 브라우저로 표시
+- diff 뷰어 Watch 토글: 켜면 ~2초 폴링으로 변경을 감지해 스크롤 유지한 채 자동 갱신 (localStorage에 상태 저장)
 - PR URL (클릭 가능한 OSC 8 하이퍼링크)
 - 리셋 시각 (5시간 사용량 리셋 시각, HH:MM)
 - 주간 리셋 시간 (7일 사용량 리셋 시각, MM/DD HH:MM)

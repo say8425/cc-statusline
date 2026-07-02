@@ -23,7 +23,7 @@ diff 뷰어 웹페이지에 **Watch 토글**을 추가한다. ON이면 repo 변�
 | 갱신 방식 | **In-place 갱신(스크롤 보존)** — 인스턴스 재사용 |
 | 폴링 간격 | **2초** (상수, 조정 용이) |
 | 토글 지속성 | `localStorage`에 ON/OFF 저장 → 새로고침 후 복원 |
-| 백그라운드 탭 | `document.hidden`이면 폴링 skip (복귀 시 기존 focus 리스너가 따라잡음) |
+| 백그라운드 탭 | 폴링은 탭 가시성과 무관하게 동작 (에디터에서 편집 중 브라우저가 백그라운드여도 갱신). ~~`document.hidden` skip~~ 은 구현 중 제거 — 9절 참고 |
 | 기본 상태 | **OFF** |
 
 ## 4. 동작
@@ -83,3 +83,21 @@ diff 뷰어 웹페이지에 **Watch 토글**을 추가한다. ON이면 repo 변�
 - 서버 SSE/파일시스템 watch.
 - 사용자 조정 가능한 폴링 간격 UI (상수 2초로 고정).
 - 스크롤을 라인 단위로 정밀 앵커링(변경으로 라인 수가 바뀌면 best-effort 위치 복원).
+
+## 9. 구현 중 편차 / 알려진 한계 (브라우저 E2E로 발견)
+
+- **`document.hidden` 폴링 skip 제거**: 원래 백그라운드 탭에서 폴링을 멈추려 했으나,
+  watch의 핵심 용도가 "에디터에서 편집하며 브라우저는 뒤에 둔 채 자동 갱신"이라 탭이
+  백그라운드/가려지면 `document.hidden`이 true가 되어 기능이 무력화됨. localhost
+  `git diff` 2초 폴링은 비용이 미미하므로 가드를 제거하고 가시성과 무관하게 폴링.
+- **CodeView 아이템 `version` 부여**: `CodeView.setItems` reconcile은 재사용 아이템의
+  `version`이 바뀔 때만 내용을 갱신한다. version 없이는 재사용 경로(poll/Refresh)에서
+  diff 내용이 갱신되지 않아, 매 렌더마다 증가하는 `renderVersion`을 모든 아이템에 부여.
+- **데몬 `Cache-Control: no-store`** (server.ts): 뷰어 번들을 캐시 헤더 없이 서빙하면
+  브라우저가 옛 `main.js`를 실행할 수 있어(리빌드/업데이트 후 stale), 정적 뷰어 자산에
+  no-store를 추가. (뷰어 전용 범위를 살짝 넘지만 stale 뷰어를 막는 실제 버그 수정.)
+- **알려진 minor 한계**: 스크롤 보존을 위해 CodeView 인스턴스를 재사용하므로, 자동
+  갱신 시 diff **내용**은 정확히 갱신되지만 파일 헤더의 **`+N` 요약 배지가 stale**할 수
+  있다(Pierre reconcile이 헤더 요약을 재계산하지 않음). 새로고침/split·unified 토글 시
+  정정됨. 헤더까지 정확히 하려면 인스턴스 재생성이 필요한데 스크롤 튐/깜빡임을
+  유발하므로 트레이드오프상 재사용을 유지.
