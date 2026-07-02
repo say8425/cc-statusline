@@ -1,5 +1,6 @@
 import { CodeView, parsePatchFiles } from "@pierre/diffs";
 import { FileTree } from "@pierre/trees";
+import { isLargeFile } from "./largeFile.ts";
 import { changeTypeToGitStatus } from "./mapStatus.ts";
 import {
 	FLATTEN_KEY,
@@ -60,6 +61,7 @@ let renderedDiffStyle: "unified" | "split" | null = null;
 let renderVersion = 0;
 
 const collapsedIds = new Set<string>();
+const seenIds = new Set<string>();
 
 function makeFoldButton(id: string): HTMLButtonElement {
 	const collapsed = collapsedIds.has(id);
@@ -94,6 +96,16 @@ function renderPatch(patch: string): void {
 		return;
 	}
 	statusEl.textContent = `${files.length} file(s)`;
+
+	// Large files (lockfiles or over the changed-line threshold) start collapsed,
+	// but only the first time we see each file — so a file the user manually
+	// expands is not re-collapsed on the next watch refresh.
+	for (const f of files) {
+		if (seenIds.has(f.name)) continue;
+		seenIds.add(f.name);
+		const changedLines = f.additionLines.length + f.deletionLines.length;
+		if (isLargeFile(f.name, changedLines)) collapsedIds.add(f.name);
+	}
 
 	const paths = files.map((f) => f.name);
 	const gitStatus = files.map((f) => ({
