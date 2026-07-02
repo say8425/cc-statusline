@@ -191,9 +191,14 @@ modeSelect?.addEventListener("change", () => {
 	void load();
 });
 
-// Restore persisted diff mode before the initial load (updateBaseOption in
-// load() will revert to working if the base turns out to be unresolvable).
-if (localStorage.getItem("cc-statusline:diff-mode") === "base") {
+// URL mode (from the statusline link) wins over the persisted preference so a
+// "vs base" edit link opens directly in base mode; otherwise restore localStorage.
+const urlMode = params.get("mode");
+if (urlMode === "base" || urlMode === "working") {
+	diffMode = urlMode;
+	localStorage.setItem("cc-statusline:diff-mode", urlMode);
+	if (modeSelect) modeSelect.value = urlMode;
+} else if (localStorage.getItem("cc-statusline:diff-mode") === "base") {
 	diffMode = "base";
 	modeSelect.value = "base";
 }
