@@ -1,6 +1,6 @@
 import { resolve } from "node:path";
 import type { Server } from "bun";
-import { getDiff, isGitRepo } from "./diff.ts";
+import { getDiff, isGitRepo, resolveBaseRef } from "./diff.ts";
 import { ensureToken } from "./token.ts";
 
 type Env = Record<string, string | undefined>;
@@ -9,6 +9,24 @@ export interface DiffServerHandle {
 	server: Server<undefined>;
 	token: string;
 	stop(): void;
+}
+
+// Base resolution runs `gh pr view`, which is slow — cache it per repo.
+const BASE_TTL_MS = 10_000;
+const baseCache = new Map<
+	string,
+	{ value: { base: string | null; ref: string | null }; at: number }
+>();
+
+async function resolveBaseCached(
+	repo: string,
+): Promise<{ base: string | null; ref: string | null }> {
+	const now = Date.now();
+	const hit = baseCache.get(repo);
+	if (hit && now - hit.at < BASE_TTL_MS) return hit.value;
+	const value = await resolveBaseRef(repo);
+	baseCache.set(repo, { value, at: now });
+	return value;
 }
 
 function createHandler(cfg: { viewerDir: string; token: string }) {
@@ -32,10 +50,22 @@ function createHandler(cfg: { viewerDir: string; token: string }) {
 				return new Response("not a git repository", { status: 400 });
 			}
 			const untracked = url.searchParams.get("untracked") === "1";
-			const diff = await getDiff(repo, { untracked });
+			const mode = url.searchParams.get("mode") === "base" ? "base" : "working";
+			const { base, ref } = await resolveBaseCached(repo);
+			const diff =
+				mode === "base"
+					? await getDiff(repo, {
+							untracked,
+							mode: "base",
+							ref: ref ?? undefined,
+						})
+					: await getDiff(repo, { untracked });
 			// NOTE: intentionally no Access-Control-Allow-Origin — cross-origin pages must not read this.
 			return new Response(diff, {
-				headers: { "content-type": "text/plain; charset=utf-8" },
+				headers: {
+					"content-type": "text/plain; charset=utf-8",
+					"x-diff-base": base ?? "",
+				},
 			});
 		}
 

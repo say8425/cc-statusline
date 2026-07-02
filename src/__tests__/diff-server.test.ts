@@ -126,3 +126,28 @@ describe("diff server", () => {
 		expect(statusLine).toContain("403");
 	});
 });
+
+describe("diff server base mode", () => {
+	test("mode=base diffs against the base branch and sets X-Diff-Base", async () => {
+		await $`git -C ${repo} branch -M main`;
+		await $`git -C ${repo} checkout -qb feature`;
+		writeFileSync(join(repo, "c.txt"), "committed on branch\n");
+		await $`git -C ${repo} add c.txt`;
+		await $`git -C ${repo} commit -qm branch-commit`;
+
+		const url = `${base}/api/diff?repo=${encodeURIComponent(repo)}&token=${handle.token}&mode=base`;
+		const res = await fetch(url);
+		expect(res.status).toBe(200);
+		expect(res.headers.get("x-diff-base")).toBe("main");
+		const body = await res.text();
+		expect(body).toContain("c.txt");
+	});
+
+	test("working mode still sets X-Diff-Base for the dropdown label", async () => {
+		await $`git -C ${repo} branch -M main`;
+		const url = `${base}/api/diff?repo=${encodeURIComponent(repo)}&token=${handle.token}`;
+		const res = await fetch(url);
+		expect(res.status).toBe(200);
+		expect(res.headers.get("x-diff-base")).toBe("main");
+	});
+});
