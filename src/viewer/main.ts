@@ -15,6 +15,33 @@ const token = params.get("token") ?? "";
 
 const treeMount = document.getElementById("tree") as HTMLElement;
 const diffMount = document.getElementById("diff") as HTMLElement;
+
+// Fold/unfold a file when its header chevron is clicked. Delegated via
+// composedPath so it works regardless of where @pierre/diffs renders the
+// button (light or shadow DOM); keyed on the data-fold attribute.
+diffMount.addEventListener("click", (event) => {
+	if (!codeView) return;
+	const target = event
+		.composedPath()
+		.find(
+			(node): node is HTMLElement =>
+				node instanceof HTMLElement && node.dataset.fold !== undefined,
+		);
+	const id = target?.dataset.fold;
+	if (!id) return;
+	const item = codeView.getItem(id);
+	if (!item || item.type !== "diff") return;
+	const nextCollapsed = !collapsedIds.has(id);
+	if (nextCollapsed) collapsedIds.add(id);
+	else collapsedIds.delete(id);
+	renderVersion += 1;
+	codeView.updateItem({
+		...item,
+		collapsed: nextCollapsed,
+		version: renderVersion,
+	});
+});
+
 const statusEl = document.getElementById("status") as HTMLElement;
 const modeSelect = document.getElementById("diff-mode") as HTMLSelectElement;
 const appEl = document.getElementById("app") as HTMLElement;
@@ -31,6 +58,20 @@ let lastPatch: string | null = null;
 let lastTreeKey: string | null = null;
 let renderedDiffStyle: "unified" | "split" | null = null;
 let renderVersion = 0;
+
+const collapsedIds = new Set<string>();
+
+function makeFoldButton(id: string): HTMLButtonElement {
+	const collapsed = collapsedIds.has(id);
+	const btn = document.createElement("button");
+	btn.type = "button";
+	btn.dataset.fold = id;
+	btn.textContent = collapsed ? "▸" : "▾";
+	btn.setAttribute("aria-label", collapsed ? "Expand file" : "Collapse file");
+	btn.style.cssText =
+		"background:transparent;border:0;color:#84848a;cursor:pointer;font:inherit;padding:0 6px 0 0;line-height:1";
+	return btn;
+}
 
 function teardownViews(): void {
 	codeView?.cleanUp();
@@ -67,6 +108,7 @@ function renderPatch(patch: string): void {
 		type: "diff" as const,
 		fileDiff: f,
 		version: renderVersion,
+		collapsed: collapsedIds.has(f.name),
 	}));
 
 	// File tree: create once; afterwards update in place only when the file set
@@ -105,6 +147,7 @@ function renderPatch(patch: string): void {
 			stickyHeaders: true,
 			hunkSeparators: "line-info",
 			expandUnchanged: true,
+			renderHeaderPrefix: (fileDiff) => makeFoldButton(fileDiff.name),
 		});
 		codeView.setup(diffMount);
 		codeView.setItems(items);
