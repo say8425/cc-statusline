@@ -1,8 +1,4 @@
-import {
-	CodeView,
-	type FileDiffMetadata,
-	parsePatchFiles,
-} from "@pierre/diffs";
+import { CodeView, parsePatchFiles } from "@pierre/diffs";
 import { FileTree } from "@pierre/trees";
 import { changeTypeToGitStatus } from "./mapStatus.ts";
 
@@ -19,77 +15,124 @@ let includeUntracked = false;
 let codeView: CodeView | null = null;
 let fileTree: FileTree | null = null;
 
-function renderFiles(files: FileDiffMetadata[]): void {
+let lastTreeKey: string | null = null;
+let renderedDiffStyle: "unified" | "split" | null = null;
+
+function teardownViews(): void {
+	codeView?.cleanUp();
+	codeView = null;
+	fileTree?.cleanUp();
+	fileTree = null;
+	renderedDiffStyle = null;
+	lastTreeKey = null;
 	treeMount.replaceChildren();
-	diffMount.replaceChildren();
+}
+
+function renderPatch(patch: string): void {
+	const files = parsePatchFiles(patch).flatMap((p) => p.files);
 
 	if (files.length === 0) {
+		teardownViews();
+		diffMount.replaceChildren();
 		diffMount.innerHTML = '<div id="empty">No changes.</div>';
 		statusEl.textContent = "";
 		return;
 	}
 	statusEl.textContent = `${files.length} file(s)`;
 
-	fileTree = new FileTree({
-		paths: files.map((f) => f.name),
-		gitStatus: files.map((f) => ({
-			path: f.name,
-			status: changeTypeToGitStatus(f.type),
-		})),
-		initialExpansion: "open",
-		flattenEmptyDirectories: true,
-		search: true,
-		onSelectionChange: (selected) => {
-			const path = selected[0];
-			if (path && codeView) codeView.scrollTo({ type: "item", id: path });
-		},
-	});
-	fileTree.render({ containerWrapper: treeMount });
+	const paths = files.map((f) => f.name);
+	const gitStatus = files.map((f) => ({
+		path: f.name,
+		status: changeTypeToGitStatus(f.type),
+	}));
+	const items = files.map((f) => ({
+		id: f.name,
+		type: "diff" as const,
+		fileDiff: f,
+	}));
 
-	codeView = new CodeView({
-		diffStyle,
-		themeType: "dark",
-		stickyHeaders: true,
-	});
-	codeView.setup(diffMount);
-	codeView.setItems(
-		files.map((f) => ({ id: f.name, type: "diff" as const, fileDiff: f })),
-	);
-	codeView.render();
-	// 첫 페인트 안정화: 가상화된 CodeView는 컨테이너 크기가 측정된 뒤에야
-	// 보이는 범위를 채운다. 초기 mount 직후엔 비어 보일 수 있으므로 다음
-	// 프레임들에서 다시 렌더해 확실히 그리게 한다.
-	// 이후 다른 렌더로 교체된 인스턴스라면 재렌더하지 않는다 (빠른 토글/refresh 시
-	// 이전 rAF가 orphaned CodeView를 건드리는 것을 방지).
-	const cv = codeView;
-	requestAnimationFrame(() => {
-		if (cv !== codeView) return;
-		cv.render();
-		requestAnimationFrame(() => {
-			if (cv === codeView) cv.render();
+	// File tree: create once; afterwards update in place only when the file set
+	// or statuses changed (so editing a file's contents doesn't reset it).
+	const treeKey = JSON.stringify(gitStatus);
+	if (!fileTree) {
+		treeMount.replaceChildren();
+		fileTree = new FileTree({
+			paths,
+			gitStatus,
+			initialExpansion: "open",
+			flattenEmptyDirectories: true,
+			search: true,
+			onSelectionChange: (selected) => {
+				const path = selected[0];
+				if (path && codeView) codeView.scrollTo({ type: "item", id: path });
+			},
 		});
+		fileTree.render({ containerWrapper: treeMount });
+		lastTreeKey = treeKey;
+	} else if (treeKey !== lastTreeKey) {
+		fileTree.resetPaths(paths);
+		fileTree.setGitStatus(gitStatus);
+		lastTreeKey = treeKey;
+	}
+
+	// Diff panel: recreate the CodeView on first render, when transitioning from
+	// empty, or when diffStyle changed; otherwise reuse it so scroll is
+	// preserved across updates.
+	if (!codeView || renderedDiffStyle !== diffStyle) {
+		codeView?.cleanUp();
+		diffMount.replaceChildren();
+		codeView = new CodeView({
+			diffStyle,
+			themeType: "dark",
+			stickyHeaders: true,
+		});
+		codeView.setup(diffMount);
+		codeView.setItems(items);
+		codeView.render();
+		renderedDiffStyle = diffStyle;
+		// First-paint stabilization: the virtualized CodeView fills its visible
+		// range only after the container is measured. Re-render on the next two
+		// frames (guarded against a superseded instance).
+		const cv = codeView;
+		requestAnimationFrame(() => {
+			if (cv !== codeView) return;
+			cv.render();
+			requestAnimationFrame(() => {
+				if (cv === codeView) cv.render();
+			});
+		});
+	} else {
+		const scrollTop = codeView.getScrollTop();
+		codeView.setItems(items);
+		codeView.render();
+		codeView.scrollTo({ type: "position", position: scrollTop });
+	}
+}
+
+async function fetchPatch(): Promise<string | null> {
+	const query = new URLSearchParams({
+		repo,
+		token,
+		untracked: includeUntracked ? "1" : "0",
 	});
+	try {
+		const res = await fetch(`/api/diff?${query.toString()}`);
+		if (!res.ok) return null;
+		return await res.text();
+	} catch (err) {
+		console.error(err);
+		return null;
+	}
 }
 
 async function load(): Promise<void> {
 	statusEl.textContent = "Loading…";
-	try {
-		const query = new URLSearchParams({
-			repo,
-			token,
-			untracked: includeUntracked ? "1" : "0",
-		});
-		const res = await fetch(`/api/diff?${query.toString()}`);
-		if (!res.ok) {
-			diffMount.innerHTML = `<div id="empty">Error: ${res.status}</div>`;
-			return;
-		}
-		const patch = await res.text();
-		renderFiles(parsePatchFiles(patch).flatMap((p) => p.files));
-	} catch (err) {
-		diffMount.innerHTML = `<div id="empty">Failed to load diff.</div>`;
-		console.error(err);
+	const patch = await fetchPatch();
+	if (patch === null) {
+		diffMount.innerHTML = '<div id="empty">Failed to load diff.</div>';
+		return;
 	}
+	renderPatch(patch);
 }
 
 document.getElementById("toggle-style")?.addEventListener("click", () => {
