@@ -36,16 +36,21 @@
   }
   .tb-left, .tb-right { display: flex; align-items: center; gap: 8px; }
   .tb-right { margin-left: auto; }
+  /* One control height for every toolbar widget — without it, line-height:
+     normal + differing paddings yield 25/26/26.5/27px mismatches. */
   #toolbar button,
   #toolbar select {
+    box-sizing: border-box;
+    height: 26px;
     background: var(--vd-inset);
     color: var(--vd-fg);
     border: 1px solid var(--vd-border);
     border-radius: var(--vd-radius);
-    padding: 4px 10px;
+    padding: 0 10px;
     font: inherit;
     cursor: pointer;
   }
+  #toolbar button { display: inline-flex; align-items: center; }
   #toolbar button:hover,
   #toolbar select:hover { background: var(--vd-hover); }
   #toolbar select {
@@ -58,17 +63,20 @@
   }
   /* Segmented control (Pierre-style): inset pill, active segment raised */
   #toolbar .tb-seg {
-    display: inline-flex; gap: 2px; padding: 2px;
+    box-sizing: border-box;
+    height: 26px;
+    display: inline-flex; align-items: center; gap: 2px; padding: 2px;
     background: var(--vd-inset);
     border: 1px solid var(--vd-border);
     border-radius: var(--vd-radius);
   }
   #toolbar .tb-seg button {
+    height: 20px; /* 26 - 2px border - 4px container padding */
     background: transparent;
     border: 0;
     border-radius: 4px;
     color: var(--vd-fg-muted);
-    padding: 3px 10px;
+    padding: 0 10px;
     transition: background-color .15s, color .15s;
   }
   #toolbar .tb-seg button:hover { background: transparent; color: var(--vd-fg); }
@@ -76,7 +84,7 @@
     background: #2a2a2c;
     color: var(--vd-fg);
   }
-  #toolbar #refresh { display: inline-flex; align-items: center; padding: 5px 7px; }
+  #toolbar #refresh { padding: 0 7px; }
   #toolbar label {
     display: inline-flex; align-items: center; gap: 6px;
     color: var(--vd-fg);
