@@ -89,7 +89,9 @@ if (import.meta.main) {
 		startDiffServer({
 			port: resolveDiffPort(),
 			viewerDir: join(import.meta.dir, "viewer"),
-			idleTimeoutMs: 15 * 60 * 1000,
+			// No idle timeout: once the statusline spawns the daemon it stays up
+			// until reboot/kill, so it doesn't die mid-session after 15 min idle.
+			// (server.ts keeps the optional idle feature; the daemon just opts out.)
 		});
 		// Bun.serve keeps the process alive.
 	} else {
