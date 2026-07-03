@@ -90,7 +90,7 @@ Claude Code 기본 statusbar에 다음 정보를 추가로 표시:
 - 파일트리 좌/우 배치(`data-tree-side`, localStorage `cc-statusline:tree-side`, 기본 left)와 flatten(빈 디렉터리 접기, localStorage `cc-statusline:flatten`, 기본 on)은 토글 가능; flatten 변경 시 FileTree 재생성. 파일트리 상단 padding은 diff의 8px(`--diffs-gap-fallback`)와 일치
 - diff 뷰어 파일 폴딩: 파일 헤더 바 전체(파일명·stats·chevron ▾/▸)를 클릭해 접기/펼치기 (diffMount의 composedPath 위임: `data-diffs-header` 경로면 헤더 클릭, 감싼 `<diffs-container>`의 `[data-fold]`로 파일 id → CodeView.updateItem, 세션 인메모리 collapsedIds). 드래그(pointerdown 대비 이동 > 6px)나 텍스트 선택 시엔 토글 안 함(bad UX 방지, src/viewer/drag.ts). 헤더 커서는 `unsafeCSS`로 pointer
 - 대용량 파일 기본 접힘: 락파일(pnpm-lock.yaml 등) 또는 변경 줄 수 > 1500이면 첫 렌더 시 접힘(seenIds로 1회성 → 펼치면 유지). 판정은 src/viewer/largeFile.ts
-- hunk context 확장: CodeView `hunkSeparators:"line-info"` + `expandUnchanged:true`로 hunk 사이 생략 context를 구분선 클릭으로 펼침
+- diff 데이터: diff-server가 패치 대신 파일별 old/new 전체 내용을 JSON으로 제공(`getDiffFiles`: `git diff --name-status` + `git show <base>:path`/워킹트리 읽기, 바이너리는 NUL 감지로 표식). viewer는 `parseDiffFromFile`로 파싱 → non-partial diff라 @pierre/diffs가 미변경 구간을 `collapsedContextThreshold:3`로 접고 `hunkSeparators:"line-info"`+`expansionLineCount:10`의 내장 expand 캐럿으로 실제 노출(파일별 old/new가 있어야 expand 가능 — patch=partial은 불가). 바이너리 파일은 트리에만 표시
 - PR URL (클릭 가능한 OSC 8 하이퍼링크)
 - 리셋 시각 (5시간 사용량 리셋 시각, HH:MM)
 - 주간 리셋 시간 (7일 사용량 리셋 시각, MM/DD HH:MM)
