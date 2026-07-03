@@ -97,10 +97,13 @@ function makeFoldButton(id: string): HTMLButtonElement {
 	const btn = document.createElement("button");
 	btn.type = "button";
 	btn.dataset.fold = id;
-	btn.textContent = collapsed ? "▸" : "▾";
 	btn.setAttribute("aria-label", collapsed ? "Expand file" : "Collapse file");
 	btn.style.cssText =
-		"background:transparent;border:0;color:#84848a;cursor:pointer;font:inherit;padding:0 6px 0 0;line-height:1";
+		"background:transparent;border:0;color:#84848a;cursor:pointer;display:inline-flex;align-items:center;padding:0 6px 0 0;line-height:1";
+	// Inline chevron SVG: Pierre's icon sprite lives in the diff's shadow DOM and
+	// isn't reachable from this light-DOM slotted button, so we inline a clean
+	// caret. It rotates (0deg expanded ▾, -90deg collapsed ▸) with a short tween.
+	btn.innerHTML = `<svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true" style="transition:transform .15s ease;transform:rotate(${collapsed ? -90 : 0}deg)"><path fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" d="M4.5 6.5 8 10l3.5-3.5"/></svg>`;
 	return btn;
 }
 
@@ -187,7 +190,7 @@ function renderPatch(patch: string): void {
 			themeType: "dark",
 			stickyHeaders: true,
 			hunkSeparators: "line-info",
-			expandUnchanged: true,
+			expansionLineCount: 10,
 			renderHeaderPrefix: (fileDiff) => makeFoldButton(fileDiff.name),
 			unsafeCSS: "[data-diffs-header]{cursor:pointer}",
 		});
