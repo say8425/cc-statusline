@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import { $ } from "bun";
 
 export async function isGitRepo(repo: string): Promise<boolean> {
@@ -66,48 +68,112 @@ export async function resolveBaseRef(
 	return { base: named, ref: null };
 }
 
-async function appendUntracked(repo: string, tracked: string): Promise<string> {
-	const listed =
-		await $`git -C ${repo} ls-files --others --exclude-standard 2>/dev/null`
-			.nothrow()
-			.text();
-	const files = listed
-		.split("\n")
-		.map((s) => s.trim())
-		.filter(Boolean);
-	const parts: string[] = tracked ? [tracked] : [];
-	for (const file of files) {
-		// --no-index exits 1 when the file differs from /dev/null; capture stdout anyway.
-		const synthetic =
-			await $`git -C ${repo} diff -U100000 --no-index --no-color /dev/null ${file} 2>/dev/null`
-				.nothrow()
-				.text();
-		if (synthetic) parts.push(synthetic);
-	}
-	return parts.join("");
+export type DiffFileStatus =
+	| "added"
+	| "deleted"
+	| "modified"
+	| "renamed"
+	| "untracked";
+
+export interface DiffFile {
+	name: string;
+	oldName?: string;
+	status: DiffFileStatus;
+	binary: boolean;
+	oldContents: string;
+	newContents: string;
 }
 
-export async function getDiff(
+async function showBytes(
+	repo: string,
+	rev: string,
+	path: string,
+): Promise<Uint8Array> {
+	const buf = await $`git -C ${repo} show ${`${rev}:${path}`} 2>/dev/null`
+		.nothrow()
+		.arrayBuffer();
+	return new Uint8Array(buf);
+}
+
+function readWorkingBytes(repo: string, path: string): Uint8Array {
+	try {
+		return new Uint8Array(readFileSync(join(repo, path)));
+	} catch {
+		return new Uint8Array();
+	}
+}
+
+async function buildFile(
+	repo: string,
+	base: string,
+	status: DiffFileStatus,
+	name: string,
+	oldName?: string,
+): Promise<DiffFile> {
+	const oldBytes =
+		status === "added" || status === "untracked"
+			? new Uint8Array()
+			: await showBytes(repo, base, oldName ?? name);
+	const newBytes =
+		status === "deleted" ? new Uint8Array() : readWorkingBytes(repo, name);
+	const binary = oldBytes.includes(0) || newBytes.includes(0);
+	const decoder = new TextDecoder();
+	return {
+		name,
+		...(oldName ? { oldName } : {}),
+		status,
+		binary,
+		oldContents: binary ? "" : decoder.decode(oldBytes),
+		newContents: binary ? "" : decoder.decode(newBytes),
+	};
+}
+
+export async function getDiffFiles(
 	repo: string,
 	opts: { untracked?: boolean; mode?: "working" | "base"; ref?: string } = {},
-): Promise<string> {
-	let tracked: string;
-	if (opts.mode === "base" && opts.ref) {
-		const mb = (
-			await $`git -C ${repo} merge-base ${opts.ref} HEAD 2>/dev/null`
+): Promise<DiffFile[]> {
+	const base =
+		opts.mode === "base" && opts.ref
+			? (
+					await $`git -C ${repo} merge-base ${opts.ref} HEAD 2>/dev/null`
+						.nothrow()
+						.text()
+				).trim()
+			: "HEAD";
+	const files: DiffFile[] = [];
+	if (base) {
+		const nameStatus =
+			await $`git -C ${repo} diff --name-status ${base} 2>/dev/null`
 				.nothrow()
-				.text()
-		).trim();
-		tracked = mb
-			? await $`git -C ${repo} diff -U100000 ${mb} --no-color 2>/dev/null`
-					.nothrow()
-					.text()
-			: "";
-	} else {
-		tracked = await $`git -C ${repo} diff -U100000 HEAD --no-color 2>/dev/null`
-			.nothrow()
-			.text();
+				.text();
+		for (const line of nameStatus.split("\n")) {
+			if (!line.trim()) continue;
+			const parts = line.split("\t");
+			const code = parts[0] ?? "";
+			if (code.startsWith("R")) {
+				files.push(
+					await buildFile(repo, base, "renamed", parts[2] ?? "", parts[1]),
+				);
+			} else if (code.startsWith("A")) {
+				files.push(await buildFile(repo, base, "added", parts[1] ?? ""));
+			} else if (code.startsWith("D")) {
+				files.push(await buildFile(repo, base, "deleted", parts[1] ?? ""));
+			} else {
+				files.push(await buildFile(repo, base, "modified", parts[1] ?? ""));
+			}
+		}
 	}
-	if (!opts.untracked) return tracked;
-	return appendUntracked(repo, tracked);
+	if (opts.untracked) {
+		const listed =
+			await $`git -C ${repo} ls-files --others --exclude-standard 2>/dev/null`
+				.nothrow()
+				.text();
+		for (const path of listed
+			.split("\n")
+			.map((s) => s.trim())
+			.filter(Boolean)) {
+			files.push(await buildFile(repo, base, "untracked", path));
+		}
+	}
+	return files;
 }

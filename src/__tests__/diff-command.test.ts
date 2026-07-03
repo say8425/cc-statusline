@@ -3,7 +3,11 @@ import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { $ } from "bun";
-import { getDiff, isGitRepo, resolveBaseRef } from "../diff-server/diff.ts";
+import {
+	getDiffFiles,
+	isGitRepo,
+	resolveBaseRef,
+} from "../diff-server/diff.ts";
 
 let repo: string;
 
@@ -30,42 +34,54 @@ describe("isGitRepo", () => {
 	});
 });
 
-describe("getDiff", () => {
-	test("returns tracked working-tree changes", async () => {
-		writeFileSync(join(repo, "a.txt"), "two\n");
-		const diff = await getDiff(repo);
-		expect(diff).toContain("a.txt");
-		expect(diff).toContain("-one");
-		expect(diff).toContain("+two");
-	});
-
-	test("excludes untracked by default, includes with opt-in", async () => {
-		writeFileSync(join(repo, "b.txt"), "brand new\n");
-		const without = await getDiff(repo, { untracked: false });
-		expect(without).not.toContain("b.txt");
-		const withUntracked = await getDiff(repo, { untracked: true });
-		expect(withUntracked).toContain("b.txt");
-		expect(withUntracked).toContain("+brand new");
-	});
-
-	test("includes full file context so hidden lines can be expanded", async () => {
+describe("getDiffFiles", () => {
+	test("modified file carries full old and new contents", async () => {
 		const lines = `${Array.from({ length: 60 }, (_, i) => `line${i + 1}`).join(
 			"\n",
 		)}\n`;
 		writeFileSync(join(repo, "a.txt"), lines);
 		await $`git -C ${repo} add a.txt`;
 		await $`git -C ${repo} commit -qm sixty`;
-		// Change only the first and last line — far apart, so default -U3 would
-		// omit the middle unchanged lines.
-		const changed = lines
-			.replace("line1\n", "LINE1\n")
-			.replace("line60\n", "LINE60\n");
-		writeFileSync(join(repo, "a.txt"), changed);
-		const diff = await getDiff(repo);
-		expect(diff).toContain("+LINE1");
-		expect(diff).toContain("+LINE60");
-		// A middle unchanged line is only present when full context is emitted.
-		expect(diff).toContain("line30");
+		writeFileSync(join(repo, "a.txt"), lines.replace("line1\n", "LINE1\n"));
+		const files = await getDiffFiles(repo);
+		expect(files).toHaveLength(1);
+		const f = files[0];
+		expect(f.name).toBe("a.txt");
+		expect(f.status).toBe("modified");
+		expect(f.binary).toBe(false);
+		expect(f.oldContents).toContain("line1\n");
+		expect(f.newContents).toContain("LINE1\n");
+		// full content: an unchanged middle line is present in both
+		expect(f.oldContents).toContain("line30");
+		expect(f.newContents).toContain("line30");
+	});
+
+	test("deleted file has empty newContents", async () => {
+		rmSync(join(repo, "a.txt"));
+		const files = await getDiffFiles(repo);
+		expect(files[0].status).toBe("deleted");
+		expect(files[0].oldContents).toBe("one\n");
+		expect(files[0].newContents).toBe("");
+	});
+
+	test("untracked included only with opt-in, as status untracked", async () => {
+		writeFileSync(join(repo, "b.txt"), "brand new\n");
+		const without = await getDiffFiles(repo, { untracked: false });
+		expect(without.find((f) => f.name === "b.txt")).toBeUndefined();
+		const withUntracked = await getDiffFiles(repo, { untracked: true });
+		const b = withUntracked.find((f) => f.name === "b.txt");
+		expect(b?.status).toBe("untracked");
+		expect(b?.oldContents).toBe("");
+		expect(b?.newContents).toBe("brand new\n");
+	});
+
+	test("binary file is flagged with empty contents", async () => {
+		writeFileSync(join(repo, "bin.dat"), Buffer.from([0x41, 0x00, 0x42]));
+		const files = await getDiffFiles(repo, { untracked: true });
+		const bin = files.find((f) => f.name === "bin.dat");
+		expect(bin?.binary).toBe(true);
+		expect(bin?.oldContents).toBe("");
+		expect(bin?.newContents).toBe("");
 	});
 });
 
@@ -92,7 +108,7 @@ describe("resolveBaseRef", () => {
 	});
 });
 
-describe("getDiff base mode", () => {
+describe("getDiffFiles base mode", () => {
 	test("base mode includes committed AND uncommitted changes since the base", async () => {
 		await $`git -C ${repo} branch -M main`;
 		await $`git -C ${repo} checkout -qb feature`;
@@ -103,12 +119,14 @@ describe("getDiff base mode", () => {
 		writeFileSync(join(repo, "b.txt"), "BETA_working\n");
 		await $`git -C ${repo} add b.txt`;
 
-		const working = await getDiff(repo, { mode: "working" });
-		expect(working).toContain("BETA_working");
-		expect(working).not.toContain("ALPHA_on_branch");
+		const working = await getDiffFiles(repo, { mode: "working" });
+		const workingA = working.find((f) => f.name === "a.txt");
+		expect(workingA).toBeUndefined();
 
-		const base = await getDiff(repo, { mode: "base", ref: "main" });
-		expect(base).toContain("ALPHA_on_branch");
-		expect(base).toContain("BETA_working");
+		const base = await getDiffFiles(repo, { mode: "base", ref: "main" });
+		const baseA = base.find((f) => f.name === "a.txt");
+		const baseB = base.find((f) => f.name === "b.txt");
+		expect(baseA?.newContents).toContain("ALPHA_on_branch");
+		expect(baseB?.newContents).toContain("BETA_working");
 	});
 });
