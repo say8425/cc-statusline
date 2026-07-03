@@ -1,8 +1,8 @@
-import { CodeView, parsePatchFiles } from "@pierre/diffs";
+import { CodeView, parseDiffFromFile } from "@pierre/diffs";
 import { FileTree } from "@pierre/trees";
+import type { DiffFile } from "../diff-server/diff.ts";
 import { movedBeyondThreshold } from "./drag.ts";
 import { isLargeFile } from "./largeFile.ts";
-import { changeTypeToGitStatus } from "./mapStatus.ts";
 import {
 	FLATTEN_KEY,
 	readFlatten,
@@ -117,9 +117,7 @@ function teardownViews(): void {
 	treeMount.replaceChildren();
 }
 
-function renderPatch(patch: string): void {
-	const files = parsePatchFiles(patch).flatMap((p) => p.files);
-
+function renderPatch(files: DiffFile[]): void {
 	if (files.length === 0) {
 		teardownViews();
 		diffMount.replaceChildren();
@@ -129,31 +127,37 @@ function renderPatch(patch: string): void {
 	}
 	statusEl.textContent = `${files.length} file(s)`;
 
-	// Large files (lockfiles or over the changed-line threshold) start collapsed,
-	// but only the first time we see each file — so a file the user manually
-	// expands is not re-collapsed on the next watch refresh.
-	for (const f of files) {
-		if (seenIds.has(f.name)) continue;
-		seenIds.add(f.name);
-		const changedLines = f.additionLines.length + f.deletionLines.length;
-		if (isLargeFile(f.name, changedLines)) collapsedIds.add(f.name);
-	}
-
+	// File tree lists ALL changed files (binary included); status maps 1:1 to
+	// @pierre/trees GitStatus.
 	const paths = files.map((f) => f.name);
-	const gitStatus = files.map((f) => ({
-		path: f.name,
-		status: changeTypeToGitStatus(f.type),
-	}));
-	// Bump a monotonic version so CodeView's reconcile re-renders the diff
-	// content on reuse (it only updates a reused item when its version changes).
+	const gitStatus = files.map((f) => ({ path: f.name, status: f.status }));
+
+	// Diff items: parse each non-binary file's full old/new contents into a
+	// NON-partial FileDiffMetadata so hunk expansion works.
 	renderVersion += 1;
-	const items = files.map((f) => ({
-		id: f.name,
-		type: "diff" as const,
-		fileDiff: f,
-		version: renderVersion,
-		collapsed: collapsedIds.has(f.name),
-	}));
+	const items = files
+		.filter((f) => !f.binary)
+		.map((f) => {
+			const fileDiff = parseDiffFromFile(
+				{ name: f.oldName ?? f.name, contents: f.oldContents },
+				{ name: f.name, contents: f.newContents },
+			);
+			// Large files (lockfiles or over the changed-line threshold) start
+			// collapsed on first sight.
+			if (!seenIds.has(f.name)) {
+				seenIds.add(f.name);
+				const changedLines =
+					fileDiff.additionLines.length + fileDiff.deletionLines.length;
+				if (isLargeFile(f.name, changedLines)) collapsedIds.add(f.name);
+			}
+			return {
+				id: f.name,
+				type: "diff" as const,
+				fileDiff,
+				version: renderVersion,
+				collapsed: collapsedIds.has(f.name),
+			};
+		});
 
 	// File tree: create once; afterwards update in place only when the file set
 	// or statuses changed (so editing a file's contents doesn't reset it).
@@ -191,6 +195,7 @@ function renderPatch(patch: string): void {
 			stickyHeaders: true,
 			hunkSeparators: "line-info",
 			expansionLineCount: 10,
+			collapsedContextThreshold: 3,
 			renderHeaderPrefix: (fileDiff) => makeFoldButton(fileDiff.name),
 			unsafeCSS: "[data-diffs-header]{cursor:pointer}",
 		});
@@ -239,7 +244,10 @@ function updateBaseOption(base: string): void {
 	}
 }
 
-async function fetchDiff(): Promise<{ patch: string; base: string } | null> {
+async function fetchDiff(): Promise<{
+	files: DiffFile[];
+	base: string;
+} | null> {
 	const query = new URLSearchParams({
 		repo,
 		token,
@@ -249,8 +257,8 @@ async function fetchDiff(): Promise<{ patch: string; base: string } | null> {
 	try {
 		const res = await fetch(`/api/diff?${query.toString()}`);
 		if (!res.ok) return null;
-		const patch = await res.text();
-		return { patch, base: res.headers.get("x-diff-base") ?? "" };
+		const files = (await res.json()) as DiffFile[];
+		return { files, base: res.headers.get("x-diff-base") ?? "" };
 	} catch (err) {
 		console.error(err);
 		return null;
@@ -265,8 +273,8 @@ async function load(): Promise<void> {
 		return;
 	}
 	updateBaseOption(result.base);
-	lastPatch = result.patch;
-	renderPatch(result.patch);
+	lastPatch = JSON.stringify(result.files);
+	renderPatch(result.files);
 }
 
 document.getElementById("toggle-style")?.addEventListener("click", () => {
@@ -373,9 +381,10 @@ async function poll(): Promise<void> {
 	const result = await fetchDiff();
 	if (result === null) return;
 	updateBaseOption(result.base);
-	if (result.patch === lastPatch) return;
-	lastPatch = result.patch;
-	renderPatch(result.patch);
+	const serialized = JSON.stringify(result.files);
+	if (serialized === lastPatch) return;
+	lastPatch = serialized;
+	renderPatch(result.files);
 }
 
 function startWatch(): void {
