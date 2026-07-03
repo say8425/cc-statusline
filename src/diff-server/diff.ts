@@ -79,7 +79,7 @@ async function appendUntracked(repo: string, tracked: string): Promise<string> {
 	for (const file of files) {
 		// --no-index exits 1 when the file differs from /dev/null; capture stdout anyway.
 		const synthetic =
-			await $`git -C ${repo} diff --no-index --no-color /dev/null ${file} 2>/dev/null`
+			await $`git -C ${repo} diff -U100000 --no-index --no-color /dev/null ${file} 2>/dev/null`
 				.nothrow()
 				.text();
 		if (synthetic) parts.push(synthetic);
@@ -99,12 +99,12 @@ export async function getDiff(
 				.text()
 		).trim();
 		tracked = mb
-			? await $`git -C ${repo} diff ${mb} --no-color 2>/dev/null`
+			? await $`git -C ${repo} diff -U100000 ${mb} --no-color 2>/dev/null`
 					.nothrow()
 					.text()
 			: "";
 	} else {
-		tracked = await $`git -C ${repo} diff HEAD --no-color 2>/dev/null`
+		tracked = await $`git -C ${repo} diff -U100000 HEAD --no-color 2>/dev/null`
 			.nothrow()
 			.text();
 	}

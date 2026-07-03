@@ -47,6 +47,26 @@ describe("getDiff", () => {
 		expect(withUntracked).toContain("b.txt");
 		expect(withUntracked).toContain("+brand new");
 	});
+
+	test("includes full file context so hidden lines can be expanded", async () => {
+		const lines = `${Array.from({ length: 60 }, (_, i) => `line${i + 1}`).join(
+			"\n",
+		)}\n`;
+		writeFileSync(join(repo, "a.txt"), lines);
+		await $`git -C ${repo} add a.txt`;
+		await $`git -C ${repo} commit -qm sixty`;
+		// Change only the first and last line — far apart, so default -U3 would
+		// omit the middle unchanged lines.
+		const changed = lines
+			.replace("line1\n", "LINE1\n")
+			.replace("line60\n", "LINE60\n");
+		writeFileSync(join(repo, "a.txt"), changed);
+		const diff = await getDiff(repo);
+		expect(diff).toContain("+LINE1");
+		expect(diff).toContain("+LINE60");
+		// A middle unchanged line is only present when full context is emitted.
+		expect(diff).toContain("line30");
+	});
 });
 
 describe("resolveBaseRef", () => {
