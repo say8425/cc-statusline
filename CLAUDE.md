@@ -183,4 +183,5 @@ bun test --coverage
 - `rate_limits.resets_at`는 Unix timestamp (초 단위, number)
 - `rate_limits`가 없으면 사용량 줄이 표시되지 않음
 - diff 뷰어 데몬은 statusline이 spawn-if-not-running으로 관리 (env `CC_STATUSLINE_DIFF_PORT` 기본 49573, `CC_STATUSLINE_DIFF_DISABLE=1`로 비활성)
+- diff 뷰어 데몬은 ephemeral: statusline이 `repo && (hasChanges || baseChanges)`일 때만 spawn/유지하므로 재부팅·유휴 종료·Claude Code 비활성 시 죽음. 부팅 자동시작 없음 → 다음 statusline tick(~5초, `ENSURE_TTL`)에 respawn. 따라서 뷰어는 북마크 URL 대신 statusline의 `✏️` 링크로 여는 것을 권장(✏️는 클릭 직전 데몬 ensure + 현재 토큰 포함). 토큰은 `~/.cache/cc-statusline/diff-server.token`에 영속되어 재부팅에도 유효(캐시 삭제 시 옛 북마크는 403). 지속 데몬(launchd 등)은 의도적으로 미도입 — 본 기능이 statusline 종속이라
 - Pierre 컴포넌트는 devDependency이며 `build.ts`가 `dist/viewer/`로 프리번들 (런타임 `dist/index.js`엔 미포함)
