@@ -34,7 +34,6 @@ cc-statusline/
 │   │   └── ensure.ts               # ensureDiffServer (spawn-if-not-running 데몬)
 │   ├── viewer/
 │   │   ├── main.ts                 # 뷰어 프론트엔드 엔트리포인트
-│   │   ├── mapStatus.ts            # git status 코드 매핑
 │   │   └── index.html              # 뷰어 HTML 셸
 │   └── __tests__/                  # 테스트 파일
 │       ├── pure.test.ts            # 순수 함수 테스트
@@ -48,8 +47,7 @@ cc-statusline/
 │       ├── diff-command.test.ts    # diff-server/diff 테스트
 │       ├── diff-server.test.ts     # diff-server/server 테스트 (403 경로 탐색 포함)
 │       ├── diff-ensure.test.ts     # diff-server/ensure 테스트
-│       ├── diff-link.test.ts       # diff-server/link 테스트
-│       └── map-status.test.ts      # viewer/mapStatus 테스트
+│       └── diff-link.test.ts       # diff-server/link 테스트
 ├── bunfig.toml        # Bun 테스트 설정
 ├── package.json
 ├── tsconfig.json
