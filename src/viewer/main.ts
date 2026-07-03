@@ -1,5 +1,6 @@
 import { CodeView, parsePatchFiles } from "@pierre/diffs";
 import { FileTree } from "@pierre/trees";
+import { movedBeyondThreshold } from "./drag.ts";
 import { isLargeFile } from "./largeFile.ts";
 import { changeTypeToGitStatus } from "./mapStatus.ts";
 import {
@@ -17,18 +18,46 @@ const token = params.get("token") ?? "";
 const treeMount = document.getElementById("tree") as HTMLElement;
 const diffMount = document.getElementById("diff") as HTMLElement;
 
-// Fold/unfold a file when its header chevron is clicked. Delegated via
-// composedPath so it works regardless of where @pierre/diffs renders the
-// button (light or shadow DOM); keyed on the data-fold attribute.
+// Fold/unfold a file by clicking anywhere on its header bar. Delegated via
+// composedPath so it works across @pierre/diffs' light/shadow DOM: a header
+// click is any path crossing a [data-diffs-header] element (filename, stats,
+// or empty header row); the file id comes from the enclosing <diffs-container>'s
+// [data-fold] button. Code lines and hunk separators sit under a <pre> without
+// that marker, so they're ignored (keeps unchanged-context expansion working).
+const DRAG_THRESHOLD = 6;
+let pointerDown: { x: number; y: number } | null = null;
+
+diffMount.addEventListener("pointerdown", (event) => {
+	pointerDown = { x: event.clientX, y: event.clientY };
+});
+
 diffMount.addEventListener("click", (event) => {
 	if (!codeView) return;
-	const target = event
-		.composedPath()
-		.find(
-			(node): node is HTMLElement =>
-				node instanceof HTMLElement && node.dataset.fold !== undefined,
-		);
-	const id = target?.dataset.fold;
+	// Don't toggle when the interaction was a drag (e.g. selecting the filename)
+	// so it never feels like an accidental collapse.
+	if (
+		pointerDown &&
+		movedBeyondThreshold(
+			pointerDown,
+			{ x: event.clientX, y: event.clientY },
+			DRAG_THRESHOLD,
+		)
+	) {
+		return;
+	}
+	if (window.getSelection()?.toString()) return;
+
+	const path = event.composedPath();
+	const isHeader = path.some(
+		(node): node is HTMLElement =>
+			node instanceof HTMLElement && node.hasAttribute("data-diffs-header"),
+	);
+	if (!isHeader) return;
+	const container = path.find(
+		(node): node is HTMLElement =>
+			node instanceof HTMLElement && node.tagName === "DIFFS-CONTAINER",
+	);
+	const id = container?.querySelector<HTMLElement>("[data-fold]")?.dataset.fold;
 	if (!id) return;
 	const item = codeView.getItem(id);
 	if (!item || item.type !== "diff") return;
@@ -160,6 +189,7 @@ function renderPatch(patch: string): void {
 			hunkSeparators: "line-info",
 			expandUnchanged: true,
 			renderHeaderPrefix: (fileDiff) => makeFoldButton(fileDiff.name),
+			unsafeCSS: "[data-diffs-header]{cursor:pointer}",
 		});
 		codeView.setup(diffMount);
 		codeView.setItems(items);
