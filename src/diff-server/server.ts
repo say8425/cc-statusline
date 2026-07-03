@@ -1,6 +1,6 @@
 import { resolve } from "node:path";
 import type { Server } from "bun";
-import { getDiff, isGitRepo, resolveBaseRef } from "./diff.ts";
+import { getDiffFiles, isGitRepo, resolveBaseRef } from "./diff.ts";
 import { ensureToken } from "./token.ts";
 
 type Env = Record<string, string | undefined>;
@@ -52,18 +52,18 @@ function createHandler(cfg: { viewerDir: string; token: string }) {
 			const untracked = url.searchParams.get("untracked") === "1";
 			const mode = url.searchParams.get("mode") === "base" ? "base" : "working";
 			const { base, ref } = await resolveBaseCached(repo);
-			const diff =
+			const files =
 				mode === "base"
-					? await getDiff(repo, {
+					? await getDiffFiles(repo, {
 							untracked,
 							mode: "base",
 							ref: ref ?? undefined,
 						})
-					: await getDiff(repo, { untracked });
+					: await getDiffFiles(repo, { untracked });
 			// NOTE: intentionally no Access-Control-Allow-Origin — cross-origin pages must not read this.
-			return new Response(diff, {
+			return new Response(JSON.stringify(files), {
 				headers: {
-					"content-type": "text/plain; charset=utf-8",
+					"content-type": "application/json; charset=utf-8",
 					"x-diff-base": base ?? "",
 				},
 			});

@@ -66,9 +66,15 @@ describe("diff server", () => {
 		const res = await fetch(url);
 		expect(res.status).toBe(200);
 		expect(res.headers.get("access-control-allow-origin")).toBeNull();
-		const body = await res.text();
-		expect(body).toContain("a.txt");
-		expect(body).toContain("+two");
+		expect(res.headers.get("content-type")).toContain("application/json");
+		const files = (await res.json()) as Array<{
+			name: string;
+			status: string;
+			newContents: string;
+		}>;
+		const file = files.find((f) => f.name === "a.txt");
+		expect(file?.status).toBe("modified");
+		expect(file?.newContents).toContain("two");
 	});
 
 	test("api/diff rejects a non-repo path with 400", async () => {
@@ -139,8 +145,10 @@ describe("diff server base mode", () => {
 		const res = await fetch(url);
 		expect(res.status).toBe(200);
 		expect(res.headers.get("x-diff-base")).toBe("main");
-		const body = await res.text();
-		expect(body).toContain("c.txt");
+		const files = (await res.json()) as Array<{ name: string; status: string }>;
+		expect(files.some((f) => f.name === "c.txt" && f.status === "added")).toBe(
+			true,
+		);
 	});
 
 	test("working mode still sets X-Diff-Base for the dropdown label", async () => {
