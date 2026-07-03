@@ -290,10 +290,31 @@ async function load(): Promise<void> {
 	renderPatch(result.files);
 }
 
-document.getElementById("toggle-style")?.addEventListener("click", () => {
-	diffStyle = diffStyle === "unified" ? "split" : "unified";
-	void load();
-});
+// Segmented Unified/Split control: the active segment stays highlighted
+// (aria-pressed drives both accessibility and the CSS raised state).
+const styleButtons = Array.from(
+	document.querySelectorAll<HTMLButtonElement>(
+		"#diff-style-group [data-style]",
+	),
+);
+function syncStyleButtons(): void {
+	for (const b of styleButtons) {
+		b.setAttribute(
+			"aria-pressed",
+			b.dataset.style === diffStyle ? "true" : "false",
+		);
+	}
+}
+for (const b of styleButtons) {
+	b.addEventListener("click", () => {
+		const next = b.dataset.style === "split" ? "split" : "unified";
+		if (next === diffStyle) return;
+		diffStyle = next;
+		syncStyleButtons();
+		void load();
+	});
+}
+syncStyleButtons();
 const untrackedInput = document.getElementById(
 	"toggle-untracked",
 ) as HTMLInputElement;

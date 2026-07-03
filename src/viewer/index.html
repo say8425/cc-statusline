@@ -56,6 +56,27 @@
     background-repeat: no-repeat;
     background-position: right 8px center;
   }
+  /* Segmented control (Pierre-style): inset pill, active segment raised */
+  #toolbar .tb-seg {
+    display: inline-flex; gap: 2px; padding: 2px;
+    background: var(--vd-inset);
+    border: 1px solid var(--vd-border);
+    border-radius: var(--vd-radius);
+  }
+  #toolbar .tb-seg button {
+    background: transparent;
+    border: 0;
+    border-radius: 4px;
+    color: var(--vd-fg-muted);
+    padding: 3px 10px;
+    transition: background-color .15s, color .15s;
+  }
+  #toolbar .tb-seg button:hover { background: transparent; color: var(--vd-fg); }
+  #toolbar .tb-seg button[aria-pressed="true"] {
+    background: #2a2a2c;
+    color: var(--vd-fg);
+  }
+  #toolbar #refresh { display: inline-flex; align-items: center; padding: 5px 7px; }
   #toolbar label {
     display: inline-flex; align-items: center; gap: 6px;
     color: var(--vd-fg);
@@ -107,8 +128,11 @@
         <option value="working">Working tree</option>
         <option value="base" disabled>vs base</option>
       </select>
-      <button id="toggle-style" type="button">Split / Unified</button>
-      <button id="refresh" type="button">Refresh</button>
+      <div class="tb-seg" id="diff-style-group" role="group" aria-label="Diff style">
+        <button type="button" data-style="unified" aria-pressed="true">Unified</button>
+        <button type="button" data-style="split" aria-pressed="false">Split</button>
+      </div>
+      <button id="refresh" type="button" aria-label="Refresh" title="Refresh"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg></button>
     </div>
     <div class="tb-right">
       <span id="status"></span>
