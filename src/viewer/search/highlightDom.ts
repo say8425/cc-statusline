@@ -15,14 +15,17 @@ function unwrap(root: HTMLElement | ShadowRoot): void {
 	}
 }
 
+function sideOf(lineType: string | undefined): "additions" | "deletions" {
+	return lineType?.includes("deletion") ? "deletions" : "additions";
+}
+
 /**
- * Wrap query matches inside root's code content in <mark>. Idempotent: unwraps
- * previous marks first. `active` (the current match) gets an extra class when
- * its file matches and it sits on a text node whose match column lines up.
- *
- * Code content lines are located via the shared line container selector. The
- * exact selector is confirmed during E2E; the default below walks text nodes
- * under elements carrying Pierre's line role, skipping gutters/headers.
+ * Wrap query matches inside root's code content lines in <mark>. Idempotent:
+ * unwraps previous marks first; empty query → unwrap only. Scopes to Pierre's
+ * `[data-line]` rows (excludes the gutter), derives each row's 1-based line
+ * number and side, and tracks each text node's column offset within the full
+ * line so the active occurrence (fileId + side + lineNumber + column) is the
+ * only one marked `--active`.
  */
 export function highlightDom(
 	root: HTMLElement | ShadowRoot,
@@ -33,25 +36,29 @@ export function highlightDom(
 	unwrap(root);
 	if (query === "") return;
 
-	// Content cells: Pierre renders code line text inside the diff grid content
-	// column. Confirmed in E2E; `[data-diffs-content] *, pre code` covers the
-	// rendered code text while excluding gutter line numbers and the header.
-	const contentRoots = root.querySelectorAll<HTMLElement>(
-		"[data-diffs-content], pre",
-	);
-	const scope =
-		contentRoots.length > 0 ? Array.from(contentRoots) : [root as HTMLElement];
+	const lineEls = root.querySelectorAll<HTMLElement>("[data-line]");
+	for (const lineEl of lineEls) {
+		const lineNumber = Number(lineEl.dataset.line);
+		if (!Number.isFinite(lineNumber)) continue;
+		const side = sideOf(lineEl.dataset.lineType);
+		const activeHere =
+			active !== null &&
+			active.fileId === fileId &&
+			active.side === side &&
+			active.lineNumber === lineNumber;
 
-	for (const container of scope) {
-		const walker = document.createTreeWalker(container, NodeFilter.SHOW_TEXT);
-		const textNodes: Text[] = [];
+		const walker = document.createTreeWalker(lineEl, NodeFilter.SHOW_TEXT);
+		const nodes: { node: Text; offset: number }[] = [];
+		let lineOffset = 0;
 		for (let n = walker.nextNode(); n; n = walker.nextNode()) {
-			const t = n as Text;
-			if (t.parentElement?.closest(`mark.${HIT}`)) continue;
-			if (t.nodeValue && t.nodeValue.length > 0) textNodes.push(t);
+			const textNode = n as Text;
+			const len = textNode.nodeValue?.length ?? 0;
+			if (len > 0) nodes.push({ node: textNode, offset: lineOffset });
+			lineOffset += len;
 		}
-		for (const textNode of textNodes) {
-			const text = textNode.nodeValue ?? "";
+
+		for (const { node, offset } of nodes) {
+			const text = node.nodeValue ?? "";
 			const ranges = findRanges(text, query);
 			if (ranges.length === 0) continue;
 			const frag = document.createDocumentFragment();
@@ -65,11 +72,7 @@ export function highlightDom(
 				const mark = document.createElement("mark");
 				mark.className = HIT;
 				mark.textContent = text.slice(range.start, range.start + range.length);
-				if (
-					active &&
-					active.fileId === fileId &&
-					active.column === range.start
-				) {
+				if (activeHere && active.column === offset + range.start) {
 					mark.classList.add(ACTIVE);
 				}
 				frag.appendChild(mark);
@@ -77,7 +80,7 @@ export function highlightDom(
 			}
 			if (cursor < text.length)
 				frag.appendChild(document.createTextNode(text.slice(cursor)));
-			textNode.parentNode?.replaceChild(frag, textNode);
+			node.parentNode?.replaceChild(frag, node);
 		}
 	}
 }
