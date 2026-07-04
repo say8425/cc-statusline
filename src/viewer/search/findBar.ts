@@ -110,6 +110,10 @@ export function createFindBar(deps: FindBarDeps): FindBar {
 	}
 
 	function close(): void {
+		if (debounce !== null) {
+			clearTimeout(debounce);
+			debounce = null;
+		}
 		opened = false;
 		elements.bar.hidden = true;
 		deps.setExpandAll(false);
