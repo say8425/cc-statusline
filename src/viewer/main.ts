@@ -10,6 +10,8 @@ import {
 	TREE_SIDE_KEY,
 	type TreeSide,
 } from "./prefs.ts";
+import { createFindBar, type FindBar } from "./search/findBar.ts";
+import type { SearchFile, SearchMatch } from "./search/searchIndex.ts";
 
 const params = new URLSearchParams(location.search);
 const repo = params.get("repo") ?? "";
@@ -92,6 +94,9 @@ let renderVersion = 0;
 const collapsedIds = new Set<string>();
 const seenIds = new Set<string>();
 
+let searchFiles: SearchFile[] = [];
+let findBar: FindBar | null = null;
+
 // Reuse one button element per file across re-renders: a fold toggle re-runs
 // renderHeaderPrefix, and only a persistent DOM node can CSS-tween its chevron
 // rotation (a freshly created SVG is born at the final angle — no animation).
@@ -170,6 +175,9 @@ function renderPatch(files: DiffFile[]): void {
 				collapsed: collapsedIds.has(f.name),
 			};
 		});
+
+	searchFiles = items.map((it) => ({ fileId: it.id, fileDiff: it.fileDiff }));
+	findBar?.setData();
 
 	// File tree: create once; afterwards update in place only when the file set
 	// or statuses changed (so editing a file's contents doesn't reset it).
@@ -403,6 +411,41 @@ document.addEventListener("mousedown", (event) => {
 
 document.addEventListener("keydown", (event) => {
 	if (event.key === "Escape") setOverflowOpen(false);
+});
+
+findBar = createFindBar({
+	elements: {
+		bar: document.getElementById("find-bar") as HTMLElement,
+		input: document.getElementById("find-input") as HTMLInputElement,
+		count: document.getElementById("find-count") as HTMLElement,
+		prev: document.getElementById("find-prev") as HTMLButtonElement,
+		next: document.getElementById("find-next") as HTMLButtonElement,
+		close: document.getElementById("find-close") as HTMLButtonElement,
+	},
+	getFiles: () => searchFiles,
+	revealMatch: (m: SearchMatch) => {
+		codeView?.scrollTo({
+			type: "line",
+			id: m.fileId,
+			lineNumber: m.lineNumber,
+			side: m.side,
+			align: "center",
+		});
+		codeView?.setSelectedLines({
+			id: m.fileId,
+			range: { start: m.lineNumber, end: m.lineNumber, side: m.side },
+		});
+	},
+	selectMatch: (m: SearchMatch) => {
+		codeView?.setSelectedLines({
+			id: m.fileId,
+			range: { start: m.lineNumber, end: m.lineNumber, side: m.side },
+		});
+	},
+	clearSelection: () => codeView?.clearSelectedLines(),
+	ensureVisible: () => {}, // Task 5
+	setExpandAll: () => {}, // Task 5
+	reapplyHighlights: () => codeView?.render(), // Task 4에서 실화
 });
 
 void load();

@@ -85,6 +85,31 @@
     color: var(--vd-fg);
   }
   #toolbar #refresh { padding: 0 7px; }
+  /* In-app find bar (opens on Cmd/Ctrl+F). Sits in the toolbar; hidden by default. */
+  #toolbar .tb-find {
+    box-sizing: border-box; height: 26px;
+    display: inline-flex; align-items: center; gap: 6px;
+    margin-left: 8px; padding: 0 8px;
+    background: var(--vd-inset);
+    border: 1px solid var(--vd-border); border-radius: var(--vd-radius);
+  }
+  #toolbar .tb-find[hidden] { display: none; }
+  #toolbar #find-input {
+    height: 20px; min-width: 160px;
+    background: transparent; border: 0; outline: none;
+    color: var(--vd-fg); font: inherit;
+  }
+  #toolbar #find-count {
+    color: var(--vd-fg-muted); font-variant-numeric: tabular-nums;
+    min-width: 34px; text-align: right;
+  }
+  #toolbar .tb-find button {
+    box-sizing: border-box; height: 20px; padding: 0 6px;
+    background: transparent; border: 0; border-radius: 4px;
+    color: var(--vd-fg-muted); cursor: pointer; display: inline-flex; align-items: center;
+  }
+  #toolbar .tb-find button:hover { background: transparent; color: var(--vd-fg); }
+  #toolbar .tb-find button:disabled { opacity: .4; cursor: default; }
   #toolbar label {
     display: inline-flex; align-items: center; gap: 6px;
     color: var(--vd-fg);
@@ -142,6 +167,14 @@
       </div>
       <button id="refresh" type="button" aria-label="Refresh" title="Refresh"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg></button>
     </div>
+      <div id="find-bar" class="tb-find" hidden role="search">
+        <span class="tb-find-icon" aria-hidden="true">🔍</span>
+        <input id="find-input" type="text" placeholder="Search diff" aria-label="Search diff" autocomplete="off" spellcheck="false" />
+        <span id="find-count" aria-live="polite"></span>
+        <button id="find-prev" type="button" aria-label="Previous match" title="Previous (Shift+Enter)">↑</button>
+        <button id="find-next" type="button" aria-label="Next match" title="Next (Enter)">↓</button>
+        <button id="find-close" type="button" aria-label="Close search" title="Close (Esc)">✕</button>
+      </div>
     <div class="tb-right">
       <span id="status"></span>
       <div class="tb-overflow">
