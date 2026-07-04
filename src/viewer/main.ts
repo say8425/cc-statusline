@@ -11,6 +11,7 @@ import {
 	type TreeSide,
 } from "./prefs.ts";
 import { createFindBar, type FindBar } from "./search/findBar.ts";
+import { highlightDom } from "./search/highlightDom.ts";
 import type { SearchFile, SearchMatch } from "./search/searchIndex.ts";
 
 const params = new URLSearchParams(location.search);
@@ -134,6 +135,25 @@ function teardownViews(): void {
 	treeMount.replaceChildren();
 }
 
+// A rendered diff item is a <diffs-container> whose fold button carries the id.
+function containerFileId(container: Element): string | null {
+	return (
+		container.querySelector<HTMLElement>("[data-fold]")?.dataset.fold ?? null
+	);
+}
+
+function highlightContainer(container: HTMLElement): void {
+	const fileId = containerFileId(container);
+	if (!fileId || !findBar) return;
+	const root = (container.shadowRoot as ShadowRoot | null) ?? container;
+	highlightDom(root, findBar.getQuery(), findBar.getActiveMatch(), fileId);
+}
+
+function highlightAllVisible(): void {
+	const containers = diffMount.querySelectorAll<HTMLElement>("diffs-container");
+	for (const container of containers) highlightContainer(container);
+}
+
 function renderPatch(files: DiffFile[]): void {
 	if (files.length === 0) {
 		teardownViews();
@@ -217,8 +237,18 @@ function renderPatch(files: DiffFile[]): void {
 			expansionLineCount: 10,
 			collapsedContextThreshold: 3,
 			renderHeaderPrefix: (fileDiff) => makeFoldButton(fileDiff.name),
+			onPostRender: (node: HTMLElement, _instance: unknown, phase: string) => {
+				if (phase === "unmount") return;
+				const container = node.closest?.(
+					"diffs-container",
+				) as HTMLElement | null;
+				if (container) highlightContainer(container);
+				else highlightContainer(node);
+			},
 			unsafeCSS:
-				"[data-diffs-header]{cursor:pointer;transition:background-color .15s}[data-diffs-header]:hover{background-color:rgba(255,255,255,.05)}",
+				"[data-diffs-header]{cursor:pointer;transition:background-color .15s}[data-diffs-header]:hover{background-color:rgba(255,255,255,.05)}" +
+				"mark.cc-find-hit{background:#e3b341;color:#000;border-radius:2px}" +
+				"mark.cc-find-hit--active{background:#f0883e;color:#000}",
 		});
 		codeView.setup(diffMount);
 		codeView.setItems(items);
@@ -445,7 +475,7 @@ findBar = createFindBar({
 	clearSelection: () => codeView?.clearSelectedLines(),
 	ensureVisible: () => {}, // Task 5
 	setExpandAll: () => {}, // Task 5
-	reapplyHighlights: () => codeView?.render(), // Task 4에서 실화
+	reapplyHighlights: () => highlightAllVisible(),
 });
 
 void load();
