@@ -154,6 +154,47 @@ function highlightAllVisible(): void {
 	for (const container of containers) highlightContainer(container);
 }
 
+let expandAll = false; // find bar 활성 중 전역 미변경 context 펼침
+const autoExpandedIds = new Set<string>(); // 검색이 임시로 펼친 대용량 파일
+
+function codeViewOptions(): ConstructorParameters<
+	typeof CodeView<undefined>
+>[0] {
+	return {
+		diffStyle,
+		themeType: "dark",
+		stickyHeaders: true,
+		hunkSeparators: "line-info",
+		expansionLineCount: 10,
+		collapsedContextThreshold: 3,
+		expandUnchanged: expandAll,
+		renderHeaderPrefix: (fileDiff) => makeFoldButton(fileDiff.name),
+		onPostRender: (node: HTMLElement, _instance: unknown, phase: string) => {
+			if (phase === "unmount") return;
+			const container = node.closest?.("diffs-container") as HTMLElement | null;
+			if (container) highlightContainer(container);
+			else highlightContainer(node);
+		},
+		unsafeCSS:
+			"[data-diffs-header]{cursor:pointer;transition:background-color .15s}[data-diffs-header]:hover{background-color:rgba(255,255,255,.05)}" +
+			"mark.cc-find-hit{background:#e3b341;color:#000;border-radius:2px}" +
+			"mark.cc-find-hit--active{background:#f0883e;color:#000}",
+	};
+}
+
+function restoreAutoExpanded(): void {
+	if (!codeView || autoExpandedIds.size === 0) return;
+	for (const id of autoExpandedIds) {
+		if (collapsedIds.has(id)) continue;
+		const item = codeView.getItem(id);
+		if (!item || item.type !== "diff") continue;
+		collapsedIds.add(id);
+		renderVersion += 1;
+		codeView.updateItem({ ...item, collapsed: true, version: renderVersion });
+	}
+	autoExpandedIds.clear();
+}
+
 function renderPatch(files: DiffFile[]): void {
 	if (files.length === 0) {
 		teardownViews();
@@ -229,27 +270,7 @@ function renderPatch(files: DiffFile[]): void {
 	if (!codeView || renderedDiffStyle !== diffStyle) {
 		codeView?.cleanUp();
 		diffMount.replaceChildren();
-		codeView = new CodeView({
-			diffStyle,
-			themeType: "dark",
-			stickyHeaders: true,
-			hunkSeparators: "line-info",
-			expansionLineCount: 10,
-			collapsedContextThreshold: 3,
-			renderHeaderPrefix: (fileDiff) => makeFoldButton(fileDiff.name),
-			onPostRender: (node: HTMLElement, _instance: unknown, phase: string) => {
-				if (phase === "unmount") return;
-				const container = node.closest?.(
-					"diffs-container",
-				) as HTMLElement | null;
-				if (container) highlightContainer(container);
-				else highlightContainer(node);
-			},
-			unsafeCSS:
-				"[data-diffs-header]{cursor:pointer;transition:background-color .15s}[data-diffs-header]:hover{background-color:rgba(255,255,255,.05)}" +
-				"mark.cc-find-hit{background:#e3b341;color:#000;border-radius:2px}" +
-				"mark.cc-find-hit--active{background:#f0883e;color:#000}",
-		});
+		codeView = new CodeView(codeViewOptions());
 		codeView.setup(diffMount);
 		codeView.setItems(items);
 		codeView.render();
@@ -473,8 +494,26 @@ findBar = createFindBar({
 		});
 	},
 	clearSelection: () => codeView?.clearSelectedLines(),
-	ensureVisible: () => {}, // Task 5
-	setExpandAll: () => {}, // Task 5
+	ensureVisible: (m: SearchMatch) => {
+		if (!codeView) return;
+		if (!collapsedIds.has(m.fileId)) return;
+		const item = codeView.getItem(m.fileId);
+		if (!item || item.type !== "diff") return;
+		collapsedIds.delete(m.fileId);
+		autoExpandedIds.add(m.fileId);
+		renderVersion += 1;
+		codeView.updateItem({ ...item, collapsed: false, version: renderVersion });
+	},
+	setExpandAll: (on: boolean) => {
+		if (on === expandAll) {
+			if (!on) restoreAutoExpanded();
+			return;
+		}
+		expandAll = on;
+		codeView?.setOptions(codeViewOptions());
+		codeView?.render();
+		if (!on) restoreAutoExpanded();
+	},
 	reapplyHighlights: () => highlightAllVisible(),
 });
 

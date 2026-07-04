@@ -34,7 +34,12 @@ cc-statusline/
 │   │   └── ensure.ts               # ensureDiffServer (spawn-if-not-running 데몬)
 │   ├── viewer/
 │   │   ├── main.ts                 # 뷰어 프론트엔드 엔트리포인트
-│   │   └── index.html              # 뷰어 HTML 셸
+│   │   ├── index.html              # 뷰어 HTML 셸
+│   │   └── search/
+│   │       ├── highlight.ts        # 순수 하이라이트 유틸 (텍스트 → 매치 구간)
+│   │       ├── searchIndex.ts      # buildRows/findMatches (SearchMatch, 삭제 줄 포함 검색)
+│   │       ├── findBar.ts          # find bar 컨트롤러 (입력·키보드·카운트·이동)
+│   │       └── highlightDom.ts     # DOM에 노랑/주황 mark 적용
 │   └── __tests__/                  # 테스트 파일
 │       ├── pure.test.ts            # 순수 함수 테스트
 │       ├── cached.test.ts          # 캐시 메커니즘 테스트
@@ -47,7 +52,9 @@ cc-statusline/
 │       ├── diff-command.test.ts    # diff-server/diff 테스트
 │       ├── diff-server.test.ts     # diff-server/server 테스트 (403 경로 탐색 포함)
 │       ├── diff-ensure.test.ts     # diff-server/ensure 테스트
-│       └── diff-link.test.ts       # diff-server/link 테스트
+│       ├── diff-link.test.ts       # diff-server/link 테스트
+│       ├── viewer-highlight.test.ts    # search/highlight 테스트
+│       └── viewer-search-index.test.ts # search/searchIndex 테스트
 ├── bunfig.toml        # Bun 테스트 설정
 ├── package.json
 ├── tsconfig.json
@@ -89,6 +96,7 @@ Claude Code 기본 statusbar에 다음 정보를 추가로 표시:
 - diff 뷰어 파일 폴딩: 파일 헤더 바 전체(파일명·stats·chevron ▾/▸)를 클릭해 접기/펼치기 (diffMount의 composedPath 위임: `data-diffs-header` 경로면 헤더 클릭, 감싼 `<diffs-container>`의 `[data-fold]`로 파일 id → CodeView.updateItem, 세션 인메모리 collapsedIds). 드래그(pointerdown 대비 이동 > 6px)나 텍스트 선택 시엔 토글 안 함(bad UX 방지, src/viewer/drag.ts). 헤더는 `unsafeCSS`로 pointer 커서 + hover 배경(rgba(255,255,255,.05), .15s). fold chevron(SVG ▾/▸)은 파일별 버튼 노드를 `foldButtons` Map으로 재사용해 토글 시 `transform .15s` 회전 트윈이 실제 재생됨(새 노드 생성 시 트윈 불가; teardownViews에서 clear)
 - 대용량 파일 기본 접힘: 락파일(pnpm-lock.yaml 등) 또는 변경 줄 수 > 1500이면 첫 렌더 시 접힘(seenIds로 1회성 → 펼치면 유지). 판정은 src/viewer/largeFile.ts
 - diff 데이터: diff-server가 패치 대신 파일별 old/new 전체 내용을 JSON으로 제공(`getDiffFiles`: `git diff --name-status` + `git show <base>:path`/워킹트리 읽기, 바이너리는 NUL 감지로 표식). viewer는 `parseDiffFromFile`로 파싱 → non-partial diff라 @pierre/diffs가 미변경 구간을 `collapsedContextThreshold:3`로 접고 `hunkSeparators:"line-info"`+`expansionLineCount:10`의 내장 expand 캐럿으로 실제 노출(파일별 old/new가 있어야 expand 가능 — patch=partial은 불가). 바이너리 파일은 트리에만 표시
+- diff 뷰어 in-app find bar (Cmd/Ctrl+F): diff 내용(삭제 줄 포함) 검색, 매치 순회(n/N, ↑↓/Enter), 전체 노랑·현재 주황 하이라이트, 접힌 context/대용량 파일 자동 노출(닫기/검색어 비움 시 원상복구)
 - PR URL (클릭 가능한 OSC 8 하이퍼링크)
 - 리셋 시각 (5시간 사용량 리셋 시각, HH:MM)
 - 주간 리셋 시간 (7일 사용량 리셋 시각, MM/DD HH:MM)
