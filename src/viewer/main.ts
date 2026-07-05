@@ -534,6 +534,11 @@ findBar = createFindBar({
 	reapplyHighlights: () => highlightAllVisible(),
 });
 
+// Toolbar search button: opens the find bar (same as Cmd/Ctrl+F) for discoverability.
+document
+	.getElementById("find-open")
+	?.addEventListener("click", () => findBar?.open());
+
 void load();
 
 const WATCH_STORAGE_KEY = "cc-statusline:diff-watch";
