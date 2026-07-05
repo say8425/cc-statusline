@@ -86,7 +86,7 @@
   }
   #toolbar #refresh { padding: 0 7px; }
   #toolbar #find-open { padding: 0 7px; }
-  /* Hide the toolbar search button while the find bar is open (it has its own 🔍). */
+  /* Hide the toolbar search button while the find bar is already open (redundant affordance). */
   #toolbar:has(#find-bar:not([hidden])) #find-open { display: none; }
   /* In-app find bar (opens on Cmd/Ctrl+F). Sits in the toolbar; hidden by default. */
   #toolbar .tb-find {
@@ -174,7 +174,6 @@
       <span id="status"></span>
       <button id="find-open" type="button" aria-label="Search (⌘F / Ctrl+F)" title="Search (⌘F / Ctrl+F)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></button>
       <div id="find-bar" class="tb-find" hidden role="search">
-        <span class="tb-find-icon" aria-hidden="true">🔍</span>
         <input id="find-input" type="text" placeholder="Search diff" aria-label="Search diff" autocomplete="off" spellcheck="false" />
         <span id="find-count" aria-live="polite"></span>
         <button id="find-prev" type="button" aria-label="Previous match" title="Previous (Shift+Enter)">↑</button>
