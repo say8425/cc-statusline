@@ -18,10 +18,5 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: oven-sh/setup-bun@v2
-      # The runner's default bun registry is an internal Nexus that 403s on the
-      # project's public deps. bun.lock now pins public-npm tarball URLs; this
-      # env steers any non-pinned resolution to public npm too (step env wins).
       - run: bun install
-        env:
-          BUN_CONFIG_REGISTRY: https://registry.npmjs.org
       - run: bun run tsc --noEmit
