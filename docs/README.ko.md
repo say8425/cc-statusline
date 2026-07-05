@@ -55,7 +55,7 @@ Claude Code를 위한 커스텀 상태표시줄.
 - **비용**: 세션 비용 (USD)
 - **컨텍스트**: 토큰 사용량 및 백분율 (색상 표시)
 - **Git Diff**: 파일 수, 추가, 삭제
-- **클릭 가능한 Diff 뷰어**: `✏️`를 클릭하면 로컬 diff 뷰어(Pierre `@pierre/diffs` + `@pierre/trees`)가 브라우저에 열리며, 전체 diff를 대상으로 한 인앱 검색(`Cmd/Ctrl+F`) 지원 — 삭제된 줄 포함
+- **클릭 가능한 Diff 뷰어**: `✏️`를 클릭하면 로컬 diff 뷰어(Pierre `@pierre/diffs` + `@pierre/trees`)가 브라우저에 열립니다 — 파일 트리, working-tree / vs-base 모드, watch 모드(자동 새로고침), 파일 폴딩, 전체 diff 대상 인앱 검색(`Cmd/Ctrl+F`, 삭제된 줄 포함)
 - **PR URL**: 클릭 가능한 OSC 8 하이퍼링크
 - **워크트리 지원**: `cc --worktree` 세션에서 실제 프로젝트 이름 표시
 - **TrueColor**: 임계값에 따른 동적 색상

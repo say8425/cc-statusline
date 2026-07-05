@@ -55,7 +55,7 @@ Add the following to `~/.claude/settings.json`:
 - **Cost**: Session cost in USD
 - **Context**: Token usage with percentage (color-coded)
 - **Git Diff**: File count, insertions, deletions
-- **Clickable Diff Viewer**: Click `✏️` to open a local diff viewer (Pierre `@pierre/diffs` + `@pierre/trees`) in your browser, with in-app search (`Cmd/Ctrl+F`) across the full diff — including deleted lines
+- **Clickable Diff Viewer**: Click `✏️` to open a local diff viewer (Pierre `@pierre/diffs` + `@pierre/trees`) in your browser — file tree, working-tree / vs-base modes, watch mode (auto-refresh), file folding, and in-app search (`Cmd/Ctrl+F`) across the full diff, including deleted lines
 - **PR URL**: Clickable OSC 8 hyperlink
 - **Worktree Support**: Shows real project name when running in a `cc --worktree` session
 - **TrueColor**: Dynamic colors based on thresholds
