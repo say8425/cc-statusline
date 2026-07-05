@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.1.0](https://github.com/say8425/cc-statusline/compare/v3.0.0...v3.1.0) (2026-07-05)
+
+
+### Features
+
+* clickable local diff viewer with search, copy, and toolbar ([#48](https://github.com/say8425/cc-statusline/issues/48)) ([620fbd5](https://github.com/say8425/cc-statusline/commit/620fbd59e0bbf81d40b9d80cdf6c8e1fcb08217d))
+
 ## [3.0.0](https://github.com/say8425/cc-statusline/compare/v2.2.0...v3.0.0) (2026-04-13)
 
 
