@@ -1,5 +1,6 @@
 import { $ } from "bun";
 import { CACHE_TTL, cache } from "../cache.ts";
+import { parseShortstat } from "./shortstat.ts";
 
 // Git 변경사항 가져오기 (캐싱)
 export async function getGitChangesCached(): Promise<{
@@ -15,18 +16,8 @@ export async function getGitChangesCached(): Promise<{
 			$`git diff --shortstat 2>/dev/null`.text(),
 			$`git diff --cached --shortstat 2>/dev/null`.text(),
 		]);
-		const combined = `${diff}\n${staged}`;
-
-		// 파일 수, insertions, deletions 추출 (단수/복수 모두 처리)
-		const [files, insertions, deletions] = [
-			/(\d+) files?/g,
-			/(\d+) insertions?/g,
-			/(\d+) deletions?/g,
-		].map((regex) =>
-			(combined.match(regex) || []).reduce(
-				(sum, m) => sum + Number.parseInt(m, 10),
-				0,
-			),
+		const { files, insertions, deletions } = parseShortstat(
+			`${diff}\n${staged}`,
 		);
 		cache.gitChanges = { files, insertions, deletions, timestamp: Date.now() };
 		return cache.gitChanges;

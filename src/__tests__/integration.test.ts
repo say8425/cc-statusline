@@ -1,4 +1,7 @@
 import { afterEach, beforeEach, describe, expect, spyOn, test } from "bun:test";
+import { mkdtempSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { resetCache } from "../cache.ts";
 import { main } from "../index.ts";
 
@@ -211,4 +214,42 @@ describe("main function (integration)", () => {
 			Bun.stdin.stream = originalStream;
 		}
 	});
+
+	test("--diff-server flag dispatches to the diff server subcommand", async () => {
+		// Isolated cache dir + unique port so this never collides with a real
+		// daemon or other test runs.
+		const cacheHome = mkdtempSync(join(tmpdir(), "cc-diff-server-e2e-"));
+		const port = 58732;
+		const entry = join(import.meta.dir, "..", "index.ts");
+
+		const proc = Bun.spawn([process.execPath, entry, "--diff-server"], {
+			env: {
+				...process.env,
+				CC_STATUSLINE_DIFF_PORT: String(port),
+				XDG_CACHE_HOME: cacheHome,
+			},
+			stdout: "ignore",
+			stderr: "ignore",
+		});
+
+		try {
+			let ok = false;
+			for (let i = 0; i < 40 && !ok; i++) {
+				try {
+					const res = await fetch(`http://127.0.0.1:${port}/api/ping`, {
+						signal: AbortSignal.timeout(150),
+					});
+					ok = res.headers.get("x-cc-statusline") === "1";
+				} catch {
+					// server not up yet; retry
+				}
+				if (!ok) await new Promise((resolve) => setTimeout(resolve, 50));
+			}
+
+			expect(ok).toBe(true);
+		} finally {
+			proc.kill();
+			rmSync(cacheHome, { recursive: true, force: true });
+		}
+	}, 10000);
 });

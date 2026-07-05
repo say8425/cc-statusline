@@ -55,6 +55,7 @@ Agrega lo siguiente a `~/.claude/settings.json`:
 - **Costo**: Costo de la sesión en USD
 - **Contexto**: Uso de tokens con porcentaje (codificado por colores)
 - **Git Diff**: Cantidad de archivos, inserciones, eliminaciones
+- **Visor de Diff clicable**: Haz clic en `✏️` para abrir un visor de diff local (Pierre `@pierre/diffs` + `@pierre/trees`) en tu navegador — árbol de archivos, modos working-tree / vs-base, modo watch (actualización automática), plegado de archivos y búsqueda integrada (`Cmd/Ctrl+F`) en todo el diff, incluidas las líneas eliminadas
 - **PR URL**: Hipervínculo OSC 8 clickeable
 - **Soporte de Worktree**: Muestra el nombre real del proyecto en sesiones `cc --worktree`
 - **TrueColor**: Colores dinámicos basados en umbrales
@@ -77,7 +78,7 @@ Agrega lo siguiente a `~/.claude/settings.json`:
 | 📊    | Utilización de 5 horas %             |
 | ⏰    | Tiempo de reinicio semanal           |
 | 📅    | Utilización de 7 días %              |
-| ✏️    | Cambios sin confirmar                |
+| ✏️    | Cambios sin confirmar (haz clic para abrir el visor de diff)                |
 | 📎    | Enlace de Pull Request               |
 
 ## Métricas de Uso
