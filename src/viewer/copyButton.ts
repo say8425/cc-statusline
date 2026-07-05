@@ -20,10 +20,12 @@ export function createCopyButton(path: string): HTMLButtonElement {
 	function showCopied(): void {
 		btn.innerHTML = CHECK_SVG;
 		btn.setAttribute("aria-label", "Copied");
+		btn.setAttribute("title", "Copied");
 		if (resetTimer !== null) clearTimeout(resetTimer);
 		resetTimer = setTimeout(() => {
 			btn.innerHTML = COPY_SVG;
 			btn.setAttribute("aria-label", "Copy file path");
+			btn.setAttribute("title", "Copy path");
 			resetTimer = null;
 		}, RESET_MS);
 	}
