@@ -1,6 +1,7 @@
 import { CodeView, parseDiffFromFile } from "@pierre/diffs";
 import { FileTree } from "@pierre/trees";
 import type { DiffFile } from "../diff-server/diff.ts";
+import { createCopyButton } from "./copyButton.ts";
 import { movedBeyondThreshold } from "./drag.ts";
 import { isLargeFile } from "./largeFile.ts";
 import {
@@ -154,6 +155,19 @@ function highlightAllVisible(): void {
 	for (const container of containers) highlightContainer(container);
 }
 
+// Inject a "copy file path" button right after the filename in a rendered
+// file header (idempotent — skip if already present; re-added after Pierre
+// rebuilds the header).
+function ensureCopyButton(container: HTMLElement): void {
+	const fileId = containerFileId(container);
+	if (!fileId) return;
+	const root = (container.shadowRoot as ShadowRoot | null) ?? container;
+	if (root.querySelector("[data-copy-name]")) return;
+	const title = root.querySelector("[data-title]");
+	if (!title) return;
+	title.after(createCopyButton(fileId));
+}
+
 let expandAll = false; // find bar 활성 중 전역 미변경 context 펼침
 const autoExpandedIds = new Set<string>(); // 검색이 임시로 펼친 대용량 파일
 
@@ -171,14 +185,17 @@ function codeViewOptions(): ConstructorParameters<
 		renderHeaderPrefix: (fileDiff) => makeFoldButton(fileDiff.name),
 		onPostRender: (node: HTMLElement, _instance: unknown, phase: string) => {
 			if (phase === "unmount") return;
-			const container = node.closest?.("diffs-container") as HTMLElement | null;
-			if (container) highlightContainer(container);
-			else highlightContainer(node);
+			const container =
+				(node.closest?.("diffs-container") as HTMLElement | null) ?? node;
+			highlightContainer(container);
+			ensureCopyButton(container);
 		},
 		unsafeCSS:
 			"[data-diffs-header]{cursor:pointer;transition:background-color .15s}[data-diffs-header]:hover{background-color:rgba(255,255,255,.05)}" +
 			"mark.cc-find-hit{background:#e3b341;color:#000;border-radius:2px}" +
-			"mark.cc-find-hit--active{background:#f0883e;color:#000}",
+			"mark.cc-find-hit--active{background:#f0883e;color:#000}" +
+			"[data-copy-name]{opacity:0;transition:opacity .15s;background:transparent;border:0;color:#84848a;cursor:pointer;display:inline-flex;align-items:center;padding:0 4px;margin-left:2px;line-height:1}" +
+			"[data-diffs-header]:hover [data-copy-name]{opacity:1}[data-copy-name]:hover{color:#adadb1}[data-copy-name]:focus-visible{opacity:1}",
 	};
 }
 
