@@ -470,10 +470,12 @@ if (urlMode === "base" || urlMode === "working") {
 // Apply persisted file-tree side and reflect stored prefs in the overflow menu.
 appEl.dataset.treeSide = treeSide;
 
-const flatListInput = document.getElementById(
-	"toggle-flat-list",
+// Labeled "Flatten" (flattens the folder tree into a flat file list); the
+// checked state maps to the "list" file view.
+const flattenInput = document.getElementById(
+	"toggle-flatten",
 ) as HTMLInputElement | null;
-if (flatListInput) flatListInput.checked = fileView === "list";
+if (flattenInput) flattenInput.checked = fileView === "list";
 
 const treeSideInput = document.getElementById(
 	"toggle-tree-side",
@@ -489,8 +491,8 @@ treeSideInput?.addEventListener("change", () => {
 	localStorage.setItem(TREE_SIDE_KEY, treeSide);
 });
 
-flatListInput?.addEventListener("change", () => {
-	fileView = flatListInput.checked ? "list" : "tree";
+flattenInput?.addEventListener("change", () => {
+	fileView = flattenInput.checked ? "list" : "tree";
 	localStorage.setItem(FILE_VIEW_KEY, fileView);
 	// Switching the sidebar view swaps the FileTree for the flat list (or back),
 	// so tear the current one down and force a rebuild on the next render.
