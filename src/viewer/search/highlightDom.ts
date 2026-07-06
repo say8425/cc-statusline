@@ -5,7 +5,7 @@ const HIT = "cc-find-hit";
 const ACTIVE = "cc-find-hit--active";
 
 /** Remove all mark.cc-find-hit wrappers under root, restoring original text. */
-function unwrap(root: HTMLElement | ShadowRoot): void {
+const unwrap = (root: HTMLElement | ShadowRoot): void => {
 	const marks = root.querySelectorAll<HTMLElement>(`mark.${HIT}`);
 	for (const mark of marks) {
 		const parent = mark.parentNode;
@@ -13,11 +13,10 @@ function unwrap(root: HTMLElement | ShadowRoot): void {
 		parent.replaceChild(document.createTextNode(mark.textContent ?? ""), mark);
 		parent.normalize();
 	}
-}
+};
 
-function sideOf(lineType: string | undefined): "additions" | "deletions" {
-	return lineType?.includes("deletion") ? "deletions" : "additions";
-}
+const sideOf = (lineType: string | undefined): "additions" | "deletions" =>
+	lineType?.includes("deletion") ? "deletions" : "additions";
 
 /**
  * Wrap query matches inside root's code content lines in <mark>. Idempotent:
@@ -27,12 +26,12 @@ function sideOf(lineType: string | undefined): "additions" | "deletions" {
  * line so the active occurrence (fileId + side + lineNumber + column) is the
  * only one marked `--active`.
  */
-export function highlightDom(
+export const highlightDom = (
 	root: HTMLElement | ShadowRoot,
 	query: string,
 	active: SearchMatch | null,
 	fileId: string,
-): void {
+): void => {
 	unwrap(root);
 	if (query === "") return;
 
@@ -83,4 +82,4 @@ export function highlightDom(
 			node.parentNode?.replaceChild(frag, node);
 		}
 	}
-}
+};

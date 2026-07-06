@@ -3,7 +3,7 @@ import { formatNumber, formatResetDate, formatTime } from "./format/index.ts";
 import type { RenderContext } from "./types.ts";
 
 // 상태 라인 렌더링 (순수 함수 - 테스트 가능)
-export function renderStatusLine(ctx: RenderContext): string[] {
+export const renderStatusLine = (ctx: RenderContext): string[] => {
 	const lines: string[] = [];
 
 	// 1. 폴더 이름 추출
@@ -130,4 +130,4 @@ export function renderStatusLine(ctx: RenderContext): string[] {
 	}
 
 	return lines;
-}
+};

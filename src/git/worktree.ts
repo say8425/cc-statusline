@@ -1,7 +1,7 @@
 import { $ } from "bun";
 import { CACHE_TTL, cache } from "../cache.ts";
 
-export async function getMainProjectNameCached(): Promise<string | null> {
+export const getMainProjectNameCached = async (): Promise<string | null> => {
 	if (
 		Date.now() - cache.mainProjectName.timestamp <
 		CACHE_TTL.mainProjectName
@@ -24,4 +24,4 @@ export async function getMainProjectNameCached(): Promise<string | null> {
 	} catch {
 		return cache.mainProjectName.value;
 	}
-}
+};

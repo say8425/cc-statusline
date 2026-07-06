@@ -32,14 +32,14 @@ export interface FindBar {
 
 const DEBOUNCE_MS = 120;
 
-export function createFindBar(deps: FindBarDeps): FindBar {
+export const createFindBar = (deps: FindBarDeps): FindBar => {
 	const { elements } = deps;
 	let opened = false;
 	let query = "";
 	let matches: SearchMatch[] = [];
 	let current = -1;
 
-	function renderCount(): void {
+	const renderCount = (): void => {
 		elements.count.textContent =
 			matches.length === 0
 				? query === ""
@@ -49,9 +49,9 @@ export function createFindBar(deps: FindBarDeps): FindBar {
 		const none = matches.length === 0;
 		elements.prev.disabled = none;
 		elements.next.disabled = none;
-	}
+	};
 
-	function rebuild(): void {
+	const rebuild = (): void => {
 		matches = findMatches(deps.getFiles(), query);
 		if (matches.length === 0) {
 			current = -1;
@@ -60,9 +60,9 @@ export function createFindBar(deps: FindBarDeps): FindBar {
 			current = 0;
 		}
 		renderCount();
-	}
+	};
 
-	function goTo(index: number): void {
+	const goTo = (index: number): void => {
 		if (matches.length === 0) return;
 		current = ((index % matches.length) + matches.length) % matches.length;
 		const match = matches[current];
@@ -70,15 +70,15 @@ export function createFindBar(deps: FindBarDeps): FindBar {
 		deps.revealMatch(match);
 		deps.reapplyHighlights();
 		renderCount();
-	}
+	};
 
-	function applyQuery(next: string): void {
+	const applyQuery = (next: string): void => {
 		query = next;
 		deps.setExpandAll(opened && query !== "");
 		rebuild();
 		if (matches.length > 0) goTo(0);
 		else deps.reapplyHighlights();
-	}
+	};
 
 	let debounce: ReturnType<typeof setTimeout> | null = null;
 	elements.input.addEventListener("input", () => {
@@ -98,7 +98,7 @@ export function createFindBar(deps: FindBarDeps): FindBar {
 	elements.next.addEventListener("click", () => goTo(current + 1));
 	elements.close.addEventListener("click", () => close());
 
-	function open(): void {
+	const open = (): void => {
 		opened = true;
 		elements.bar.hidden = false;
 		elements.input.focus();
@@ -107,9 +107,9 @@ export function createFindBar(deps: FindBarDeps): FindBar {
 		rebuild();
 		if (matches.length > 0) goTo(current < 0 ? 0 : current);
 		deps.reapplyHighlights();
-	}
+	};
 
-	function close(): void {
+	const close = (): void => {
 		if (debounce !== null) {
 			clearTimeout(debounce);
 			debounce = null;
@@ -119,7 +119,7 @@ export function createFindBar(deps: FindBarDeps): FindBar {
 		deps.setExpandAll(false);
 		deps.clearSelection();
 		deps.reapplyHighlights();
-	}
+	};
 
 	window.addEventListener("keydown", (event) => {
 		if (
@@ -149,4 +149,4 @@ export function createFindBar(deps: FindBarDeps): FindBar {
 		getQuery: () => (opened ? query : ""),
 		getActiveMatch: () => (opened && current >= 0 ? matches[current] : null),
 	};
-}
+};

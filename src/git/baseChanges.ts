@@ -5,12 +5,12 @@ import { parseShortstat } from "./shortstat.ts";
 
 // 현재 브랜치가 base(PR 타겟/기본 브랜치)보다 앞선 변경 통계 (working이 clean일 때
 // diff 진입점을 유지하기 위한 용도). base 해결(gh)은 캐시, shortstat은 매번 계산.
-export async function getBaseChangesCached(): Promise<{
+export const getBaseChangesCached = async (): Promise<{
 	base: string;
 	files: number;
 	insertions: number;
 	deletions: number;
-} | null> {
+} | null> => {
 	try {
 		let resolved = cache.baseRef.value;
 		if (
@@ -36,4 +36,4 @@ export async function getBaseChangesCached(): Promise<{
 	} catch {
 		return null;
 	}
-}
+};

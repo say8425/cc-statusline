@@ -12,8 +12,8 @@ export const C = {
 };
 
 // 사용률에 따른 색상 (Context 및 Block Usage 공통)
-export function getUsageColor(pct: number): string {
+export const getUsageColor = (pct: number): string => {
 	if (pct < 50) return C.WHITE;
 	if (pct < 80) return C.YELLOW;
 	return C.RED;
-}
+};

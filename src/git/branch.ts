@@ -2,7 +2,7 @@ import { $ } from "bun";
 import { CACHE_TTL, cache } from "../cache.ts";
 
 // Git 브랜치 가져오기 (캐싱)
-export async function getBranchCached(): Promise<string> {
+export const getBranchCached = async (): Promise<string> => {
 	if (Date.now() - cache.branch.timestamp < CACHE_TTL.branch) {
 		return cache.branch.value;
 	}
@@ -13,4 +13,4 @@ export async function getBranchCached(): Promise<string> {
 	} catch {
 		return cache.branch.value;
 	}
-}
+};

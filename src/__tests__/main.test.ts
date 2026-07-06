@@ -4,57 +4,53 @@ import { renderStatusLine } from "../render.ts";
 import type { ClaudeStatusInput, RenderContext } from "../types.ts";
 
 // Helper to create Claude input JSON
-function createClaudeInput(
+const createClaudeInput = (
 	overrides: Partial<ClaudeStatusInput> = {},
-): ClaudeStatusInput {
-	return {
-		cost: {
-			total_duration_ms: 3600000, // 1 hour
-			total_cost_usd: 0.5,
-			...((overrides.cost as Record<string, unknown>) || {}),
+): ClaudeStatusInput => ({
+	cost: {
+		total_duration_ms: 3600000, // 1 hour
+		total_cost_usd: 0.5,
+		...overrides.cost,
+	},
+	context_window: {
+		context_window_size: 200000,
+		used_percentage: 34,
+		current_usage: {
+			input_tokens: 50000,
+			output_tokens: 10000,
+			cache_creation_input_tokens: 5000,
+			cache_read_input_tokens: 2000,
 		},
-		context_window: {
-			context_window_size: 200000,
-			used_percentage: 34,
-			current_usage: {
-				input_tokens: 50000,
-				output_tokens: 10000,
-				cache_creation_input_tokens: 5000,
-				cache_read_input_tokens: 2000,
-			},
-			...((overrides.context_window as Record<string, unknown>) || {}),
-		},
-		workspace: {
-			project_dir: "/Users/test/my-project",
-			current_dir: "/Users/test/my-project/src",
-			...((overrides.workspace as Record<string, unknown>) || {}),
-		},
-	} as ClaudeStatusInput;
-}
+		...overrides.context_window,
+	},
+	workspace: {
+		project_dir: "/Users/test/my-project",
+		current_dir: "/Users/test/my-project/src",
+		...overrides.workspace,
+	},
+});
 
 // Helper to create render context
-function createRenderContext(
+const createRenderContext = (
 	overrides: Partial<RenderContext> & {
 		fullClaudeJson?: ClaudeStatusInput;
 	} = {},
-): RenderContext {
-	return {
-		claudeJson:
-			overrides.fullClaudeJson ?? createClaudeInput(overrides.claudeJson),
-		branch: overrides.branch ?? "main",
-		gitChanges: overrides.gitChanges ?? {
-			files: 0,
-			insertions: 0,
-			deletions: 0,
-		},
-		prUrl: overrides.prUrl ?? null,
-		rateLimits: overrides.rateLimits ?? null,
-		mainProjectName: overrides.mainProjectName ?? null,
-		diffViewerUrl: overrides.diffViewerUrl ?? null,
-		baseChanges: overrides.baseChanges ?? null,
-		baseDiffViewerUrl: overrides.baseDiffViewerUrl ?? null,
-	};
-}
+): RenderContext => ({
+	claudeJson:
+		overrides.fullClaudeJson ?? createClaudeInput(overrides.claudeJson),
+	branch: overrides.branch ?? "main",
+	gitChanges: overrides.gitChanges ?? {
+		files: 0,
+		insertions: 0,
+		deletions: 0,
+	},
+	prUrl: overrides.prUrl ?? null,
+	rateLimits: overrides.rateLimits ?? null,
+	mainProjectName: overrides.mainProjectName ?? null,
+	diffViewerUrl: overrides.diffViewerUrl ?? null,
+	baseChanges: overrides.baseChanges ?? null,
+	baseDiffViewerUrl: overrides.baseDiffViewerUrl ?? null,
+});
 
 describe("renderStatusLine", () => {
 	afterEach(() => {

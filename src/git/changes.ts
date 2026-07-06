@@ -3,11 +3,11 @@ import { CACHE_TTL, cache } from "../cache.ts";
 import { parseShortstat } from "./shortstat.ts";
 
 // Git 변경사항 가져오기 (캐싱)
-export async function getGitChangesCached(): Promise<{
+export const getGitChangesCached = async (): Promise<{
 	files: number;
 	insertions: number;
 	deletions: number;
-}> {
+}> => {
 	if (Date.now() - cache.gitChanges.timestamp < CACHE_TTL.gitChanges) {
 		return cache.gitChanges;
 	}
@@ -24,4 +24,4 @@ export async function getGitChangesCached(): Promise<{
 	} catch {
 		return cache.gitChanges;
 	}
-}
+};

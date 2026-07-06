@@ -81,6 +81,39 @@ Agrega lo siguiente a `~/.claude/settings.json`:
 | ✏️    | Cambios sin confirmar (haz clic para abrir el visor de diff)                |
 | 📎    | Enlace de Pull Request               |
 
+## Visor de Diff
+
+Haz clic en `✏️` en el statusline para abrir un visor de diff local en tu navegador, renderizado con los componentes [`@pierre/diffs`](https://www.npmjs.com/package/@pierre/diffs) de Pierre.
+
+![diff_viewer](diff_viewer.png)
+
+- **Dos modos de diff**: `Working tree` (contra HEAD) y `vs <base>` (merge-base contra la rama objetivo del PR o la rama predeterminada). Después de hacer commit, el punto de entrada se mantiene como `✏️ vs <base>` — al hacer clic, el visor se abre en modo base, así tu diff nunca desaparece a mitad de la revisión.
+
+![diff_vs_base](diff_vs_base.png)
+
+- **Diff de imágenes**: las imágenes binarias modificadas (png/jpg/gif/webp/avif/bmp/ico) se muestran en línea en el flujo del diff, en el mismo orden que el árbol de archivos — paneles Old/New lado a lado sobre un fondo de tablero de ajedrez, plegables como cualquier otro archivo
+
+![image_diff](image_diff.png)
+- Alternancia de vista **Unified / Split**
+- **Modo Watch**: actualización automática (~2s de sondeo) que detecta cambios preservando la posición de desplazamiento
+- **Árbol de archivos**: alternancia de posición izquierda/derecha y flatten (colapsar directorios vacíos)
+- **Plegado de archivos**: haz clic en la cabecera de un archivo para plegarlo/desplegarlo; los lockfiles y los archivos con más de 1.500 líneas modificadas comienzan plegados
+- **Búsqueda integrada** (`Cmd/Ctrl+F`): busca en todo el diff, incluidas las líneas eliminadas, con navegación entre coincidencias y resaltado
+- **Copiar ruta**: pasa el cursor sobre la cabecera de un archivo para copiar su ruta relativa
+- Alternancia para **incluir archivos sin seguimiento**
+
+### Cómo Funciona (Visor de Diff)
+
+El statusline inicia el servidor del visor bajo demanda en `127.0.0.1:49573` cuando el repositorio tiene algo que mostrar. Las solicitudes están protegidas por token y vinculadas a localhost.
+
+| Variable de entorno | Efecto |
+| ------------------- | ------ |
+| `CC_STATUSLINE_DIFF_PORT` | Cambiar el puerto (predeterminado: `49573`) |
+| `CC_STATUSLINE_DIFF_DISABLE=1` | Desactivar el visor de diff por completo |
+
+> [!TIP]
+> Abre el visor a través del enlace `✏️` en lugar de un marcador — el enlace siempre lleva un token actualizado y garantiza que el servidor esté en ejecución.
+
 ## Métricas de Uso
 
 Muestra información de uso desde la entrada JSON stdin de Claude Code.

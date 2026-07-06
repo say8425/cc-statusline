@@ -16,14 +16,11 @@ export const LOCKFILE_NAMES: ReadonlySet<string> = new Set([
 	"Podfile.lock",
 ]);
 
-function basename(path: string): string {
+const basename = (path: string): string => {
 	const slash = path.lastIndexOf("/");
 	return slash === -1 ? path : path.slice(slash + 1);
-}
+};
 
-export function isLargeFile(name: string, changedLines: number): boolean {
-	return (
-		LOCKFILE_NAMES.has(basename(name)) ||
-		changedLines > LARGE_FILE_LINE_THRESHOLD
-	);
-}
+export const isLargeFile = (name: string, changedLines: number): boolean =>
+	LOCKFILE_NAMES.has(basename(name)) ||
+	changedLines > LARGE_FILE_LINE_THRESHOLD;
