@@ -121,11 +121,27 @@
 			#toolbar #find-open {
 				padding: 0 7px;
 			}
-			/* Hide the toolbar search button while the find bar is already open (redundant affordance). */
+			/* Hide the toolbar search button while the find bar is already open
+			   (redundant affordance). display 전환은 allow-discrete로 지연시켜
+			   find bar가 접히는 동안 부드럽게 페이드 인/아웃한다. */
+			#toolbar #find-open {
+				transition:
+					opacity 0.16s ease,
+					display 0.16s allow-discrete;
+			}
 			#toolbar:has(#find-bar:not([hidden])) #find-open {
 				display: none;
+				opacity: 0;
 			}
-			/* In-app find bar (opens on Cmd/Ctrl+F). Sits in the toolbar; hidden by default. */
+			@starting-style {
+				#toolbar #find-open {
+					opacity: 0;
+				}
+			}
+			/* In-app find bar (opens on Cmd/Ctrl+F). Sits in the toolbar; hidden by
+			   default. 열릴 때 돋보기 자리에서 가로로 펼쳐지고(max-width 0→340px),
+			   닫힐 때 같은 모션으로 접힌다 — @starting-style + allow-discrete로
+			   display:none 양방향 트랜지션. */
 			#toolbar .tb-find {
 				box-sizing: border-box;
 				height: 26px;
@@ -137,9 +153,35 @@
 				background: var(--vd-inset);
 				border: 1px solid var(--vd-border);
 				border-radius: var(--vd-radius);
+				max-width: 340px;
+				overflow: hidden;
+				opacity: 1;
+				transition:
+					opacity 0.16s ease,
+					max-width 0.16s ease,
+					margin-left 0.16s ease,
+					padding 0.16s ease,
+					border-width 0.16s ease,
+					display 0.16s allow-discrete;
 			}
 			#toolbar .tb-find[hidden] {
 				display: none;
+				opacity: 0;
+				max-width: 0;
+				margin-left: 0;
+				padding-left: 0;
+				padding-right: 0;
+				border-width: 0;
+			}
+			@starting-style {
+				#toolbar .tb-find:not([hidden]) {
+					opacity: 0;
+					max-width: 0;
+					margin-left: 0;
+					padding-left: 0;
+					padding-right: 0;
+					border-width: 0;
+				}
 			}
 			#toolbar #find-input {
 				height: 20px;
