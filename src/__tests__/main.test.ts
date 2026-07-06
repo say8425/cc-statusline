@@ -343,6 +343,18 @@ describe("renderStatusLine", () => {
 			expect(lines[1]).not.toContain("Haiku 4.5 undefined");
 		});
 
+		test("omits model segment when display_name is empty", () => {
+			const ctx = createRenderContext({
+				fullClaudeJson: {
+					...createClaudeInput(),
+					model: { id: "claude-fable-5", display_name: "" },
+				},
+			});
+			const lines = renderStatusLine(ctx);
+
+			expect(lines.join("\n")).not.toContain("🤖");
+		});
+
 		test("omits model segment when model is absent", () => {
 			const ctx = createRenderContext();
 			const lines = renderStatusLine(ctx);
