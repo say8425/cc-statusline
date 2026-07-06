@@ -344,6 +344,20 @@ describe("renderStatusLine", () => {
 			expect(lines[1]).not.toContain("Haiku 4.5 undefined");
 		});
 
+		test("shows model name only when effort level is empty string", () => {
+			const ctx = createRenderContext({
+				fullClaudeJson: {
+					...createClaudeInput(),
+					model: { id: "claude-fable-5", display_name: "Fable 5" },
+					effort: { level: "" },
+				},
+			});
+			const lines = renderStatusLine(ctx);
+
+			expect(lines[1]).toContain("🤖 Fable 5");
+			expect(lines[1]).not.toContain("Fable 5 ");
+		});
+
 		test("omits model segment when display_name is empty", () => {
 			const ctx = createRenderContext({
 				fullClaudeJson: {
