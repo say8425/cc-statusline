@@ -3,14 +3,26 @@ import { homedir } from "node:os";
 import { join } from "node:path";
 import { CACHE_TTL, cache } from "./cache.ts";
 
+// enterprise managed settings — Claude Code 설정 우선순위 최상위 (플랫폼별 고정 경로)
+export const MANAGED_SETTINGS_PATH: string =
+	process.platform === "darwin"
+		? "/Library/Application Support/ClaudeCode/managed-settings.json"
+		: process.platform === "win32"
+			? join(
+					process.env.ProgramData || "C:\\ProgramData",
+					"ClaudeCode",
+					"managed-settings.json",
+				)
+			: "/etc/claude-code/managed-settings.json";
+
 // ultracode 여부는 stdin JSON·env로 전달되지 않아 (effort.level은 xhigh로만 보고,
 // CLI 2.1.201에서 확인) Claude Code 설정 파일의 `ultracode` 키를 직접 읽는다.
-// 우선순위는 Claude Code 설정 해석 순서와 동일: local > project > user.
+// 우선순위는 Claude Code 설정 해석 순서와 동일: managed > local > project > user.
 export const ultracodeSettingsPaths = (
 	projectDir: string,
 	homeDir: string,
 ): string[] => {
-	const paths: string[] = [];
+	const paths: string[] = [MANAGED_SETTINGS_PATH];
 	if (projectDir) {
 		paths.push(
 			join(projectDir, ".claude", "settings.local.json"),

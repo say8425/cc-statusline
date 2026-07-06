@@ -4,6 +4,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { CACHE_TTL, cache, resetCache } from "../cache.ts";
 import {
+	MANAGED_SETTINGS_PATH,
 	getUltracodeCached,
 	resolveUltracodeFromFiles,
 	ultracodeSettingsPaths,
@@ -27,9 +28,10 @@ describe("ultracode settings", () => {
 	});
 
 	describe("ultracodeSettingsPaths", () => {
-		test("orders local > project > user", () => {
+		test("orders managed > local > project > user", () => {
 			const paths = ultracodeSettingsPaths("/proj", "/home/u");
 			expect(paths).toEqual([
+				MANAGED_SETTINGS_PATH,
 				"/proj/.claude/settings.local.json",
 				"/proj/.claude/settings.json",
 				"/home/u/.claude/settings.json",
@@ -38,7 +40,19 @@ describe("ultracode settings", () => {
 
 		test("skips project paths when projectDir is empty", () => {
 			const paths = ultracodeSettingsPaths("", "/home/u");
-			expect(paths).toEqual(["/home/u/.claude/settings.json"]);
+			expect(paths).toEqual([
+				MANAGED_SETTINGS_PATH,
+				"/home/u/.claude/settings.json",
+			]);
+		});
+
+		test("managed settings path is platform-specific and absolute", () => {
+			expect(MANAGED_SETTINGS_PATH).toContain("managed-settings.json");
+			// darwin: /Library/Application Support/ClaudeCode/managed-settings.json
+			// linux: /etc/claude-code/managed-settings.json
+			expect(MANAGED_SETTINGS_PATH.startsWith("/")).toBe(
+				process.platform !== "win32",
+			);
 		});
 	});
 

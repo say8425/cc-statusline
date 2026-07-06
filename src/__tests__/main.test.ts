@@ -413,7 +413,22 @@ describe("renderStatusLine", () => {
 			expect(lines[1]).not.toContain("⚡");
 		});
 
-		test("appends ⚡ultra even when effort is absent", () => {
+		test("no ultra marker when effort is not xhigh (session not in ultracode)", () => {
+			const ctx = createRenderContext({
+				ultracode: true,
+				fullClaudeJson: {
+					...createClaudeInput(),
+					model: { id: "claude-fable-5", display_name: "Fable 5" },
+					effort: { level: "high" },
+				},
+			});
+			const lines = renderStatusLine(ctx);
+
+			expect(lines[1]).toContain("🤖 Fable 5 high");
+			expect(lines[1]).not.toContain("⚡");
+		});
+
+		test("no ultra marker when effort is absent even if settings enable ultracode", () => {
 			const ctx = createRenderContext({
 				ultracode: true,
 				fullClaudeJson: {
@@ -423,7 +438,8 @@ describe("renderStatusLine", () => {
 			});
 			const lines = renderStatusLine(ctx);
 
-			expect(lines[1]).toContain("🤖 Fable 5 ⚡ultra");
+			expect(lines[1]).toContain("🤖 Fable 5");
+			expect(lines[1]).not.toContain("⚡");
 		});
 
 		test("no ultra marker when model is absent", () => {

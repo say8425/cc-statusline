@@ -54,7 +54,7 @@ Agrega lo siguiente a `~/.claude/settings.json`:
 - **Tiempo de sesión**: Tiempo transcurrido de la sesión actual
 - **Costo**: Costo de la sesión en USD
 - **Contexto**: Uso de tokens con porcentaje (codificado por colores)
-- **Modelo**: Nombre del modelo en uso y reasoning effort (p. ej., `Fable 5 high`; el effort solo se muestra en modelos compatibles), con una insignia `⚡ultra` cuando ultracode está habilitado en la configuración de Claude Code
+- **Modelo**: Nombre del modelo en uso y reasoning effort (p. ej., `Fable 5 high`; el effort solo se muestra en modelos compatibles), con una insignia `⚡ultra` cuando ultracode está habilitado en la configuración de Claude Code y la sesión reporta effort `xhigh`
 - **Git Diff**: Cantidad de archivos, inserciones, eliminaciones
 - **Visor de Diff clicable**: Haz clic en `✏️` para abrir un visor de diff local (Pierre `@pierre/diffs` + `@pierre/trees`) en tu navegador — árbol de archivos, modos working-tree / vs-base, modo watch (actualización automática), plegado de archivos y búsqueda integrada (`Cmd/Ctrl+F`) en todo el diff, incluidas las líneas eliminadas
 - **PR URL**: Hipervínculo OSC 8 clickeable

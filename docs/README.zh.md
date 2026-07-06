@@ -54,7 +54,7 @@ Claude Code 自定义状态栏。
 - **会话时间**: 当前会话经过时间
 - **费用**: 会话费用（美元）
 - **上下文**: 令牌使用量及百分比（颜色标识）
-- **模型**: 当前使用的模型名称和 reasoning effort（例如 `Fable 5 high`，effort 仅在支持的模型上显示），当 Claude Code 设置中启用 ultracode 时显示 `⚡ultra` 徽章
+- **模型**: 当前使用的模型名称和 reasoning effort（例如 `Fable 5 high`，effort 仅在支持的模型上显示），当 Claude Code 设置中启用 ultracode 且会话 effort 为 `xhigh` 时显示 `⚡ultra` 徽章
 - **Git Diff**: 文件数、新增、删除
 - **可点击的 Diff 查看器**：点击 `✏️` 即可在浏览器中打开本地 diff 查看器（Pierre `@pierre/diffs` + `@pierre/trees`）——文件树、working-tree / vs-base 模式、watch 模式（自动刷新）、文件折叠，以及对整个 diff 的应用内搜索（`Cmd/Ctrl+F`，包括已删除的行）
 - **PR URL**: 可点击的 OSC 8 超链接
