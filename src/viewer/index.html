@@ -128,16 +128,16 @@
 			   이 지연은 닫힘(나타남)에만 적용된다. */
 			#toolbar #find-open {
 				transition:
-					opacity 0.14s ease 0.1s,
-					display 0.24s allow-discrete;
+					opacity 0.16s ease 0.12s,
+					display 0.28s allow-discrete;
 			}
 			#toolbar:has(#find-bar:not([hidden])) #find-open {
 				display: none;
 				opacity: 0;
 				/* 열림: 바가 즉시 자리를 차지하므로 지연 없이 빠르게 사라진다. */
 				transition:
-					opacity 0.08s ease,
-					display 0.08s allow-discrete;
+					opacity 0.1s ease,
+					display 0.1s allow-discrete;
 			}
 			@starting-style {
 				#toolbar #find-open {
@@ -163,12 +163,12 @@
 				overflow: hidden;
 				opacity: 1;
 				transition:
-					opacity 0.16s ease,
-					max-width 0.16s ease,
-					margin-left 0.16s ease,
-					padding 0.16s ease,
-					border-width 0.16s ease,
-					display 0.16s allow-discrete;
+					opacity 0.2s ease,
+					max-width 0.2s ease,
+					margin-left 0.2s ease,
+					padding 0.2s ease,
+					border-width 0.2s ease,
+					display 0.2s allow-discrete;
 			}
 			#toolbar .tb-find[hidden] {
 				display: none;
