@@ -124,7 +124,7 @@
 			/* Hide the toolbar search button while the find bar is already open
 			   (redundant affordance). 닫힘 안무: 바가 아이콘 자리로 접힌 "뒤에"
 			   돋보기가 나타나야 자연스러우므로, 보이는 상태(기본 규칙)의 전이에
-			   0.1s 지연을 둔다 — CSS 전이는 목적지 상태의 transition을 쓰므로
+			   0.12s 지연을 둔다 — CSS 전이는 목적지 상태의 transition을 쓰므로
 			   이 지연은 닫힘(나타남)에만 적용된다. */
 			#toolbar #find-open {
 				transition:
@@ -191,6 +191,8 @@
 			}
 			@media (prefers-reduced-motion: reduce) {
 				#toolbar #find-open,
+				/* :has() 변형도 명시해야 열림 방향(더 높은 특이도 규칙의 전이)까지 덮는다 */
+				#toolbar:has(#find-bar:not([hidden])) #find-open,
 				#toolbar .tb-find {
 					/* 전이 제거 → display가 즉시 전환되어 기존 즉시 표시/숨김으로 강등 */
 					transition: none;

@@ -191,12 +191,19 @@ describe("api/blob", () => {
 	});
 
 	test("404 for an image-suffixed path escaping the repo", async () => {
-		// isImagePath 게이트를 통과하는 확장자로 getFileBytes의 경로 탈출
-		// 방어 분기를 서버 레벨에서 직접 겨냥한다.
-		const res = await fetch(
-			`${base}/api/blob?repo=${encodeURIComponent(repo)}&token=${handle.token}&path=${encodeURIComponent("../../secret.png")}&side=new`,
-		);
-		expect(res.status).toBe(404);
+		// isImagePath 게이트를 통과하는 확장자 + repo 밖에 "실재하는" 파일로
+		// getFileBytes의 경로 탈출 가드를 겨냥한다 — 가드가 사라지면 이 파일이
+		// 실제로 읽혀 200이 나오므로 진짜 회귀망이 된다.
+		const outside = join(repo, "..", "outside-secret.png");
+		writeFileSync(outside, Buffer.from([0x89, 0x00]));
+		try {
+			const res = await fetch(
+				`${base}/api/blob?repo=${encodeURIComponent(repo)}&token=${handle.token}&path=${encodeURIComponent("../outside-secret.png")}&side=new`,
+			);
+			expect(res.status).toBe(404);
+		} finally {
+			rmSync(outside, { force: true });
+		}
 	});
 
 	test("404 for an empty path", async () => {
