@@ -87,6 +87,9 @@ Click `✏️` in the statusline to open a local diff viewer in your browser, re
 
 ![diff_viewer](docs/diff_viewer.png)
 
+> [!TIP]
+> **Pairs well with [cmux](https://cmux.com)** — the viewer opens right in cmux's [browser side panel](https://cmux.com/docs/browser-automation), so your diff sits next to your terminal instead of in a separate window. cmux's built-in diff viewer felt clunky to use, which is part of why this one exists.
+
 - **Two diff modes**: `Working tree` (vs HEAD) and `vs <base>` (merge-base against the PR target or default branch). After you commit, the entry point stays alive as `✏️ vs <base>` — clicking it opens the viewer in base mode, so your diff never disappears mid-review.
 
 ![diff_vs_base](docs/diff_vs_base.png)
