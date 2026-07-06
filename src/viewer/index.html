@@ -346,6 +346,56 @@
 			#app[data-tree-side="right"] #diff {
 				grid-column: 1;
 			}
+			/* Flat file list (Flat list toggle): full-path rows, no folder nesting. */
+			.flat-list {
+				display: flex;
+				flex-direction: column;
+				height: 100%;
+			}
+			.flat-filter {
+				margin: 0 8px 8px;
+				padding: 4px 8px;
+				background: var(--vd-inset);
+				color: var(--vd-fg);
+				border: 1px solid var(--vd-border);
+				border-radius: var(--vd-radius);
+				font: inherit;
+			}
+			.flat-filter:focus-visible {
+				outline: 1px solid var(--vd-accent);
+			}
+			.flat-rows {
+				overflow: auto;
+			}
+			.flat-row {
+				display: flex;
+				align-items: center;
+				gap: 8px;
+				width: 100%;
+				padding: 3px 8px;
+				background: transparent;
+				border: 0;
+				color: var(--vd-fg);
+				font: inherit;
+				text-align: left;
+				cursor: pointer;
+			}
+			.flat-row:hover {
+				background: var(--vd-hover);
+			}
+			.flat-row[hidden] {
+				display: none;
+			}
+			.flat-status {
+				flex: none;
+				width: 1ch;
+				font-weight: 600;
+			}
+			.flat-path {
+				overflow: hidden;
+				text-overflow: ellipsis;
+				white-space: nowrap;
+			}
 			#status,
 			#empty {
 				color: var(--vd-fg-muted);
@@ -472,7 +522,8 @@
 							>
 							<label><input type="checkbox" id="toggle-watch" /> Watch</label>
 							<label
-								><input type="checkbox" id="toggle-flatten" /> Flatten</label
+								><input type="checkbox" id="toggle-flat-list" /> Flat
+								list</label
 							>
 							<label
 								><input type="checkbox" id="toggle-tree-side" /> Tree on

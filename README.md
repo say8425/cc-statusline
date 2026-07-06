@@ -101,7 +101,7 @@ Click `✏️` in the statusline to open a local diff viewer in your browser, re
 ![image_diff](docs/image_diff.png)
 - **Unified / Split** view toggle
 - **Watch mode**: auto-refresh (~2s polling) that detects changes while preserving scroll position
-- **File tree**: left/right placement and flatten (collapse empty directories) toggles
+- **Sidebar view**: switch between a folder tree and a flat file list (the **Flat list** toggle lists every changed file by full path — no folders — with a filter box; handy since the tree's folder-collapsing rarely has anything to collapse); the tree also has a left/right placement toggle
 - **File folding**: click any file header to collapse/expand; lockfiles and files with more than 1,500 changed lines start collapsed
 - **In-app search** (`Cmd/Ctrl+F`): searches the entire diff including deleted lines, with match navigation and highlighting
 - **Copy path**: hover a file header to copy the file's relative path

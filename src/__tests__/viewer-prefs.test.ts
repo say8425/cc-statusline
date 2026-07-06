@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import {
-	FLATTEN_KEY,
-	readFlatten,
+	FILE_VIEW_KEY,
+	readFileView,
 	readTreeSide,
 	TREE_SIDE_KEY,
 } from "../viewer/prefs.ts";
@@ -23,14 +23,14 @@ describe("readTreeSide", () => {
 	});
 });
 
-describe("readFlatten", () => {
-	test("defaults to on when unset", () => {
-		expect(readFlatten(fake({}))).toBe(true);
+describe("readFileView", () => {
+	test("defaults to tree when unset", () => {
+		expect(readFileView(fake({}))).toBe("tree");
 	});
-	test("off only when stored 0", () => {
-		expect(readFlatten(fake({ [FLATTEN_KEY]: "0" }))).toBe(false);
+	test("returns list only when stored list", () => {
+		expect(readFileView(fake({ [FILE_VIEW_KEY]: "list" }))).toBe("list");
 	});
-	test("on when stored 1", () => {
-		expect(readFlatten(fake({ [FLATTEN_KEY]: "1" }))).toBe(true);
+	test("falls back to tree for unknown value", () => {
+		expect(readFileView(fake({ [FILE_VIEW_KEY]: "bogus" }))).toBe("tree");
 	});
 });

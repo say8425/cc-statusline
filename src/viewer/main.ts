@@ -4,12 +4,14 @@ import type { DiffFile } from "../diff-server/diff.ts";
 import { createCopyButton } from "./copyButton.ts";
 import { movedBeyondThreshold } from "./drag.ts";
 import { sortFilesLikeTree } from "./fileOrder.ts";
+import { type FlatListHandle, renderFlatList } from "./flatList.ts";
 import { ensureImageCard, IMAGE_CARD_CSS } from "./imageCard.ts";
 import { blobUrl, type ImageEntry, imageEntries } from "./imageDiff.ts";
 import { isLargeFile } from "./largeFile.ts";
 import {
-	FLATTEN_KEY,
-	readFlatten,
+	FILE_VIEW_KEY,
+	type FileView,
+	readFileView,
 	readTreeSide,
 	TREE_SIDE_KEY,
 	type TreeSide,
@@ -91,10 +93,11 @@ const appEl = document.getElementById("app") as HTMLElement;
 let diffStyle: "unified" | "split" = "unified";
 let includeUntracked = false;
 let diffMode: "working" | "base" = "working";
-let flattenDirs = readFlatten((k) => localStorage.getItem(k));
+let fileView: FileView = readFileView((k) => localStorage.getItem(k));
 let treeSide: TreeSide = readTreeSide((k) => localStorage.getItem(k));
 let codeView: CodeView | null = null;
 let fileTree: FileTree | null = null;
+let flatList: FlatListHandle | null = null;
 
 let lastPatch: string | null = null;
 let lastTreeKey: string | null = null;
@@ -138,6 +141,7 @@ const teardownViews = (): void => {
 	codeView = null;
 	fileTree?.cleanUp();
 	fileTree = null;
+	flatList = null;
 	renderedDiffStyle = null;
 	lastTreeKey = null;
 	foldButtons.clear();
@@ -282,20 +286,37 @@ const renderPatch = (unsorted: DiffFile[]): void => {
 	searchFiles = items.map((it) => ({ fileId: it.id, fileDiff: it.fileDiff }));
 	findBar?.setData();
 
-	// File tree: create once; afterwards update in place only when the file set
-	// or statuses changed (so editing a file's contents doesn't reset it).
+	// Sidebar: folder tree (default) or flat file list. Both rebuild only when the
+	// file set or statuses change (treeKey), so editing a file's contents — or a
+	// watch-mode refresh — doesn't reset the tree's expansion or the list's filter.
 	const treeKey = JSON.stringify(gitStatus);
-	if (!fileTree) {
+	const selectFile = (path: string): void => {
+		if (codeView) codeView.scrollTo({ type: "item", id: path });
+	};
+	if (fileView === "list") {
+		fileTree?.cleanUp();
+		fileTree = null;
+		if (!flatList || treeKey !== lastTreeKey) {
+			treeMount.replaceChildren();
+			flatList = renderFlatList(
+				treeMount,
+				files.map((f) => ({ path: f.name, status: f.status })),
+				selectFile,
+			);
+			lastTreeKey = treeKey;
+		}
+	} else if (!fileTree) {
+		flatList = null;
 		treeMount.replaceChildren();
 		fileTree = new FileTree({
 			paths,
 			gitStatus,
 			initialExpansion: "open",
-			flattenEmptyDirectories: flattenDirs,
+			flattenEmptyDirectories: true,
 			search: true,
 			onSelectionChange: (selected) => {
 				const path = selected[0];
-				if (path && codeView) codeView.scrollTo({ type: "item", id: path });
+				if (path) selectFile(path);
 			},
 		});
 		fileTree.render({ containerWrapper: treeMount });
@@ -449,10 +470,10 @@ if (urlMode === "base" || urlMode === "working") {
 // Apply persisted file-tree side and reflect stored prefs in the overflow menu.
 appEl.dataset.treeSide = treeSide;
 
-const flattenInput = document.getElementById(
-	"toggle-flatten",
+const flatListInput = document.getElementById(
+	"toggle-flat-list",
 ) as HTMLInputElement | null;
-if (flattenInput) flattenInput.checked = flattenDirs;
+if (flatListInput) flatListInput.checked = fileView === "list";
 
 const treeSideInput = document.getElementById(
 	"toggle-tree-side",
@@ -460,7 +481,7 @@ const treeSideInput = document.getElementById(
 if (treeSideInput) treeSideInput.checked = treeSide === "right";
 
 // 토글해도 메뉴는 열린 채 유지한다(연속 조작). 트리가 오른쪽일 때는 열린
-// 메뉴가 트리 상단 일부를 덮어 flatten 변화가 즉시 안 보일 수 있지만,
+// 메뉴가 트리 상단 일부를 덮어 사이드바 변화가 즉시 안 보일 수 있지만,
 // 메뉴를 닫으면(바깥 클릭/Esc) 적용돼 있다.
 treeSideInput?.addEventListener("change", () => {
 	treeSide = treeSideInput.checked ? "right" : "left";
@@ -468,14 +489,16 @@ treeSideInput?.addEventListener("change", () => {
 	localStorage.setItem(TREE_SIDE_KEY, treeSide);
 });
 
-flattenInput?.addEventListener("change", () => {
-	flattenDirs = flattenInput.checked;
-	localStorage.setItem(FLATTEN_KEY, flattenDirs ? "1" : "0");
-	// flattenEmptyDirectories is a constructor option, so the tree must be
-	// recreated; force a rebuild on the next render and reload the diff.
+flatListInput?.addEventListener("change", () => {
+	fileView = flatListInput.checked ? "list" : "tree";
+	localStorage.setItem(FILE_VIEW_KEY, fileView);
+	// Switching the sidebar view swaps the FileTree for the flat list (or back),
+	// so tear the current one down and force a rebuild on the next render.
 	fileTree?.cleanUp();
 	fileTree = null;
+	flatList = null;
 	lastTreeKey = null;
+	treeMount.replaceChildren();
 	void load();
 });
 
