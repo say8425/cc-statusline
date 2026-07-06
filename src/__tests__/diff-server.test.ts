@@ -190,6 +190,15 @@ describe("api/blob", () => {
 		}
 	});
 
+	test("404 for an image-suffixed path escaping the repo", async () => {
+		// isImagePath 게이트를 통과하는 확장자로 getFileBytes의 경로 탈출
+		// 방어 분기를 서버 레벨에서 직접 겨냥한다.
+		const res = await fetch(
+			`${base}/api/blob?repo=${encodeURIComponent(repo)}&token=${handle.token}&path=${encodeURIComponent("../../secret.png")}&side=new`,
+		);
+		expect(res.status).toBe(404);
+	});
+
 	test("404 for an empty path", async () => {
 		const res = await fetch(
 			`${base}/api/blob?repo=${encodeURIComponent(repo)}&token=${handle.token}&path=&side=old`,
