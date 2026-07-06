@@ -128,16 +128,16 @@
 			   이 지연은 닫힘(나타남)에만 적용된다. */
 			#toolbar #find-open {
 				transition:
-					opacity 0.14s ease 0.1s,
-					display 0.24s allow-discrete;
+					opacity 0.2s ease 0.12s,
+					display 0.32s allow-discrete;
 			}
 			#toolbar:has(#find-bar:not([hidden])) #find-open {
 				display: none;
 				opacity: 0;
 				/* 열림: 바가 즉시 자리를 차지하므로 지연 없이 빠르게 사라진다. */
 				transition:
-					opacity 0.08s ease,
-					display 0.08s allow-discrete;
+					opacity 0.1s ease,
+					display 0.1s allow-discrete;
 			}
 			@starting-style {
 				#toolbar #find-open {
@@ -162,13 +162,14 @@
 				max-width: 340px;
 				overflow: hidden;
 				opacity: 1;
+				/* 열림(목적지=기본 상태): 빠르게 출발해 길게 정착하는 enter 커브. */
 				transition:
-					opacity 0.16s ease,
-					max-width 0.16s ease,
-					margin-left 0.16s ease,
-					padding 0.16s ease,
-					border-width 0.16s ease,
-					display 0.16s allow-discrete;
+					opacity 0.28s cubic-bezier(0.22, 1, 0.36, 1),
+					max-width 0.28s cubic-bezier(0.22, 1, 0.36, 1),
+					margin-left 0.28s cubic-bezier(0.22, 1, 0.36, 1),
+					padding 0.28s cubic-bezier(0.22, 1, 0.36, 1),
+					border-width 0.28s cubic-bezier(0.22, 1, 0.36, 1),
+					display 0.28s allow-discrete;
 			}
 			#toolbar .tb-find[hidden] {
 				display: none;
@@ -178,6 +179,14 @@
 				padding-left: 0;
 				padding-right: 0;
 				border-width: 0;
+				/* 닫힘(목적지=hidden 상태): 조금 빠른 move 커브로 접힌다. */
+				transition:
+					opacity 0.22s cubic-bezier(0.25, 1, 0.5, 1),
+					max-width 0.22s cubic-bezier(0.25, 1, 0.5, 1),
+					margin-left 0.22s cubic-bezier(0.25, 1, 0.5, 1),
+					padding 0.22s cubic-bezier(0.25, 1, 0.5, 1),
+					border-width 0.22s cubic-bezier(0.25, 1, 0.5, 1),
+					display 0.22s allow-discrete;
 			}
 			@starting-style {
 				#toolbar .tb-find:not([hidden]) {

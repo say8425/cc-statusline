@@ -70,18 +70,67 @@ diffMount.addEventListener("click", (event) => {
 			node instanceof HTMLElement && node.tagName === "DIFFS-CONTAINER",
 	);
 	const id = container?.querySelector<HTMLElement>("[data-fold]")?.dataset.fold;
-	if (!id) return;
+	if (!id || !container) return;
 	const item = codeView.getItem(id);
 	if (item?.type !== "diff") return;
+	// 접힘 진행 중 재클릭 무시 (페이드 타이머와 상태가 어긋나지 않게).
+	if (container.dataset.folding) return;
 	const nextCollapsed = !collapsedIds.has(id);
-	if (nextCollapsed) collapsedIds.add(id);
-	else collapsedIds.delete(id);
-	renderVersion += 1;
-	codeView.updateItem({
-		...item,
-		collapsed: nextCollapsed,
-		version: renderVersion,
-	});
+
+	const findBody = (): HTMLElement | undefined =>
+		Array.from((container.shadowRoot ?? container).children).find(
+			(el): el is HTMLElement =>
+				el instanceof HTMLElement &&
+				!el.hasAttribute("data-diffs-header") &&
+				el.tagName !== "SVG",
+		);
+
+	const applyFold = (): void => {
+		if (!codeView) return;
+		if (nextCollapsed) collapsedIds.add(id);
+		else collapsedIds.delete(id);
+		renderVersion += 1;
+		codeView.updateItem({
+			...item,
+			collapsed: nextCollapsed,
+			version: renderVersion,
+		});
+		if (!nextCollapsed) {
+			// 펼치기: 새로 생긴 body를 페이드인. (CSS @starting-style 전역 규칙은
+			// 가상화 스크롤 재마운트 때마다 깜빡이므로 폴드 경로에서만 JS로.)
+			requestAnimationFrame(() => {
+				requestAnimationFrame(() => {
+					const body = findBody();
+					if (!body) return;
+					body.style.opacity = "0";
+					body.style.transition = "opacity 0.18s ease";
+					requestAnimationFrame(() => {
+						body.style.opacity = "1";
+					});
+					setTimeout(() => {
+						body.style.opacity = "";
+						body.style.transition = "";
+					}, 260);
+				});
+			});
+		}
+	};
+
+	// 접기: body를 먼저 짧게 페이드아웃한 뒤 접는다 (노드 제거는 CSS로
+	// 애니메이션할 수 없으므로 여기서 시퀀싱). 펼치기: 새로 생기는 body가
+	// unsafeCSS의 @starting-style 페이드인으로 나타난다.
+	const body = nextCollapsed ? findBody() : undefined;
+	if (body) {
+		container.dataset.folding = "1";
+		body.style.transition = "opacity 0.12s ease";
+		body.style.opacity = "0";
+		setTimeout(() => {
+			delete container.dataset.folding;
+			applyFold();
+		}, 120);
+	} else {
+		applyFold();
+	}
 });
 
 const statusEl = document.getElementById("status") as HTMLElement;
@@ -211,8 +260,15 @@ const codeViewOptions = (): ConstructorParameters<
 		"[data-diffs-header]{cursor:pointer;transition:background-color .15s}[data-diffs-header]:hover{background-color:rgba(255,255,255,.05)}" +
 		"mark.cc-find-hit{background:#e3b341;color:#000;border-radius:2px}" +
 		"mark.cc-find-hit--active{background:#f0883e;color:#000}" +
-		"[data-copy-name]{opacity:0;transition:opacity .15s;background:transparent;border:0;color:#84848a;cursor:pointer;display:inline-flex;align-items:center;padding:0 4px;margin-left:2px;line-height:1}" +
-		`[data-diffs-header]:hover [data-copy-name]{opacity:1}[data-copy-name]:hover{color:#adadb1}[data-copy-name]:focus-visible{opacity:1}${IMAGE_CARD_CSS}`,
+		"[data-copy-name]{position:relative;opacity:0;transition:opacity .15s;background:transparent;border:0;color:#84848a;cursor:pointer;display:inline-flex;align-items:center;padding:0 4px;margin-left:2px;line-height:1}" +
+		"[data-diffs-header]:hover [data-copy-name]{opacity:1}[data-copy-name]:hover{color:#adadb1}[data-copy-name]:focus-visible{opacity:1}" +
+		// 복사 → 체크 아이콘 스왑: 겹쳐둔 두 아이콘의 크로스페이드 + 스케일 팝.
+		// 복사 직후엔 헤더 hover 없이도 피드백이 보이도록 버튼을 강제 표시.
+		"[data-copy-name] span{display:inline-flex;line-height:1;transition:opacity .18s ease,transform .18s cubic-bezier(0.22,1,0.36,1)}" +
+		"[data-copy-name] [data-icon-check]{position:absolute;left:4px;top:50%;translate:0 -50%;opacity:0;transform:scale(.4);color:#57ab5a}" +
+		"[data-copy-name][data-copied]{opacity:1}" +
+		"[data-copy-name][data-copied] [data-icon-copy]{opacity:0;transform:scale(.4)}" +
+		`[data-copy-name][data-copied] [data-icon-check]{opacity:1;transform:scale(1)}${IMAGE_CARD_CSS}`,
 });
 
 const restoreAutoExpanded = (): void => {
