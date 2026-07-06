@@ -51,6 +51,7 @@ export interface RenderContext {
 	branch: string;
 	gitChanges: { files: number; insertions: number; deletions: number };
 	prUrl: string | null;
+	ultracode: boolean;
 	rateLimits: RateLimits | null;
 	mainProjectName: string | null;
 	diffViewerUrl: string | null;

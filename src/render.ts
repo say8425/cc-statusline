@@ -51,7 +51,9 @@ export const renderStatusLine = (ctx: RenderContext): string[] => {
 	const modelName = ctx.claudeJson.model?.display_name;
 	if (modelName) {
 		const effortLevel = ctx.claudeJson.effort?.level;
-		const modelText = effortLevel ? `${modelName} ${effortLevel}` : modelName;
+		let modelText = effortLevel ? `${modelName} ${effortLevel}` : modelName;
+		// ultracode는 stdin에 없어 설정 파일 기반 (effort.level은 xhigh로만 보고됨)
+		if (ctx.ultracode) modelText += " ⚡ultra";
 		line2 += ` | ${C.WHITE}🤖 ${modelText}${C.RESET}`;
 	}
 	lines.push(line2);

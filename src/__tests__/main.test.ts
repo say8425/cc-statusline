@@ -45,6 +45,7 @@ const createRenderContext = (
 		deletions: 0,
 	},
 	prUrl: overrides.prUrl ?? null,
+	ultracode: overrides.ultracode ?? false,
 	rateLimits: overrides.rateLimits ?? null,
 	mainProjectName: overrides.mainProjectName ?? null,
 	diffViewerUrl: overrides.diffViewerUrl ?? null,
@@ -379,6 +380,58 @@ describe("renderStatusLine", () => {
 
 			expect(lines[1]).not.toContain("🧠");
 			expect(lines[1]).toContain("🤖 Fable 5 max");
+		});
+	});
+
+	describe("ultracode display", () => {
+		test("appends ⚡ultra to model segment when ultracode is on", () => {
+			const ctx = createRenderContext({
+				ultracode: true,
+				fullClaudeJson: {
+					...createClaudeInput(),
+					model: { id: "claude-fable-5", display_name: "Fable 5" },
+					effort: { level: "xhigh" },
+				},
+			});
+			const lines = renderStatusLine(ctx);
+
+			expect(lines[1]).toContain("🤖 Fable 5 xhigh ⚡ultra");
+		});
+
+		test("no ultra marker when ultracode is off", () => {
+			const ctx = createRenderContext({
+				ultracode: false,
+				fullClaudeJson: {
+					...createClaudeInput(),
+					model: { id: "claude-fable-5", display_name: "Fable 5" },
+					effort: { level: "xhigh" },
+				},
+			});
+			const lines = renderStatusLine(ctx);
+
+			expect(lines[1]).toContain("🤖 Fable 5 xhigh");
+			expect(lines[1]).not.toContain("⚡");
+		});
+
+		test("appends ⚡ultra even when effort is absent", () => {
+			const ctx = createRenderContext({
+				ultracode: true,
+				fullClaudeJson: {
+					...createClaudeInput(),
+					model: { id: "claude-fable-5", display_name: "Fable 5" },
+				},
+			});
+			const lines = renderStatusLine(ctx);
+
+			expect(lines[1]).toContain("🤖 Fable 5 ⚡ultra");
+		});
+
+		test("no ultra marker when model is absent", () => {
+			const ctx = createRenderContext({ ultracode: true });
+			const lines = renderStatusLine(ctx);
+
+			expect(lines.join("\n")).not.toContain("⚡");
+			expect(lines.join("\n")).not.toContain("🤖");
 		});
 	});
 
