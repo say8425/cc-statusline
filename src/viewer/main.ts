@@ -459,10 +459,14 @@ const treeSideInput = document.getElementById(
 ) as HTMLInputElement | null;
 if (treeSideInput) treeSideInput.checked = treeSide === "right";
 
+// 레이아웃을 바꾸는 토글(트리 위치·flatten)은 메뉴를 닫아 변화가 바로 보이게
+// 한다 — 트리가 오른쪽일 때 열린 메뉴가 트리 상단을 덮어 flatten 결과가
+// 가려지면 "동작 안 함"처럼 보인다.
 treeSideInput?.addEventListener("change", () => {
 	treeSide = treeSideInput.checked ? "right" : "left";
 	appEl.dataset.treeSide = treeSide;
 	localStorage.setItem(TREE_SIDE_KEY, treeSide);
+	setOverflowOpen(false);
 });
 
 flattenInput?.addEventListener("change", () => {
@@ -473,6 +477,7 @@ flattenInput?.addEventListener("change", () => {
 	fileTree?.cleanUp();
 	fileTree = null;
 	lastTreeKey = null;
+	setOverflowOpen(false);
 	void load();
 });
 
