@@ -1,0 +1,49 @@
+{
+	"$schema": "./node_modules/oxlint/configuration_schema.json",
+	"plugins": ["typescript", "oxc", "unicorn", "import", "promise"],
+	"env": {
+		"builtin": true,
+		"browser": true
+	},
+	"globals": {
+		"Bun": "readonly"
+	},
+	"options": {
+		"typeAware": true
+	},
+	"categories": {
+		"correctness": "error",
+		"suspicious": "warn",
+		"perf": "warn"
+	},
+	"rules": {
+		"prefer-arrow-callback": "error",
+		"func-style": ["error", "expression", { "allowArrowFunctions": true }],
+		"arrow-body-style": ["error", "as-needed"],
+		"no-var": "error",
+		"prefer-const": "error",
+		"prefer-template": "error",
+		"eqeqeq": ["error", "always", { "null": "ignore" }],
+		"no-else-return": "error",
+		"no-param-reassign": "error",
+		"require-await": "error",
+		"typescript/no-explicit-any": "error",
+		"typescript/consistent-type-imports": "error",
+		"typescript/ban-ts-comment": "error",
+		"typescript/no-unsafe-type-assertion": "off",
+		"unicorn/prefer-node-protocol": "error",
+		"import/no-cycle": "error",
+		"typescript/no-floating-promises": "error",
+		"typescript/no-misused-promises": "error",
+		"typescript/await-thenable": "error"
+	},
+	"overrides": [
+		{
+			"files": ["src/__tests__/**"],
+			"rules": {
+				"typescript/unbound-method": "off",
+				"no-await-in-loop": "off"
+			}
+		}
+	]
+}

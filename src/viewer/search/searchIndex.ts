@@ -28,7 +28,7 @@ export interface SearchFile {
  * the additions side, top-to-bottom. Requires isPartial=false diffs (full
  * old/new contents), which parseDiffFromFile produces.
  */
-export function buildRows(fileDiff: FileDiffMetadata): SearchRow[] {
+export const buildRows = (fileDiff: FileDiffMetadata): SearchRow[] => {
 	const { additionLines, deletionLines, hunks } = fileDiff;
 	const rows: SearchRow[] = [];
 
@@ -78,16 +78,16 @@ export function buildRows(fileDiff: FileDiffMetadata): SearchRow[] {
 		pushAdditions(newCursor, additionLines.length - newCursor); // trailing context
 	}
 	return rows;
-}
+};
 
 /**
  * All matches across files, ordered files[] → unified stream (top-to-bottom)
  * → column. Empty query → [].
  */
-export function findMatches(
+export const findMatches = (
 	files: readonly SearchFile[],
 	query: string,
-): SearchMatch[] {
+): SearchMatch[] => {
 	if (query === "") return [];
 	const matches: SearchMatch[] = [];
 	for (const { fileId, fileDiff } of files) {
@@ -104,4 +104,4 @@ export function findMatches(
 		}
 	}
 	return matches;
-}
+};

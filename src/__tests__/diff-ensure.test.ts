@@ -6,23 +6,27 @@ import { ensureDiffServer, resetEnsureCache } from "../diff-server/ensure.ts";
 
 let cacheHome: string;
 
+const throwingSpawn = (): void => {
+	throw new Error("spawn EMFILE: simulated spawn failure");
+};
+
 afterEach(() => {
 	resetEnsureCache();
 	if (cacheHome) rmSync(cacheHome, { recursive: true, force: true });
 });
 
 describe("ensureDiffServer", () => {
-	test("returns null when disabled", async () => {
-		const result = await ensureDiffServer("/some/repo", {
+	test("returns null when disabled", () => {
+		const result = ensureDiffServer("/some/repo", {
 			CC_STATUSLINE_DIFF_DISABLE: "1",
 		});
 		expect(result).toBeNull();
 	});
 
-	test("returns null on the first tick when no token exists yet", async () => {
+	test("returns null on the first tick when no token exists yet", () => {
 		cacheHome = mkdtempSync(join(tmpdir(), "cc-ensure-"));
 		// Use an unlikely port so the probe fails fast and no real daemon interferes.
-		const result = await ensureDiffServer("/some/repo", {
+		const result = ensureDiffServer("/some/repo", {
 			XDG_CACHE_HOME: cacheHome,
 			CC_STATUSLINE_DIFF_PORT: "59999",
 		});
@@ -36,21 +40,18 @@ describe("ensureDiffServer", () => {
 		const env = { XDG_CACHE_HOME: cacheHome, CC_STATUSLINE_DIFF_PORT: "59999" };
 		const token = ensureToken(env);
 		resetEnsureCache();
-		const result = await ensureDiffServer("/some/repo", env);
+		const result = ensureDiffServer("/some/repo", env);
 		expect(result).toEqual({ port: 59999, token });
 	});
 
 	test("does not throw/reject when the injected spawner throws (spawn failure)", async () => {
 		cacheHome = mkdtempSync(join(tmpdir(), "cc-ensure-"));
 		const env = { XDG_CACHE_HOME: cacheHome, CC_STATUSLINE_DIFF_PORT: "59997" };
-		const throwingSpawn = () => {
-			throw new Error("spawn EMFILE: simulated spawn failure");
-		};
 
 		// Must resolve (not throw) even though the injected spawner always throws,
 		// and the fire-and-forget probe/spawn promise must never surface as an
 		// unhandled rejection.
-		const result = await ensureDiffServer("/some/repo", env, throwingSpawn);
+		const result = ensureDiffServer("/some/repo", env, throwingSpawn);
 		expect(result).toBeNull();
 
 		// Give the fire-and-forget maybeSpawn() microtask a chance to run so a

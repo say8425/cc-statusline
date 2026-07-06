@@ -5,7 +5,7 @@ import { buildRows, findMatches } from "../viewer/search/searchIndex.ts";
 // 최소 fixture: buildRows가 읽는 필드만 채운다 (라이브러리 런타임 미사용).
 // 새 파일 5줄, 옛 파일 5줄. 3번째 줄이 REMOVED→ADDED로 교체.
 // 1번째 줄은 hunk 앞 collapsed context, 5번째 줄은 trailing context.
-function fixture(): FileDiffMetadata {
+const fixture = (): FileDiffMetadata => {
 	const additionLines = [
 		"import a",
 		"const x = 1",
@@ -47,7 +47,7 @@ function fixture(): FileDiffMetadata {
 		},
 	];
 	return { additionLines, deletionLines, hunks } as unknown as FileDiffMetadata;
-}
+};
 
 describe("buildRows", () => {
 	test("unified 순서로 재구성 (collapsed 앞/삭제/추가/trailing, context 1회)", () => {

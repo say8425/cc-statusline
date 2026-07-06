@@ -11,13 +11,13 @@ export const cache = {
 };
 
 // 캐시 초기화 (테스트용)
-export function resetCache(): void {
+export const resetCache = (): void => {
 	cache.branch = { value: "", timestamp: 0 };
 	cache.gitChanges = { files: 0, insertions: 0, deletions: 0, timestamp: 0 };
 	cache.prUrl = { value: null, timestamp: 0 };
 	cache.mainProjectName = { value: null, timestamp: 0 };
 	cache.baseRef = { value: null, timestamp: 0 };
-}
+};
 
 // 캐시 TTL (ms)
 export const CACHE_TTL = {

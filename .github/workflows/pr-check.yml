@@ -8,10 +8,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Setup Biome CLI
-        uses: biomejs/setup-biome@v2
-      - name: Run Biome
-        run: biome ci src/
+      - uses: oven-sh/setup-bun@v2
+      - run: bun install --frozen-lockfile
+      - name: Run oxlint
+        run: bun run lint
+      - name: Check formatting (oxfmt)
+        run: bun run format:check
 
   typecheck:
     runs-on: ubuntu-latest

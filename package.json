@@ -6,11 +6,13 @@
 		"url": "https://github.com/say8425/cc-statusline.git"
 	},
 	"devDependencies": {
-		"@biomejs/biome": "^2.4.11",
 		"@pierre/diffs": "^1.2.12",
 		"@pierre/trees": "^1.0.0-beta.5",
-		"@types/bun": "^1.3.12",
-		"typescript": "^6.0.2"
+		"@types/bun": "^1.3.14",
+		"oxfmt": "^0.57.0",
+		"oxlint": "^1.72.0",
+		"oxlint-tsgolint": "^0.24.0",
+		"typescript": "^6.0.3"
 	},
 	"bin": {
 		"cc-statusline": "dist/index.js"
@@ -28,7 +30,9 @@
 		"start": "bun src/index.ts",
 		"test": "bun test",
 		"test:coverage": "bun test --coverage",
-		"lint": "biome check src/",
+		"lint": "oxlint src/",
+		"format": "oxfmt src/ build.ts",
+		"format:check": "oxfmt --check src/ build.ts",
 		"typecheck": "tsc --noEmit"
 	},
 	"type": "module"

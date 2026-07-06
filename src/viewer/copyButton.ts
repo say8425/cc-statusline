@@ -8,7 +8,7 @@ const CHECK_SVG =
 	'<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>';
 const RESET_MS = 1200;
 
-export function createCopyButton(path: string): HTMLButtonElement {
+export const createCopyButton = (path: string): HTMLButtonElement => {
 	const btn = document.createElement("button");
 	btn.type = "button";
 	btn.dataset.copyName = "";
@@ -17,7 +17,7 @@ export function createCopyButton(path: string): HTMLButtonElement {
 	btn.innerHTML = COPY_SVG;
 
 	let resetTimer: ReturnType<typeof setTimeout> | null = null;
-	function showCopied(): void {
+	const showCopied = (): void => {
 		btn.innerHTML = CHECK_SVG;
 		btn.setAttribute("aria-label", "Copied");
 		btn.setAttribute("title", "Copied");
@@ -28,7 +28,7 @@ export function createCopyButton(path: string): HTMLButtonElement {
 			btn.setAttribute("title", "Copy path");
 			resetTimer = null;
 		}, RESET_MS);
-	}
+	};
 
 	// Keep copy interactions from reaching the header's fold toggle (a header
 	// click collapses the file; its pointerdown starts drag tracking).
@@ -45,4 +45,4 @@ export function createCopyButton(path: string): HTMLButtonElement {
 	});
 
 	return btn;
-}
+};

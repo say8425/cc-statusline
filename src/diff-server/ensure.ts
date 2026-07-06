@@ -16,11 +16,11 @@ const LOCK_STALE_MS = 30_000;
 
 let checkedAt = 0;
 
-export function resetEnsureCache(): void {
+export const resetEnsureCache = (): void => {
 	checkedAt = 0;
-}
+};
 
-async function probeOurServer(port: number): Promise<boolean> {
+const probeOurServer = async (port: number): Promise<boolean> => {
 	try {
 		const res = await fetch(`http://127.0.0.1:${port}/api/ping`, {
 			signal: AbortSignal.timeout(150),
@@ -29,9 +29,9 @@ async function probeOurServer(port: number): Promise<boolean> {
 	} catch {
 		return false;
 	}
-}
+};
 
-function acquireSpawnLock(env: Env): boolean {
+const acquireSpawnLock = (env: Env): boolean => {
 	const lock = join(getCacheDir(env), "diff-server.lock");
 	mkdirSync(getCacheDir(env), { recursive: true, mode: 0o700 });
 	try {
@@ -47,9 +47,9 @@ function acquireSpawnLock(env: Env): boolean {
 		} catch {}
 		return false;
 	}
-}
+};
 
-function spawnDaemon(port: number, env: Env): void {
+const spawnDaemon = (port: number, env: Env): void => {
 	const execPath = process.execPath;
 	const selfPath = Bun.main;
 	// nohup + & fully detaches so the daemon outlives this statusline process.
@@ -68,13 +68,13 @@ function spawnDaemon(port: number, env: Env): void {
 			stderr: "ignore",
 		},
 	).unref();
-}
+};
 
-async function maybeSpawn(
+const maybeSpawn = async (
 	port: number,
 	env: Env,
 	spawn: SpawnFn = spawnDaemon,
-): Promise<void> {
+): Promise<void> => {
 	try {
 		if (await probeOurServer(port)) return;
 		if (!acquireSpawnLock(env)) return;
@@ -87,13 +87,15 @@ async function maybeSpawn(
 		// from ensureDiffServer with no `.catch`, so an uncaught throw here
 		// would crash the statusline hot path. Degrade to a silent no-op.
 	}
-}
+};
 
-export async function ensureDiffServer(
+// 동기 함수 — probe/spawn은 fire-and-forget이라 await할 것이 없다.
+// 호출부의 `await`는 값에 대한 no-op이므로 시그니처를 굳이 Promise로 만들지 않는다.
+export const ensureDiffServer = (
 	_repo: string,
 	env: Env = process.env,
 	spawn: SpawnFn = spawnDaemon,
-): Promise<EnsureResult> {
+): EnsureResult => {
 	if (isDiffViewerDisabled(env)) return null;
 	const port = resolveDiffPort(env);
 
@@ -106,4 +108,4 @@ export async function ensureDiffServer(
 
 	const token = readTokenSync(env);
 	return token ? { port, token } : null;
-}
+};

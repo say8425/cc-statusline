@@ -9,7 +9,7 @@ export interface MatchRange {
  * index (searchIndex.ts) and the DOM highlighter (highlightDom.ts) so both
  * agree on what counts as a match.
  */
-export function findRanges(text: string, query: string): MatchRange[] {
+export const findRanges = (text: string, query: string): MatchRange[] => {
 	if (query === "") return [];
 	const haystack = text.toLowerCase();
 	const needle = query.toLowerCase();
@@ -22,4 +22,4 @@ export function findRanges(text: string, query: string): MatchRange[] {
 		from = idx + needle.length;
 	}
 	return ranges;
-}
+};

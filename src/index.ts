@@ -16,7 +16,7 @@ import { readStdin } from "./stdin.ts";
 import type { ClaudeStatusInput } from "./types.ts";
 
 // 메인 함수
-export async function main(): Promise<void> {
+export const main = async (): Promise<void> => {
 	// 1. stdin에서 Claude Code JSON 읽기 (empty stdin 처리)
 	const claudeJson: ClaudeStatusInput = JSON.parse((await readStdin()) || "{}");
 
@@ -45,7 +45,7 @@ export async function main(): Promise<void> {
 		baseChanges = await getBaseChangesCached();
 	}
 	if (repo && (hasChanges || baseChanges)) {
-		const ensured = await ensureDiffServer(repo);
+		const ensured = ensureDiffServer(repo);
 		if (ensured) {
 			if (hasChanges) {
 				diffViewerUrl = buildDiffViewerUrl({
@@ -81,7 +81,7 @@ export async function main(): Promise<void> {
 	for (const line of lines) {
 		console.log(line);
 	}
-}
+};
 
 if (import.meta.main) {
 	if (process.argv.includes("--diff-server")) {
