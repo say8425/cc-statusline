@@ -81,6 +81,39 @@ Claude Code를 위한 커스텀 상태표시줄.
 | ✏️    | 커밋되지 않은 변경사항 (클릭하면 diff 뷰어 열림) |
 | 📎    | Pull Request 링크      |
 
+## Diff 뷰어
+
+statusline의 `✏️`를 클릭하면 Pierre의 [`@pierre/diffs`](https://www.npmjs.com/package/@pierre/diffs) 컴포넌트로 렌더링되는 로컬 diff 뷰어가 브라우저에 열립니다.
+
+![diff_viewer](diff_viewer.png)
+
+- **두 가지 diff 모드**: `Working tree`(HEAD 대비)와 `vs <base>`(PR 타겟 또는 기본 브랜치와의 merge-base 대비). 커밋 후에도 진입점이 `✏️ vs <base>`로 유지되어 클릭하면 뷰어가 base 모드로 열립니다 — 리뷰 도중 diff가 사라지지 않습니다.
+
+![diff_vs_base](diff_vs_base.png)
+
+- **이미지 diff**: 변경된 바이너리 이미지(png/jpg/gif/webp/avif/bmp/ico)가 파일트리와 같은 순서로 diff 흐름에 인라인 표시 — 체커보드 배경의 Old/New 패널, 다른 파일처럼 접기 가능
+
+![image_diff](image_diff.png)
+- **Unified / Split** 뷰 전환
+- **Watch 모드**: 스크롤 위치를 유지한 채 변경을 감지해 자동 갱신 (~2초 폴링)
+- **파일 트리**: 좌/우 배치 및 flatten(빈 디렉터리 접기) 토글
+- **파일 폴딩**: 파일 헤더를 클릭해 접기/펼치기; 락파일과 변경 줄 수 1,500 초과 파일은 처음부터 접힌 상태
+- **인앱 검색**(`Cmd/Ctrl+F`): 삭제된 줄을 포함한 전체 diff 검색, 매치 이동과 하이라이트
+- **경로 복사**: 파일 헤더에 마우스를 올리면 상대 경로 복사 버튼 표시
+- **Untracked 파일 포함** 토글
+
+### 동작 방식 (Diff 뷰어)
+
+레포에 보여줄 변경이 있으면 statusline이 뷰어 서버를 `127.0.0.1:49573`에 필요 시 띄웁니다. 요청은 토큰으로 보호되며 localhost에만 바인딩됩니다.
+
+| 환경 변수 | 효과 |
+| --------- | ---- |
+| `CC_STATUSLINE_DIFF_PORT` | 포트 변경 (기본값: `49573`) |
+| `CC_STATUSLINE_DIFF_DISABLE=1` | diff 뷰어 완전 비활성화 |
+
+> [!TIP]
+> 북마크 대신 `✏️` 링크로 뷰어를 여세요 — 링크에는 항상 최신 토큰이 포함되며 서버 실행도 보장됩니다.
+
 ## 사용량 지표
 
 Claude Code의 stdin JSON 입력에서 사용량 정보를 표시합니다.

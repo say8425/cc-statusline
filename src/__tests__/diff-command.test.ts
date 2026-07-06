@@ -5,6 +5,7 @@ import { join } from "node:path";
 import { $ } from "bun";
 import {
 	getDiffFiles,
+	getFileBytes,
 	isGitRepo,
 	resolveBaseRef,
 } from "../diff-server/diff.ts";
@@ -82,6 +83,71 @@ describe("getDiffFiles", () => {
 		expect(bin?.binary).toBe(true);
 		expect(bin?.oldContents).toBe("");
 		expect(bin?.newContents).toBe("");
+	});
+
+	test("binary file carries a blobVersion that changes with its bytes", async () => {
+		writeFileSync(join(repo, "img.dat"), Buffer.from([0x89, 0x00, 0x01]));
+		let files = await getDiffFiles(repo, { untracked: true });
+		const v1 = files.find((f) => f.name === "img.dat")?.blobVersion;
+		expect(v1).toBeTruthy();
+		writeFileSync(join(repo, "img.dat"), Buffer.from([0x89, 0x00, 0x02]));
+		files = await getDiffFiles(repo, { untracked: true });
+		const v2 = files.find((f) => f.name === "img.dat")?.blobVersion;
+		expect(v2).toBeTruthy();
+		expect(v2).not.toBe(v1);
+	});
+
+	test("text file has no blobVersion", async () => {
+		writeFileSync(join(repo, "a.txt"), "changed\n");
+		const files = await getDiffFiles(repo);
+		expect(files[0]?.blobVersion).toBeUndefined();
+	});
+});
+
+describe("getFileBytes", () => {
+	test("side=new reads the working tree, side=old reads the committed bytes", async () => {
+		writeFileSync(join(repo, "img.bin"), Buffer.from([1, 0, 1]));
+		await $`git -C ${repo} add img.bin`;
+		await $`git -C ${repo} commit -qm img`;
+		writeFileSync(join(repo, "img.bin"), Buffer.from([2, 0, 2, 2]));
+		const oldBytes = await getFileBytes(repo, "img.bin", "old");
+		const newBytes = await getFileBytes(repo, "img.bin", "new");
+		expect(Array.from(oldBytes ?? [])).toEqual([1, 0, 1]);
+		expect(Array.from(newBytes ?? [])).toEqual([2, 0, 2, 2]);
+	});
+
+	test("missing side returns null (old of untracked, new of deleted)", async () => {
+		writeFileSync(join(repo, "new.bin"), Buffer.from([3, 0]));
+		expect(await getFileBytes(repo, "new.bin", "old")).toBeNull();
+		rmSync(join(repo, "a.txt"));
+		expect(await getFileBytes(repo, "a.txt", "new")).toBeNull();
+	});
+
+	test("rejects paths escaping the repo and the empty path", async () => {
+		expect(await getFileBytes(repo, "../outside.txt", "new")).toBeNull();
+		expect(await getFileBytes(repo, "/etc/passwd", "new")).toBeNull();
+		// 빈 경로가 side=old에서 `git show <rev>:`(트리 목록)로 새지 않아야 한다.
+		expect(await getFileBytes(repo, "", "old")).toBeNull();
+	});
+
+	test("mode=base reads the merge-base version for side=old", async () => {
+		await $`git -C ${repo} branch -M main`;
+		writeFileSync(join(repo, "pic.bin"), Buffer.from([9, 0]));
+		await $`git -C ${repo} add pic.bin`;
+		await $`git -C ${repo} commit -qm base-img`;
+		await $`git -C ${repo} checkout -qb feature`;
+		writeFileSync(join(repo, "pic.bin"), Buffer.from([8, 0, 8]));
+		await $`git -C ${repo} add pic.bin`;
+		await $`git -C ${repo} commit -qm feat-img`;
+		// Committed on the feature branch: vs HEAD the old side is the branch
+		// commit, but vs base (main) it must be the merge-base version.
+		const vsHead = await getFileBytes(repo, "pic.bin", "old");
+		const vsBase = await getFileBytes(repo, "pic.bin", "old", {
+			mode: "base",
+			ref: "main",
+		});
+		expect(Array.from(vsHead ?? [])).toEqual([8, 0, 8]);
+		expect(Array.from(vsBase ?? [])).toEqual([9, 0]);
 	});
 });
 

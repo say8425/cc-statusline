@@ -133,6 +133,87 @@ describe("diff server", () => {
 	});
 });
 
+describe("api/blob", () => {
+	test("rejects a bad token with 403", async () => {
+		const res = await fetch(
+			`${base}/api/blob?repo=${encodeURIComponent(repo)}&token=wrong&path=a.txt&side=new`,
+		);
+		expect(res.status).toBe(403);
+	});
+
+	test("serves working-tree bytes for side=new with the image content-type", async () => {
+		writeFileSync(
+			join(repo, "shot.png"),
+			Buffer.from([0x89, 0x50, 0x00, 0x47]),
+		);
+		const res = await fetch(
+			`${base}/api/blob?repo=${encodeURIComponent(repo)}&token=${handle.token}&path=shot.png&side=new`,
+		);
+		expect(res.status).toBe(200);
+		expect(res.headers.get("content-type")).toBe("image/png");
+		expect(res.headers.get("cache-control")).toBe("no-store");
+		expect(Array.from(new Uint8Array(await res.arrayBuffer()))).toEqual([
+			0x89, 0x50, 0x00, 0x47,
+		]);
+	});
+
+	test("serves committed bytes for side=old", async () => {
+		writeFileSync(join(repo, "pic.png"), Buffer.from([0x01, 0x00, 0x01]));
+		await $`git -C ${repo} add pic.png`;
+		await $`git -C ${repo} commit -qm pic`;
+		writeFileSync(join(repo, "pic.png"), Buffer.from([0x02, 0x00, 0x02]));
+		const res = await fetch(
+			`${base}/api/blob?repo=${encodeURIComponent(repo)}&token=${handle.token}&path=pic.png&side=old`,
+		);
+		expect(res.status).toBe(200);
+		expect(res.headers.get("content-type")).toBe("image/png");
+		expect(Array.from(new Uint8Array(await res.arrayBuffer()))).toEqual([
+			0x01, 0x00, 0x01,
+		]);
+	});
+
+	test("404 for a missing side", async () => {
+		writeFileSync(join(repo, "fresh.png"), Buffer.from([0x00]));
+		const res = await fetch(
+			`${base}/api/blob?repo=${encodeURIComponent(repo)}&token=${handle.token}&path=fresh.png&side=old`,
+		);
+		expect(res.status).toBe(404);
+	});
+
+	test("404 for a non-image path (blob endpoint is image-only)", async () => {
+		// a.txt는 커밋돼 있고 워킹트리에도 존재하지만, 이미지가 아니므로 거부.
+		for (const side of ["old", "new"]) {
+			const res = await fetch(
+				`${base}/api/blob?repo=${encodeURIComponent(repo)}&token=${handle.token}&path=a.txt&side=${side}`,
+			);
+			expect(res.status).toBe(404);
+		}
+	});
+
+	test("404 for an empty path", async () => {
+		const res = await fetch(
+			`${base}/api/blob?repo=${encodeURIComponent(repo)}&token=${handle.token}&path=&side=old`,
+		);
+		expect(res.status).toBe(404);
+	});
+
+	test("400 for a non-repo path", async () => {
+		const plain = mkdtempSync(join(tmpdir(), "cc-srv-plain2-"));
+		const res = await fetch(
+			`${base}/api/blob?repo=${encodeURIComponent(plain)}&token=${handle.token}&path=a.txt&side=new`,
+		);
+		expect(res.status).toBe(400);
+		rmSync(plain, { recursive: true, force: true });
+	});
+
+	test("404 for a path escaping the repo", async () => {
+		const res = await fetch(
+			`${base}/api/blob?repo=${encodeURIComponent(repo)}&token=${handle.token}&path=${encodeURIComponent("../../etc/passwd")}&side=new`,
+		);
+		expect(res.status).toBe(404);
+	});
+});
+
 describe("diff server base mode", () => {
 	test("mode=base diffs against the base branch and sets X-Diff-Base", async () => {
 		await $`git -C ${repo} branch -M main`;

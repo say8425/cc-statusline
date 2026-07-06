@@ -81,6 +81,39 @@ Claude Code 自定义状态栏。
 | ✏️   | 未提交的更改（点击打开 diff 查看器）        |
 | 📎   | Pull Request 链接   |
 
+## Diff 查看器
+
+点击 statusline 中的 `✏️`，即可在浏览器中打开使用 Pierre 的 [`@pierre/diffs`](https://www.npmjs.com/package/@pierre/diffs) 组件渲染的本地 diff 查看器。
+
+![diff_viewer](diff_viewer.png)
+
+- **两种 diff 模式**：`Working tree`（对比 HEAD）和 `vs <base>`（与 PR 目标分支或默认分支的 merge-base 对比）。提交后入口依然保留为 `✏️ vs <base>`，点击即可以 base 模式打开查看器 — 审查过程中 diff 不会消失。
+
+![diff_vs_base](diff_vs_base.png)
+
+- **图片 diff**：变更的二进制图片（png/jpg/gif/webp/avif/bmp/ico）按与文件树相同的顺序内联显示在 diff 流中 — 棋盘格背景的 Old/New 并排面板，可像其他文件一样折叠
+
+![image_diff](image_diff.png)
+- **Unified / Split** 视图切换
+- **Watch 模式**：检测到变更后自动刷新（约2秒轮询），并保持滚动位置
+- **文件树**：左/右布局与 flatten（折叠空目录）切换
+- **文件折叠**：点击文件头部展开/折叠；锁文件和变更行数超过 1,500 行的文件默认折叠
+- **应用内搜索**（`Cmd/Ctrl+F`）：搜索包括已删除行在内的完整 diff，支持匹配跳转和高亮
+- **复制路径**：悬停文件头部即可复制文件的相对路径
+- **包含未跟踪文件** 开关
+
+### 工作原理（Diff 查看器）
+
+当仓库有可展示的变更时，statusline 会按需在 `127.0.0.1:49573` 启动查看器服务。请求受令牌保护，且仅绑定到 localhost。
+
+| 环境变量 | 效果 |
+| -------- | ---- |
+| `CC_STATUSLINE_DIFF_PORT` | 修改端口（默认: `49573`） |
+| `CC_STATUSLINE_DIFF_DISABLE=1` | 完全禁用 diff 查看器 |
+
+> [!TIP]
+> 请通过 `✏️` 链接打开查看器，而不是使用书签 — 链接始终携带最新令牌，并确保服务已启动。
+
 ## 使用量指标
 
 显示来自 Claude Code stdin JSON 输入的使用量信息。

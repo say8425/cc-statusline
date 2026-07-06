@@ -81,6 +81,39 @@ Add the following to `~/.claude/settings.json`:
 | ✏️    | Uncommitted changes (click to open diff viewer) |
 | 📎    | Pull request link        |
 
+## Diff Viewer
+
+Click `✏️` in the statusline to open a local diff viewer in your browser, rendered with Pierre's [`@pierre/diffs`](https://www.npmjs.com/package/@pierre/diffs) components.
+
+![diff_viewer](docs/diff_viewer.png)
+
+- **Two diff modes**: `Working tree` (vs HEAD) and `vs <base>` (merge-base against the PR target or default branch). After you commit, the entry point stays alive as `✏️ vs <base>` — clicking it opens the viewer in base mode, so your diff never disappears mid-review.
+
+![diff_vs_base](docs/diff_vs_base.png)
+
+- **Image diff**: changed binary images (png/jpg/gif/webp/avif/bmp/ico) render inline in the diff flow, in the same order as the file tree — side-by-side Old/New panels on a checkerboard background, foldable like any other file
+
+![image_diff](docs/image_diff.png)
+- **Unified / Split** view toggle
+- **Watch mode**: auto-refresh (~2s polling) that detects changes while preserving scroll position
+- **File tree**: left/right placement and flatten (collapse empty directories) toggles
+- **File folding**: click any file header to collapse/expand; lockfiles and files with more than 1,500 changed lines start collapsed
+- **In-app search** (`Cmd/Ctrl+F`): searches the entire diff including deleted lines, with match navigation and highlighting
+- **Copy path**: hover a file header to copy the file's relative path
+- **Include untracked** files toggle
+
+### How It Works (Diff Viewer)
+
+The statusline spawns the viewer server on demand at `127.0.0.1:49573` whenever the repo has something to show. Requests are token-protected and bound to localhost.
+
+| Environment variable | Effect |
+| -------------------- | ------ |
+| `CC_STATUSLINE_DIFF_PORT` | Change the port (default: `49573`) |
+| `CC_STATUSLINE_DIFF_DISABLE=1` | Disable the diff viewer entirely |
+
+> [!TIP]
+> Open the viewer through the `✏️` link instead of a bookmark — the link always carries a fresh token and makes sure the server is running.
+
 ## Usage Metrics
 
 Shows usage information from Claude Code's stdin JSON input.
@@ -119,8 +152,11 @@ bun test --coverage
 # Type check
 bun run typecheck
 
-# Lint
+# Lint (oxlint, type-aware)
 bun run lint
+
+# Format (oxfmt)
+bun run format
 ```
 
 ## Color Thresholds

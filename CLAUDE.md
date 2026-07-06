@@ -29,12 +29,16 @@ cc-statusline/
 │   │   ├── config.ts               # getCacheDir, resolveDiffPort, isDiffViewerDisabled
 │   │   ├── link.ts                 # buildDiffViewerUrl
 │   │   ├── token.ts                # ensureToken, readTokenSync
-│   │   ├── diff.ts                 # getDiff, isGitRepo
-│   │   ├── server.ts               # startDiffServer (로컬 diff 뷰어 HTTP 서버)
+│   │   ├── diff.ts                 # getDiffFiles, getFileBytes, isGitRepo
+│   │   ├── imageTypes.ts           # isImagePath, imageContentType (이미지 확장자·MIME)
+│   │   ├── server.ts               # startDiffServer (로컬 diff 뷰어 HTTP 서버, /api/diff·/api/blob)
 │   │   └── ensure.ts               # ensureDiffServer (spawn-if-not-running 데몬)
 │   ├── viewer/
 │   │   ├── main.ts                 # 뷰어 프론트엔드 엔트리포인트
 │   │   ├── index.html              # 뷰어 HTML 셸
+│   │   ├── imageDiff.ts            # imageEntries/blobUrl (이미지 diff 순수 헬퍼)
+│   │   ├── imageCard.ts            # 인라인 Old/New 카드 shadow DOM 주입 (ensureImageCard)
+│   │   ├── fileOrder.ts            # sortFilesLikeTree (트리 comparator 복제)
 │   │   └── search/
 │   │       ├── highlight.ts        # 순수 하이라이트 유틸 (텍스트 → 매치 구간)
 │   │       ├── searchIndex.ts      # buildRows/findMatches (SearchMatch, 삭제 줄 포함 검색)
@@ -53,15 +57,20 @@ cc-statusline/
 │       ├── diff-server.test.ts     # diff-server/server 테스트 (403 경로 탐색 포함)
 │       ├── diff-ensure.test.ts     # diff-server/ensure 테스트
 │       ├── diff-link.test.ts       # diff-server/link 테스트
+│       ├── viewer-image-diff.test.ts   # imageTypes + viewer/imageDiff 테스트
+│       ├── viewer-file-order.test.ts   # fileOrder(트리 동일 정렬) 테스트
+│       ├── map-limit.test.ts       # mapWithLimit 동시성 테스트
 │       ├── viewer-highlight.test.ts    # search/highlight 테스트
 │       └── viewer-search-index.test.ts # search/searchIndex 테스트
+├── .oxlintrc.json     # oxlint 설정 (rule 구성, type-aware 포함)
+├── .oxfmtrc.json      # oxfmt 설정 (탭 인덴트, 더블쿼트 — biome에서 이관)
 ├── bunfig.toml        # Bun 테스트 설정
 ├── package.json
 ├── tsconfig.json
 └── CLAUDE.md
 ```
 
-**기술 스택**: Bun, TypeScript, gh CLI
+**기술 스택**: Bun, TypeScript, gh CLI, oxlint/oxfmt (린트·포맷)
 
 **데이터 소스** (stdin JSON을 우선 참조, 공식 스키마: https://code.claude.com/docs/en/statusline):
 | 데이터 | 출처 |
@@ -96,7 +105,10 @@ Claude Code 기본 statusbar에 다음 정보를 추가로 표시:
 - diff 뷰어 파일 폴딩: 파일 헤더 바 전체(파일명·stats·chevron ▾/▸)를 클릭해 접기/펼치기 (diffMount의 composedPath 위임: `data-diffs-header` 경로면 헤더 클릭, 감싼 `<diffs-container>`의 `[data-fold]`로 파일 id → CodeView.updateItem, 세션 인메모리 collapsedIds). 드래그(pointerdown 대비 이동 > 6px)나 텍스트 선택 시엔 토글 안 함(bad UX 방지, src/viewer/drag.ts). 헤더는 `unsafeCSS`로 pointer 커서 + hover 배경(rgba(255,255,255,.05), .15s). fold chevron(SVG ▾/▸)은 파일별 버튼 노드를 `foldButtons` Map으로 재사용해 토글 시 `transform .15s` 회전 트윈이 실제 재생됨(새 노드 생성 시 트윈 불가; teardownViews에서 clear)
 - diff 뷰어 파일명 복사: 각 파일 헤더의 파일명 바로 옆(shadow DOM `[data-title]` 뒤, onPostRender로 멱등 주입) 복사 아이콘 — 클릭 시 전체 상대경로를 클립보드에 복사(체크마크 피드백), 헤더 hover 시 노출. 클릭은 stopPropagation으로 폴드와 분리(src/viewer/copyButton.ts)
 - 대용량 파일 기본 접힘: 락파일(pnpm-lock.yaml 등) 또는 변경 줄 수 > 1500이면 첫 렌더 시 접힘(seenIds로 1회성 → 펼치면 유지). 판정은 src/viewer/largeFile.ts
-- diff 데이터: diff-server가 패치 대신 파일별 old/new 전체 내용을 JSON으로 제공(`getDiffFiles`: `git diff --name-status` + `git show <base>:path`/워킹트리 읽기, 바이너리는 NUL 감지로 표식). viewer는 `parseDiffFromFile`로 파싱 → non-partial diff라 @pierre/diffs가 미변경 구간을 `collapsedContextThreshold:3`로 접고 `hunkSeparators:"line-info"`+`expansionLineCount:10`의 내장 expand 캐럿으로 실제 노출(파일별 old/new가 있어야 expand 가능 — patch=partial은 불가). 바이너리 파일은 트리에만 표시
+- diff 데이터: diff-server가 패치 대신 파일별 old/new 전체 내용을 JSON으로 제공(`getDiffFiles`: `git diff --name-status` + `git show <base>:path`/워킹트리 읽기, 바이너리는 NUL 감지로 표식). viewer는 `parseDiffFromFile`로 파싱 → non-partial diff라 @pierre/diffs가 미변경 구간을 `collapsedContextThreshold:3`로 접고 `hunkSeparators:"line-info"`+`expansionLineCount:10`의 내장 expand 캐럿으로 실제 노출(파일별 old/new가 있어야 expand 가능 — patch=partial은 불가). 바이너리 파일은 트리 + 인라인 이미지 카드에 표시(비이미지 바이너리는 트리만)
+- 이미지 diff: 바이너리 이미지(png/jpg/gif/webp/avif/bmp/ico, SVG는 텍스트 diff 유지)는 **diff 흐름에 인라인**으로 표시 — CodeView가 diff/file 아이템만 지원하므로 이미지 파일마다 빈 `parseDiffFromFile` diff 아이템(헤더·폴드·트리 scrollTo 제공)을 만들고, `onPostRender`에서 shadow DOM 헤더 뒤에 체커보드 배경 Old/New 카드를 주입(src/viewer/imageCard.ts의 ensureImageCard; 멱등 — blobVersion 같으면 no-op, 바뀌면 교체, 접히면 제거; 카드 CSS는 unsafeCSS로 shadow에 주입; "-0 +0" 스탯 숨김, 상태 아이콘은 스프라이트에 심볼 있을 때만 A/D로 교체). 데이터는 `/api/blob?path&side=old|new&mode`(토큰 보호, **이미지 경로 전용** — 빈 경로·비이미지·repo 밖 경로는 404, side old는 HEAD 또는 merge-base의 `git show`). `DiffFile.blobVersion`(바이트 해시, 바이너리 전용)이 watch 폴링의 JSON 비교로 바이너리 변경을 감지시키고 blob URL 캐시버스터(`v`)로 쓰임. 상태별 사이드: A/untracked→New만, D→Old만
+- diff 아이템 순서는 사이드바 트리와 동일: `sortFilesLikeTree`(src/viewer/fileOrder.ts)가 @pierre/trees comparator(디렉터리 우선 + 대소문자 무시 자연 정렬)를 복제해 renderPatch 진입 시 파일 배열을 정렬 — git diff 출력 순서(+untracked 뒤 덧붙임)를 그대로 쓰면 트리와 어긋난다
+- getDiffFiles의 파일별 buildFile(git show/워킹트리 읽기)은 `mapWithLimit`(src/diff-server/mapLimit.ts)로 동시성 8 제한 병렬 실행 — 대형 diff + watch 폴링에서 git 서브프로세스 폭증 방지 (순서 보존)
 - diff 뷰어 in-app find bar (Cmd/Ctrl+F): diff 내용(삭제 줄 포함) 검색, 매치 순회(n/N, ↑↓/Enter), 전체 노랑·현재 주황 하이라이트, 접힌 context/대용량 파일 자동 노출(닫기/검색어 비움 시 원상복구)
 - PR URL (클릭 가능한 OSC 8 하이퍼링크)
 - 리셋 시각 (5시간 사용량 리셋 시각, HH:MM)
