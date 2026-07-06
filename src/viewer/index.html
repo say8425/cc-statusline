@@ -122,16 +122,22 @@
 				padding: 0 7px;
 			}
 			/* Hide the toolbar search button while the find bar is already open
-			   (redundant affordance). display 전환은 allow-discrete로 지연시켜
-			   find bar가 접히는 동안 부드럽게 페이드 인/아웃한다. */
+			   (redundant affordance). 닫힘 안무: 바가 아이콘 자리로 접힌 "뒤에"
+			   돋보기가 나타나야 자연스러우므로, 보이는 상태(기본 규칙)의 전이에
+			   0.1s 지연을 둔다 — CSS 전이는 목적지 상태의 transition을 쓰므로
+			   이 지연은 닫힘(나타남)에만 적용된다. */
 			#toolbar #find-open {
 				transition:
-					opacity 0.16s ease,
-					display 0.16s allow-discrete;
+					opacity 0.14s ease 0.1s,
+					display 0.24s allow-discrete;
 			}
 			#toolbar:has(#find-bar:not([hidden])) #find-open {
 				display: none;
 				opacity: 0;
+				/* 열림: 바가 즉시 자리를 차지하므로 지연 없이 빠르게 사라진다. */
+				transition:
+					opacity 0.08s ease,
+					display 0.08s allow-discrete;
 			}
 			@starting-style {
 				#toolbar #find-open {
@@ -181,6 +187,13 @@
 					padding-left: 0;
 					padding-right: 0;
 					border-width: 0;
+				}
+			}
+			@media (prefers-reduced-motion: reduce) {
+				#toolbar #find-open,
+				#toolbar .tb-find {
+					/* 전이 제거 → display가 즉시 전환되어 기존 즉시 표시/숨김으로 강등 */
+					transition: none;
 				}
 			}
 			#toolbar #find-input {
