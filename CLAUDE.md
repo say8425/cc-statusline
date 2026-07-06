@@ -13,6 +13,7 @@ cc-statusline/
 │   ├── colors.ts                   # C 상수, getUsageColor
 │   ├── render.ts                   # renderStatusLine
 │   ├── stdin.ts                    # readStdin
+│   ├── ultracode.ts                # Claude Code settings의 ultracode 플래그 감지
 │   ├── format/
 │   │   ├── index.ts                # barrel re-export
 │   │   ├── formatNumber.ts         # formatNumber
@@ -51,6 +52,7 @@ cc-statusline/
 │       ├── async.test.ts           # 비동기 함수 통합 테스트
 │       ├── integration.test.ts     # main 함수 통합 테스트
 │       ├── stdin.test.ts           # readStdin 테스트
+│       ├── ultracode.test.ts       # ultracode settings 경로·우선순위·캐시 테스트
 │       ├── diff-config.test.ts     # diff-server/config 테스트
 │       ├── diff-token.test.ts      # diff-server/token 테스트
 │       ├── diff-command.test.ts    # diff-server/diff 테스트
@@ -80,6 +82,9 @@ cc-statusline/
 | 세션 비용 | `cost.total_cost_usd` |
 | Context 토큰 | `context_window.current_usage.*` |
 | Context % | `context_window.used_percentage` (없으면 미표시) |
+| 모델명 | `model.display_name` (없으면 미표시) |
+| Reasoning effort | `effort.level` (effort 지원 모델만 전달, 없으면 모델명만 표시) |
+| Ultracode 여부 | settings 파일 `ultracode` 키 (managed → local → project → user 순, stdin엔 미노출) + `effort.level == "xhigh"` 교차검증 |
 | 블록 사용량 | `rate_limits.five_hour.used_percentage` |
 | 리셋 타이머 | `rate_limits.five_hour.resets_at` |
 | 주간 사용량 | `rate_limits.seven_day.used_percentage` |
@@ -94,6 +99,7 @@ cc-statusline/
 Claude Code 기본 statusbar에 다음 정보를 추가로 표시:
 - 세션 시간 및 비용
 - Context window 토큰 사용량 및 사용률 (%)
+- 현재 사용 중인 모델명·reasoning effort (`🤖 Fable 5 high`, 🧠 컨텍스트 세그먼트 오른쪽) — 설정에서 ultracode가 켜져 있고 세션 effort가 `xhigh`일 때만 `⚡ultra` 배지 추가 (`🤖 Fable 5 xhigh ⚡ultra`)
 - Git diff 통계 (파일 수, +insertions, -deletions)
 - 클릭 가능한 diff 뷰어: `✏️` 클릭 시 로컬 diff 뷰어(Pierre `@pierre/diffs`+`@pierre/trees`)를 `127.0.0.1:49573`에 띄워 브라우저로 표시
 - diff 뷰어 Watch 토글: 켜면 ~2초 폴링으로 변경을 감지해 스크롤 유지한 채 자동 갱신 (localStorage에 상태 저장)
@@ -201,6 +207,7 @@ bun test --coverage
 - `rate_limits`는 Claude.ai 구독자(Pro/Max)에게만 첫 API 응답 이후 제공됨
 - `rate_limits.resets_at`는 Unix timestamp (초 단위, number)
 - `rate_limits`가 없으면 사용량 줄이 표시되지 않음
+- ultracode 여부는 stdin JSON·env에 세션 단위로 노출되지 않음 (`effort.level`은 ultracode여도 `xhigh`로만 보고, CLI 2.1.201에서 실측 확인). 따라서 `src/ultracode.ts`가 Claude Code settings 파일(managed-settings.json → `<project>/.claude/settings.local.json` → `<project>/.claude/settings.json` → `~/.claude/settings.json`)의 `ultracode` boolean 키를 직접 읽는다 (5초 TTL 캐시, 읽기는 병렬·판정은 우선순위 순). 설정은 세션 상태가 아니므로 render에서 `effort.level === "xhigh"`와 교차검증해 false positive를 줄인다 (ultracode 세션은 항상 xhigh로 보고; 다만 수동 `/effort xhigh` + 설정 on 조합은 구분 불가라 best-effort). 캐시는 다른 캐시들과 마찬가지로 projectDir 무키(틱마다 새 프로세스라 실질 무해). 우선순위상 프로젝트 settings가 `ultracode: false`를 고정하면 user 설정 토글이 가려지는데 이는 Claude Code 해석 순서 그대로라 의도된 동작. 공식 스키마에 ultracode 필드가 추가되면 stdin 우선으로 전환할 것
 - diff 뷰어 데몬은 statusline이 spawn-if-not-running으로 관리 (env `CC_STATUSLINE_DIFF_PORT` 기본 49573, `CC_STATUSLINE_DIFF_DISABLE=1`로 비활성)
 - diff 뷰어 데몬은 statusline 종속: statusline이 `repo && (hasChanges || baseChanges)`일 때만 spawn-if-not-running. **유휴 종료 없음**(`index.ts`에서 `idleTimeoutMs` 미전달) → 한번 뜨면 재부팅/수동 종료 전까지 상주해 작업 중 안 죽음. 부팅 자동시작은 없어 재부팅 시엔 죽고 다음 statusline tick(~5초, `ENSURE_TTL`)에 respawn. 따라서 뷰어는 북마크 URL 대신 statusline의 `✏️` 링크로 여는 것을 권장(✏️는 클릭 직전 데몬 ensure + 현재 토큰 포함). 토큰은 `~/.cache/cc-statusline/diff-server.token`에 영속되어 재부팅에도 유효(캐시 삭제 시 옛 북마크는 403). 지속 데몬(launchd 등)은 의도적으로 미도입 — 본 기능이 statusline 종속이라. (`server.ts`의 옵션 idle 기능은 남아있고 테스트만 `idleTimeoutMs:0`으로 사용)
 - Pierre 컴포넌트는 devDependency이며 `build.ts`가 `dist/viewer/`로 프리번들 (런타임 `dist/index.js`엔 미포함)

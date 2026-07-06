@@ -48,6 +48,18 @@ export const renderStatusLine = (ctx: RenderContext): string[] => {
 		const ctxColor = getUsageColor(contextPct);
 		line2 += ` | ${ctxColor}🧠 ${formatNumber(totalTokens)} (${contextPct}%)${C.RESET}`;
 	}
+	const modelName = ctx.claudeJson.model?.display_name;
+	if (modelName) {
+		const effortLevel = ctx.claudeJson.effort?.level;
+		let modelText = effortLevel ? `${modelName} ${effortLevel}` : modelName;
+		// ultracode는 설정 파일 기반 신호라 세션 effort와 교차검증한다:
+		// ultracode 세션은 effort.level을 항상 xhigh로 보고하므로, xhigh가
+		// 아니면 이번 세션은 ultracode가 아님 → 배지 억제. 수동 /effort xhigh
+		// + 설정 on 조합은 구분 불가라 false positive를 줄일 뿐 완전히 막지는
+		// 못함 (ultracode가 stdin에 노출되지 않는 한계, best-effort)
+		if (ctx.ultracode && effortLevel === "xhigh") modelText += " ⚡ultra";
+		line2 += ` | ${C.WHITE}🤖 ${modelText}${C.RESET}`;
+	}
 	lines.push(line2);
 
 	// 3번째 줄: 리셋 타이머 | 5시간 사용량 | 7일 사용량 (rate_limits가 있을 때)

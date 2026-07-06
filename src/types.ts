@@ -34,6 +34,14 @@ export interface ClaudeStatusInput {
 		// because this field carries a name, not a path.
 		git_worktree?: string;
 	};
+	model?: {
+		id: string;
+		display_name: string;
+	};
+	// effort 지원 모델에서만 전달. 알려진 값: low | medium | high | xhigh | max
+	effort?: {
+		level: string;
+	};
 	rate_limits?: RateLimits;
 }
 
@@ -43,6 +51,7 @@ export interface RenderContext {
 	branch: string;
 	gitChanges: { files: number; insertions: number; deletions: number };
 	prUrl: string | null;
+	ultracode: boolean;
 	rateLimits: RateLimits | null;
 	mainProjectName: string | null;
 	diffViewerUrl: string | null;

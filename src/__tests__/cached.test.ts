@@ -139,6 +139,7 @@ describe("cache mechanism", () => {
 				value: "cc-statusline",
 				timestamp: Date.now(),
 			};
+			cache.ultracode = { value: true, timestamp: Date.now() };
 
 			resetCache();
 
@@ -151,6 +152,7 @@ describe("cache mechanism", () => {
 			});
 			expect(cache.prUrl).toEqual({ value: null, timestamp: 0 });
 			expect(cache.mainProjectName).toEqual({ value: null, timestamp: 0 });
+			expect(cache.ultracode).toEqual({ value: false, timestamp: 0 });
 		});
 	});
 });
@@ -170,5 +172,9 @@ describe("CACHE_TTL values", () => {
 
 	test("mainProjectName TTL is 300 seconds (5 minutes)", () => {
 		expect(CACHE_TTL.mainProjectName).toBe(300000);
+	});
+
+	test("ultracode TTL is 5 seconds", () => {
+		expect(CACHE_TTL.ultracode).toBe(5000);
 	});
 });
