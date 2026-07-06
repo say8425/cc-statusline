@@ -28,8 +28,13 @@ export const flatFileStatusMeta = (status: DiffFileStatus): StatusMeta => {
 			return { letter: "D", label: "Deleted", color: "#f85149" };
 		case "renamed":
 			return { letter: "R", label: "Renamed", color: "#d29922" };
-		default:
+		case "modified":
 			return { letter: "M", label: "Modified", color: "#009fff" };
+		default: {
+			// 새 DiffFileStatus가 추가되면 여기서 컴파일 에러로 잡힌다.
+			const exhaustiveCheck: never = status;
+			return exhaustiveCheck;
+		}
 	}
 };
 
