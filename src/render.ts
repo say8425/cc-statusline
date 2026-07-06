@@ -48,6 +48,12 @@ export const renderStatusLine = (ctx: RenderContext): string[] => {
 		const ctxColor = getUsageColor(contextPct);
 		line2 += ` | ${ctxColor}🧠 ${formatNumber(totalTokens)} (${contextPct}%)${C.RESET}`;
 	}
+	const modelName = ctx.claudeJson.model?.display_name;
+	if (modelName) {
+		const effortLevel = ctx.claudeJson.effort?.level;
+		const modelText = effortLevel ? `${modelName} ${effortLevel}` : modelName;
+		line2 += ` | ${C.WHITE}🤖 ${modelText}${C.RESET}`;
+	}
 	lines.push(line2);
 
 	// 3번째 줄: 리셋 타이머 | 5시간 사용량 | 7일 사용량 (rate_limits가 있을 때)

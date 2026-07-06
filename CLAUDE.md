@@ -80,6 +80,8 @@ cc-statusline/
 | 세션 비용 | `cost.total_cost_usd` |
 | Context 토큰 | `context_window.current_usage.*` |
 | Context % | `context_window.used_percentage` (없으면 미표시) |
+| 모델명 | `model.display_name` (없으면 미표시) |
+| Reasoning effort | `effort.level` (effort 지원 모델만 전달, 없으면 모델명만 표시) |
 | 블록 사용량 | `rate_limits.five_hour.used_percentage` |
 | 리셋 타이머 | `rate_limits.five_hour.resets_at` |
 | 주간 사용량 | `rate_limits.seven_day.used_percentage` |
@@ -94,6 +96,7 @@ cc-statusline/
 Claude Code 기본 statusbar에 다음 정보를 추가로 표시:
 - 세션 시간 및 비용
 - Context window 토큰 사용량 및 사용률 (%)
+- 현재 사용 중인 모델명·reasoning effort (`🤖 Fable 5 high`, 🧠 컨텍스트 세그먼트 오른쪽)
 - Git diff 통계 (파일 수, +insertions, -deletions)
 - 클릭 가능한 diff 뷰어: `✏️` 클릭 시 로컬 diff 뷰어(Pierre `@pierre/diffs`+`@pierre/trees`)를 `127.0.0.1:49573`에 띄워 브라우저로 표시
 - diff 뷰어 Watch 토글: 켜면 ~2초 폴링으로 변경을 감지해 스크롤 유지한 채 자동 갱신 (localStorage에 상태 저장)

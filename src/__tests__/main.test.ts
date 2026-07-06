@@ -311,6 +311,65 @@ describe("renderStatusLine", () => {
 		});
 	});
 
+	describe("model display", () => {
+		test("shows model name and effort to the right of context segment", () => {
+			const ctx = createRenderContext({
+				fullClaudeJson: {
+					...createClaudeInput(),
+					model: { id: "claude-fable-5", display_name: "Fable 5" },
+					effort: { level: "high" },
+				},
+			});
+			const lines = renderStatusLine(ctx);
+
+			expect(lines[1]).toContain("🤖 Fable 5 high");
+			// 🧠 컨텍스트 세그먼트 오른쪽에 위치
+			const brainIdx = lines[1].indexOf("🧠");
+			const modelIdx = lines[1].indexOf("🤖");
+			expect(brainIdx).toBeGreaterThanOrEqual(0);
+			expect(modelIdx).toBeGreaterThan(brainIdx);
+		});
+
+		test("shows model name only when effort is absent", () => {
+			const ctx = createRenderContext({
+				fullClaudeJson: {
+					...createClaudeInput(),
+					model: { id: "claude-haiku-4-5-20251001", display_name: "Haiku 4.5" },
+				},
+			});
+			const lines = renderStatusLine(ctx);
+
+			expect(lines[1]).toContain("🤖 Haiku 4.5");
+			expect(lines[1]).not.toContain("Haiku 4.5 undefined");
+		});
+
+		test("omits model segment when model is absent", () => {
+			const ctx = createRenderContext();
+			const lines = renderStatusLine(ctx);
+
+			expect(lines.join("\n")).not.toContain("🤖");
+		});
+
+		test("shows model even when context segment is absent", () => {
+			const input = createClaudeInput();
+			const ctx = createRenderContext({
+				fullClaudeJson: {
+					...input,
+					context_window: {
+						...input.context_window,
+						used_percentage: undefined,
+					},
+					model: { id: "claude-fable-5", display_name: "Fable 5" },
+					effort: { level: "max" },
+				},
+			});
+			const lines = renderStatusLine(ctx);
+
+			expect(lines[1]).not.toContain("🧠");
+			expect(lines[1]).toContain("🤖 Fable 5 max");
+		});
+	});
+
 	describe("rate_limits display", () => {
 		test("skips usage line when rateLimits is null", () => {
 			const ctx = createRenderContext({
