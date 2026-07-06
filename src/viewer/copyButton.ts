@@ -1,9 +1,6 @@
 // A small "copy file path" button placed next to a diff header's filename.
 // Clicking copies `path` to the clipboard and briefly swaps to a check icon.
 // Clicks are stopped from bubbling so they never toggle the header's fold.
-//
-// 두 아이콘을 겹쳐두고 data-copied 상태로 크로스페이드/스케일 팝을 CSS
-// 트랜지션에 맡긴다(스타일은 main.ts의 unsafeCSS에서 주입).
 
 const COPY_SVG =
 	'<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>';
@@ -17,16 +14,16 @@ export const createCopyButton = (path: string): HTMLButtonElement => {
 	btn.dataset.copyName = "";
 	btn.setAttribute("aria-label", "Copy file path");
 	btn.setAttribute("title", "Copy path");
-	btn.innerHTML = `<span data-icon-copy>${COPY_SVG}</span><span data-icon-check>${CHECK_SVG}</span>`;
+	btn.innerHTML = COPY_SVG;
 
 	let resetTimer: ReturnType<typeof setTimeout> | null = null;
 	const showCopied = (): void => {
-		btn.dataset.copied = "";
+		btn.innerHTML = CHECK_SVG;
 		btn.setAttribute("aria-label", "Copied");
 		btn.setAttribute("title", "Copied");
 		if (resetTimer !== null) clearTimeout(resetTimer);
 		resetTimer = setTimeout(() => {
-			delete btn.dataset.copied;
+			btn.innerHTML = COPY_SVG;
 			btn.setAttribute("aria-label", "Copy file path");
 			btn.setAttribute("title", "Copy path");
 			resetTimer = null;
