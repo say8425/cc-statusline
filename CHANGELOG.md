@@ -1,5 +1,13 @@
 # Changelog
 
+## [3.2.0](https://github.com/say8425/cc-statusline/compare/v3.1.0...v3.2.0) (2026-07-06)
+
+
+### Features
+
+* inline image diffs, viewer UI polish, and oxlint/oxfmt migration ([#50](https://github.com/say8425/cc-statusline/issues/50)) ([c2b4f7d](https://github.com/say8425/cc-statusline/commit/c2b4f7dbe295446ee509a01d69214081d8ac2d3a))
+* show model effort and ultracode status ([#52](https://github.com/say8425/cc-statusline/issues/52)) ([5450db4](https://github.com/say8425/cc-statusline/commit/5450db4d31e549e74b036b0596fc10c7cdbf652f))
+
 ## [3.1.0](https://github.com/say8425/cc-statusline/compare/v3.0.0...v3.1.0) (2026-07-05)
 
 
