@@ -1,0 +1,15 @@
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "jq -r '.tool_input.file_path' | { read file_path; if echo \"$file_path\" | grep -qE '\\.(ts|tsx|js|jsx|json)$'; then bun x oxfmt \"$file_path\" 2>/dev/null || true; bun run build 2>/dev/null || true; fi; }"
+          }
+        ]
+      }
+    ]
+  }
+}

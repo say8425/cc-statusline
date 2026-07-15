@@ -1,8 +1,20 @@
 import { afterEach, describe, expect, test } from "bun:test";
-import { mkdtempSync, rmSync } from "node:fs";
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { getDiffdeckCacheDir } from "../diff-server/config.ts";
 import { ensureDiffServer, resetEnsureCache } from "../diff-server/ensure.ts";
+
+// diffdeck writes its own token to its own cache dir; ensureDiffServer only
+// reads it, so tests seed the token file there directly (no ensureToken helper
+// exists on the cc-statusline side anymore).
+const seedDiffdeckToken = (env: { XDG_CACHE_HOME: string }): string => {
+	const token = crypto.randomUUID().replaceAll("-", "");
+	const dir = getDiffdeckCacheDir(env);
+	mkdirSync(dir, { recursive: true, mode: 0o700 });
+	writeFileSync(join(dir, "diff-server.token"), token, { mode: 0o600 });
+	return token;
+};
 
 let cacheHome: string;
 
@@ -25,22 +37,24 @@ describe("ensureDiffServer", () => {
 
 	test("returns null on the first tick when no token exists yet", () => {
 		cacheHome = mkdtempSync(join(tmpdir(), "cc-ensure-"));
-		// Use an unlikely port so the probe fails fast and no real daemon interferes.
-		const result = ensureDiffServer("/some/repo", {
-			XDG_CACHE_HOME: cacheHome,
-			CC_STATUSLINE_DIFF_PORT: "59999",
-		});
+		// No-op spawner so this read-only assertion never launches a real diffdeck.
+		const result = ensureDiffServer(
+			"/some/repo",
+			{ XDG_CACHE_HOME: cacheHome, CC_STATUSLINE_DIFF_PORT: "59999" },
+			() => {},
+		);
 		// No token persisted yet on the very first call.
 		expect(result).toBeNull();
 	});
 
-	test("returns the token+port once a token file exists", async () => {
+	test("returns the token+port once a token file exists", () => {
 		cacheHome = mkdtempSync(join(tmpdir(), "cc-ensure-"));
-		const { ensureToken } = await import("../diff-server/token.ts");
 		const env = { XDG_CACHE_HOME: cacheHome, CC_STATUSLINE_DIFF_PORT: "59999" };
-		const token = ensureToken(env);
+		const token = seedDiffdeckToken(env);
 		resetEnsureCache();
-		const result = ensureDiffServer("/some/repo", env);
+		// Inject a no-op spawner: this test covers only the token/port read, and
+		// the default spawner would launch a real detached diffdeck process.
+		const result = ensureDiffServer("/some/repo", env, () => {});
 		expect(result).toEqual({ port: 59999, token });
 	});
 

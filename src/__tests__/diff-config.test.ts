@@ -2,6 +2,7 @@ import { describe, expect, test } from "bun:test";
 import {
 	DEFAULT_DIFF_PORT,
 	getCacheDir,
+	getDiffdeckCacheDir,
 	isDiffViewerDisabled,
 	resolveDiffPort,
 } from "../diff-server/config.ts";
@@ -47,5 +48,17 @@ describe("getCacheDir", () => {
 	test("falls back to ~/.cache", () => {
 		const dir = getCacheDir({ HOME: "/home/x" });
 		expect(dir.endsWith("/cc-statusline")).toBe(true);
+	});
+});
+
+describe("getDiffdeckCacheDir", () => {
+	test("respects XDG_CACHE_HOME", () => {
+		expect(getDiffdeckCacheDir({ XDG_CACHE_HOME: "/tmp/xdg" })).toBe(
+			"/tmp/xdg/diffdeck",
+		);
+	});
+	test("falls back to ~/.cache", () => {
+		const dir = getDiffdeckCacheDir({ HOME: "/home/x" });
+		expect(dir.endsWith("/diffdeck")).toBe(true);
 	});
 });

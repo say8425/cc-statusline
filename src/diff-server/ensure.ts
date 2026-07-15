@@ -1,5 +1,6 @@
-import { mkdirSync, rmSync, statSync } from "node:fs";
-import { join } from "node:path";
+import { mkdirSync, readFileSync, rmSync, statSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 import {
 	getCacheDir,
 	isDiffViewerDisabled,
@@ -25,7 +26,7 @@ const probeOurServer = async (port: number): Promise<boolean> => {
 		const res = await fetch(`http://127.0.0.1:${port}/api/ping`, {
 			signal: AbortSignal.timeout(150),
 		});
-		return res.headers.get("x-cc-statusline") === "1";
+		return res.headers.get("x-diffdeck") === "1";
 	} catch {
 		return false;
 	}
@@ -49,20 +50,33 @@ const acquireSpawnLock = (env: Env): boolean => {
 	}
 };
 
+// diffdeck의 bin 경로를 package.json의 "bin" 필드에서 읽어 절대경로로 해석한다.
+// import.meta.resolve는 diffdeck의 package.json 자체를 resolvable node_modules
+// 진입점으로 쓰고, 거기서 나온 디렉터리에 상대적으로 bin 경로를 조립한다.
+const resolveDiffdeckCli = (): string => {
+	const pkgDir = dirname(
+		fileURLToPath(import.meta.resolve("@say8425/diffdeck/package.json")),
+	);
+	const pkg = JSON.parse(
+		readFileSync(join(pkgDir, "package.json"), "utf8"),
+	) as { bin: { diffdeck: string } };
+	return join(pkgDir, pkg.bin.diffdeck);
+};
+
 const spawnDaemon = (port: number, env: Env): void => {
-	const execPath = process.execPath;
-	const selfPath = Bun.main;
+	const cli = resolveDiffdeckCli();
 	// nohup + & fully detaches so the daemon outlives this statusline process.
 	Bun.spawn(
 		[
 			"sh",
 			"-c",
-			'nohup "$0" "$1" --diff-server >/dev/null 2>&1 &',
-			execPath,
-			selfPath,
+			'nohup "$0" "$1" --no-open --port "$2" >/dev/null 2>&1 &',
+			process.execPath,
+			cli,
+			String(port),
 		],
 		{
-			env: { ...process.env, ...env, CC_STATUSLINE_DIFF_PORT: String(port) },
+			env: { ...process.env, ...env, DIFFDECK_PORT: String(port) },
 			stdin: "ignore",
 			stdout: "ignore",
 			stderr: "ignore",

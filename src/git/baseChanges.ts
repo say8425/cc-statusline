@@ -1,6 +1,6 @@
 import { $ } from "bun";
 import { CACHE_TTL, cache } from "../cache.ts";
-import { resolveBaseRef } from "../diff-server/diff.ts";
+import { resolveBaseRef } from "./baseRef.ts";
 import { parseShortstat } from "./shortstat.ts";
 
 // 현재 브랜치가 base(PR 타겟/기본 브랜치)보다 앞선 변경 통계 (working이 clean일 때

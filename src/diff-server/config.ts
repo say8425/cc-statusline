@@ -19,3 +19,11 @@ export const getCacheDir = (env: Env = process.env): string => {
 	const base = env.XDG_CACHE_HOME || join(env.HOME || homedir(), ".cache");
 	return join(base, "cc-statusline");
 };
+
+// diffdeck이 자신의 캐시 디렉터리에 토큰을 쓴다 — cc-statusline은 이제 그 파일을
+// 읽기만 하므로 diffdeck의 캐시 경로 규칙(XDG_CACHE_HOME 우선, ~/.cache 폴백)을
+// 그대로 미러링한다.
+export const getDiffdeckCacheDir = (env: Env = process.env): string => {
+	const base = env.XDG_CACHE_HOME || join(env.HOME || homedir(), ".cache");
+	return join(base, "diffdeck");
+};
