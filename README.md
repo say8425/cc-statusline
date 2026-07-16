@@ -56,7 +56,7 @@ Add the following to `~/.claude/settings.json`:
 - **Context**: Token usage with percentage (color-coded)
 - **Model**: Current model name and reasoning effort (e.g., `Fable 5 high`; effort shown only for models that support it), with an `⚡ultra` badge when ultracode is enabled in your Claude Code settings and the session reports `xhigh` effort
 - **Git Diff**: File count, insertions, deletions
-- **Clickable Diff Viewer**: Click `✏️` to open a local diff viewer (Pierre `@pierre/diffs` + `@pierre/trees`) in your browser — file tree, working-tree / vs-base modes, watch mode (auto-refresh), file folding, and in-app search (`Cmd/Ctrl+F`) across the full diff, including deleted lines
+- **Clickable Diff Viewer**: Click `✏️` to open a local diff viewer in your browser, powered by [diffdeck](https://github.com/say8425/diffdeck) (installed automatically as a dependency) — file tree, working-tree / vs-base modes, watch mode (auto-refresh), file folding, and in-app search (`Cmd/Ctrl+F`) across the full diff, including deleted lines
 - **PR URL**: Clickable OSC 8 hyperlink
 - **Worktree Support**: Shows real project name when running in a `cc --worktree` session
 - **TrueColor**: Dynamic colors based on thresholds
@@ -85,7 +85,7 @@ Add the following to `~/.claude/settings.json`:
 
 ## Diff Viewer
 
-Click `✏️` in the statusline to open a local diff viewer in your browser, rendered with Pierre's [`@pierre/diffs`](https://www.npmjs.com/package/@pierre/diffs) components.
+Click `✏️` in the statusline to open a local diff viewer in your browser. The viewer itself is provided by [diffdeck](https://github.com/say8425/diffdeck) ([`@say8425/diffdeck`](https://www.npmjs.com/package/@say8425/diffdeck) on npm), installed automatically as a runtime dependency of cc-statusline — the statusline spawns it as a background daemon and links to it from the `✏️` entry point.
 
 ![diff_viewer](docs/diff_viewer.png)
 
@@ -109,7 +109,7 @@ Click `✏️` in the statusline to open a local diff viewer in your browser, re
 
 ### How It Works (Diff Viewer)
 
-The statusline spawns the viewer server on demand at `127.0.0.1:49573` whenever the repo has something to show. Requests are token-protected and bound to localhost.
+The statusline spawns diffdeck as a background daemon on demand at `127.0.0.1:49573` whenever the repo has something to show. Requests are token-protected and bound to localhost.
 
 | Environment variable | Effect |
 | -------------------- | ------ |
