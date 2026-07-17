@@ -27,7 +27,7 @@
 		"typecheck": "tsc --noEmit"
 	},
 	"dependencies": {
-		"@say8425/diffdeck": "^0.1.0"
+		"@say8425/diffdeck": "^0.2.1"
 	},
 	"devDependencies": {
 		"@types/bun": "^1.3.14",
