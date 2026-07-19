@@ -151,10 +151,18 @@ const realDeps: EnsureDeps = {
 };
 
 // Poll until the port stops answering (the daemon has exited), bounded so a
-// wedged process can never hold the loop open.
+// wedged process can never hold the loop open. This runs inside the
+// fire-and-forget maybeSpawn, whose pending timers keep the short-lived
+// statusline process alive until it settles — but only on the one tick that
+// triggers an upgrade. diffdeck shuts down gracefully on SIGTERM, so the port
+// frees in a poll or two: measured +~180ms over a normal tick, not the full
+// PORT_FREE_TRIES budget. Every later tick sees the current version and returns
+// before this. The 2s cap only bites a daemon that ignores SIGTERM.
 const waitPortFree = async (port: number, d: EnsureDeps): Promise<boolean> => {
 	for (let i = 0; i < PORT_FREE_TRIES; i++) {
+		// oxlint-disable-next-line no-await-in-loop -- a liveness poll is sequential by nature
 		await d.sleep(PORT_FREE_INTERVAL_MS);
+		// oxlint-disable-next-line no-await-in-loop -- ditto
 		if ((await d.probe(port)) == null) return true;
 	}
 	return false;

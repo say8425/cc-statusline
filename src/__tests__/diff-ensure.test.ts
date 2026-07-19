@@ -2,7 +2,7 @@ import { afterEach, describe, expect, mock, test } from "bun:test";
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { getDiffdeckCacheDir } from "../diff-server/config.ts";
+import { getCacheDir, getDiffdeckCacheDir } from "../diff-server/config.ts";
 import {
 	type EnsureDeps,
 	ensureDiffServer,
@@ -238,6 +238,29 @@ describe("maybeSpawn: retiring a stale daemon", () => {
 			}),
 		);
 		expect(kill).toHaveBeenCalledWith(111);
+		expect(spawn).not.toHaveBeenCalled();
+	});
+
+	test("does not kill or spawn while another process holds the spawn lock", async () => {
+		const spawn = mock(() => {});
+		const kill = mock(() => {});
+		cacheHome = mkdtempSync(join(tmpdir(), "cc-retire-"));
+		// A sibling statusline (another editor window) is already retiring: its
+		// lock dir exists, so acquireSpawnLock fails here. The lock is the only
+		// thing stopping two processes from both killing the daemon and racing
+		// two spawns — so on a lock miss we must touch nothing.
+		mkdirSync(join(getCacheDir(envFor()), "diff-server.lock"), {
+			recursive: true,
+		});
+		await maybeSpawn(PORT, envFor(), {
+			spawn,
+			kill,
+			probe: () => Promise.resolve({ version: "0.1.0", pid: 111 }),
+			portOwner: () => 111,
+			sleep: () => Promise.resolve(),
+			currentVersion: () => "0.2.2",
+		});
+		expect(kill).not.toHaveBeenCalled();
 		expect(spawn).not.toHaveBeenCalled();
 	});
 
