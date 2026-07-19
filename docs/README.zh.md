@@ -56,7 +56,7 @@ Claude Code 自定义状态栏。
 - **上下文**: 令牌使用量及百分比（颜色标识）
 - **模型**: 当前使用的模型名称和 reasoning effort（例如 `Fable 5 high`，effort 仅在支持的模型上显示），当 Claude Code 设置中启用 ultracode 且会话 effort 为 `xhigh` 时显示 `⚡ultra` 徽章
 - **Git Diff**: 文件数、新增、删除
-- **可点击的 Diff 查看器**：点击 `✏️` 即可在浏览器中打开本地 diff 查看器（Pierre `@pierre/diffs` + `@pierre/trees`）——文件树、working-tree / vs-base 模式、watch 模式（自动刷新）、文件折叠，以及对整个 diff 的应用内搜索（`Cmd/Ctrl+F`，包括已删除的行）
+- **可点击的 Diff 查看器**：点击 `✏️` 即可在浏览器中打开本地 diff 查看器（由 [diffdeck](https://github.com/say8425/diffdeck) 提供，作为依赖自动安装）——文件树、working-tree / vs-base 模式、watch 模式（自动刷新）、文件折叠，以及对整个 diff 的应用内搜索（`Cmd/Ctrl+F`，包括已删除的行）
 - **PR URL**: 可点击的 OSC 8 超链接
 - **工作树支持**: 在 `cc --worktree` 会话中显示真实项目名称
 - **TrueColor**: 基于阈值的动态颜色
@@ -85,7 +85,7 @@ Claude Code 自定义状态栏。
 
 ## Diff 查看器
 
-点击 statusline 中的 `✏️`，即可在浏览器中打开使用 Pierre 的 [`@pierre/diffs`](https://www.npmjs.com/package/@pierre/diffs) 组件渲染的本地 diff 查看器。
+点击 statusline 中的 `✏️`，即可在浏览器中打开本地 diff 查看器。查看器本身由 [diffdeck](https://github.com/say8425/diffdeck)（npm 上的 [`@say8425/diffdeck`](https://www.npmjs.com/package/@say8425/diffdeck)）提供，作为 cc-statusline 的运行时依赖自动安装——statusline 会将其作为后台守护进程启动，并从 `✏️` 入口链接到它。
 
 ![diff_viewer](diff_viewer.png)
 
@@ -106,7 +106,7 @@ Claude Code 自定义状态栏。
 
 ### 工作原理（Diff 查看器）
 
-当仓库有可展示的变更时，statusline 会按需在 `127.0.0.1:49573` 启动查看器服务。请求受令牌保护，且仅绑定到 localhost。
+当仓库有可展示的变更时，statusline 会按需将 diffdeck 作为后台守护进程在 `127.0.0.1:49573` 启动。请求受令牌保护，且仅绑定到 localhost。
 
 | 环境变量 | 效果 |
 | -------- | ---- |
