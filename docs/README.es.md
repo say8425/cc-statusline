@@ -56,7 +56,7 @@ Agrega lo siguiente a `~/.claude/settings.json`:
 - **Contexto**: Uso de tokens con porcentaje (codificado por colores)
 - **Modelo**: Nombre del modelo en uso y reasoning effort (p. ej., `Fable 5 high`; el effort solo se muestra en modelos compatibles), con una insignia `⚡ultra` cuando ultracode está habilitado en la configuración de Claude Code y la sesión reporta effort `xhigh`
 - **Git Diff**: Cantidad de archivos, inserciones, eliminaciones
-- **Visor de Diff clicable**: Haz clic en `✏️` para abrir un visor de diff local (Pierre `@pierre/diffs` + `@pierre/trees`) en tu navegador — árbol de archivos, modos working-tree / vs-base, modo watch (actualización automática), plegado de archivos y búsqueda integrada (`Cmd/Ctrl+F`) en todo el diff, incluidas las líneas eliminadas
+- **Visor de Diff clicable**: Haz clic en `✏️` para abrir un visor de diff local en tu navegador, proporcionado por [diffdeck](https://github.com/say8425/diffdeck) (instalado automáticamente como dependencia) — árbol de archivos, modos working-tree / vs-base, modo watch (actualización automática), plegado de archivos y búsqueda integrada (`Cmd/Ctrl+F`) en todo el diff, incluidas las líneas eliminadas
 - **PR URL**: Hipervínculo OSC 8 clickeable
 - **Soporte de Worktree**: Muestra el nombre real del proyecto en sesiones `cc --worktree`
 - **TrueColor**: Colores dinámicos basados en umbrales
@@ -85,7 +85,7 @@ Agrega lo siguiente a `~/.claude/settings.json`:
 
 ## Visor de Diff
 
-Haz clic en `✏️` en el statusline para abrir un visor de diff local en tu navegador, renderizado con los componentes [`@pierre/diffs`](https://www.npmjs.com/package/@pierre/diffs) de Pierre.
+Haz clic en `✏️` en el statusline para abrir un visor de diff local en tu navegador. El visor lo proporciona [diffdeck](https://github.com/say8425/diffdeck) ([`@say8425/diffdeck`](https://www.npmjs.com/package/@say8425/diffdeck) en npm), instalado automáticamente como dependencia de tiempo de ejecución de cc-statusline — el statusline lo inicia como un daemon en segundo plano y enlaza a él desde el punto de entrada `✏️`.
 
 ![diff_viewer](diff_viewer.png)
 
@@ -106,7 +106,7 @@ Haz clic en `✏️` en el statusline para abrir un visor de diff local en tu na
 
 ### Cómo Funciona (Visor de Diff)
 
-El statusline inicia el servidor del visor bajo demanda en `127.0.0.1:49573` cuando el repositorio tiene algo que mostrar. Las solicitudes están protegidas por token y vinculadas a localhost.
+El statusline inicia diffdeck como un daemon en segundo plano bajo demanda en `127.0.0.1:49573` cuando el repositorio tiene algo que mostrar. Las solicitudes están protegidas por token y vinculadas a localhost.
 
 | Variable de entorno | Efecto |
 | ------------------- | ------ |

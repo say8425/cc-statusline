@@ -56,7 +56,7 @@ Claude Code用カスタムステータスライン。
 - **コンテキスト**: トークン使用量とパーセンテージ（色分け表示）
 - **モデル**: 現在使用中のモデル名と reasoning effort（例: `Fable 5 high`、effort は対応モデルのみ表示）、Claude Code 設定で ultracode が有効かつセッションの effort が `xhigh` の場合は `⚡ultra` バッジを表示
 - **Git Diff**: ファイル数、追加、削除
-- **クリック可能な Diff ビューア**: `✏️` をクリックすると、ローカルの diff ビューア（Pierre `@pierre/diffs` + `@pierre/trees`）がブラウザで開きます — ファイルツリー、working-tree / vs-base モード、watch モード（自動更新）、ファイルの折りたたみ、diff 全体を対象としたアプリ内検索（`Cmd/Ctrl+F`、削除された行も含む）
+- **クリック可能な Diff ビューア**: `✏️` をクリックすると、ローカルの diff ビューア（[diffdeck](https://github.com/say8425/diffdeck)、依存関係として自動インストール）がブラウザで開きます — ファイルツリー、working-tree / vs-base モード、watch モード（自動更新）、ファイルの折りたたみ、diff 全体を対象としたアプリ内検索（`Cmd/Ctrl+F`、削除された行も含む）
 - **PR URL**: クリック可能なOSC 8ハイパーリンク
 - **ワークツリーサポート**: `cc --worktree`セッションで実際のプロジェクト名を表示
 - **TrueColor**: しきい値に基づく動的カラー
@@ -85,7 +85,7 @@ Claude Code用カスタムステータスライン。
 
 ## Diff ビューア
 
-statusline の `✏️` をクリックすると、Pierre の [`@pierre/diffs`](https://www.npmjs.com/package/@pierre/diffs) コンポーネントでレンダリングされるローカル diff ビューアがブラウザで開きます。
+statusline の `✏️` をクリックすると、ローカル diff ビューアがブラウザで開きます。ビューア自体は [diffdeck](https://github.com/say8425/diffdeck)（npm の [`@say8425/diffdeck`](https://www.npmjs.com/package/@say8425/diffdeck)）が提供し、cc-statusline のランタイム依存関係として自動インストールされます — statusline がこれをバックグラウンドデーモンとして起動し、`✏️` エントリポイントからリンクします。
 
 ![diff_viewer](diff_viewer.png)
 
@@ -106,7 +106,7 @@ statusline の `✏️` をクリックすると、Pierre の [`@pierre/diffs`](
 
 ### 動作方法（Diff ビューア）
 
-リポジトリに表示すべき変更があると、statusline が必要に応じてビューアサーバーを `127.0.0.1:49573` に起動します。リクエストはトークンで保護され、localhost のみにバインドされます。
+リポジトリに表示すべき変更があると、statusline が diffdeck を `127.0.0.1:49573` にバックグラウンドデーモンとして必要に応じて起動します。リクエストはトークンで保護され、localhost のみにバインドされます。
 
 | 環境変数 | 効果 |
 | -------- | ---- |

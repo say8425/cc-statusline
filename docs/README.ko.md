@@ -56,7 +56,7 @@ Claude Code를 위한 커스텀 상태표시줄.
 - **컨텍스트**: 토큰 사용량 및 백분율 (색상 표시)
 - **모델**: 현재 사용 중인 모델명과 reasoning effort (예: `Fable 5 high`, effort는 지원 모델에서만 표시), Claude Code 설정에서 ultracode가 켜져 있고 세션 effort가 `xhigh`일 때 `⚡ultra` 배지 표시
 - **Git Diff**: 파일 수, 추가, 삭제
-- **클릭 가능한 Diff 뷰어**: `✏️`를 클릭하면 로컬 diff 뷰어(Pierre `@pierre/diffs` + `@pierre/trees`)가 브라우저에 열립니다 — 파일 트리, working-tree / vs-base 모드, watch 모드(자동 새로고침), 파일 폴딩, 전체 diff 대상 인앱 검색(`Cmd/Ctrl+F`, 삭제된 줄 포함)
+- **클릭 가능한 Diff 뷰어**: `✏️`를 클릭하면 로컬 diff 뷰어([diffdeck](https://github.com/say8425/diffdeck), 의존성으로 자동 설치)가 브라우저에 열립니다 — 파일 트리, working-tree / vs-base 모드, watch 모드(자동 새로고침), 파일 폴딩, 전체 diff 대상 인앱 검색(`Cmd/Ctrl+F`, 삭제된 줄 포함)
 - **PR URL**: 클릭 가능한 OSC 8 하이퍼링크
 - **워크트리 지원**: `cc --worktree` 세션에서 실제 프로젝트 이름 표시
 - **TrueColor**: 임계값에 따른 동적 색상
@@ -85,7 +85,7 @@ Claude Code를 위한 커스텀 상태표시줄.
 
 ## Diff 뷰어
 
-statusline의 `✏️`를 클릭하면 Pierre의 [`@pierre/diffs`](https://www.npmjs.com/package/@pierre/diffs) 컴포넌트로 렌더링되는 로컬 diff 뷰어가 브라우저에 열립니다.
+statusline의 `✏️`를 클릭하면 로컬 diff 뷰어가 브라우저에 열립니다. 뷰어 자체는 [diffdeck](https://github.com/say8425/diffdeck)(npm의 [`@say8425/diffdeck`](https://www.npmjs.com/package/@say8425/diffdeck))가 제공하며, cc-statusline의 런타임 의존성으로 자동 설치됩니다 — statusline이 이를 백그라운드 데몬으로 띄우고 `✏️` 진입점에서 링크합니다.
 
 ![diff_viewer](diff_viewer.png)
 
@@ -106,7 +106,7 @@ statusline의 `✏️`를 클릭하면 Pierre의 [`@pierre/diffs`](https://www.n
 
 ### 동작 방식 (Diff 뷰어)
 
-레포에 보여줄 변경이 있으면 statusline이 뷰어 서버를 `127.0.0.1:49573`에 필요 시 띄웁니다. 요청은 토큰으로 보호되며 localhost에만 바인딩됩니다.
+레포에 보여줄 변경이 있으면 statusline이 diffdeck을 `127.0.0.1:49573`에 백그라운드 데몬으로 필요 시 띄웁니다. 요청은 토큰으로 보호되며 localhost에만 바인딩됩니다.
 
 | 환경 변수 | 효과 |
 | --------- | ---- |

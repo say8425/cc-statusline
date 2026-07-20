@@ -1,7 +1,5 @@
 #!/usr/bin/env bun
 
-import { join } from "node:path";
-import { resolveDiffPort } from "./diff-server/config.ts";
 import { ensureDiffServer } from "./diff-server/ensure.ts";
 import { buildDiffViewerUrl } from "./diff-server/link.ts";
 import {
@@ -89,17 +87,5 @@ export const main = async (): Promise<void> => {
 };
 
 if (import.meta.main) {
-	if (process.argv.includes("--diff-server")) {
-		const { startDiffServer } = await import("./diff-server/server.ts");
-		startDiffServer({
-			port: resolveDiffPort(),
-			viewerDir: join(import.meta.dir, "viewer"),
-			// No idle timeout: once the statusline spawns the daemon it stays up
-			// until reboot/kill, so it doesn't die mid-session after 15 min idle.
-			// (server.ts keeps the optional idle feature; the daemon just opts out.)
-		});
-		// Bun.serve keeps the process alive.
-	} else {
-		main().catch(console.error);
-	}
+	main().catch(console.error);
 }

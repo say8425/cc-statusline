@@ -1,0 +1,60 @@
+import { afterEach, expect, test } from "bun:test";
+import { existsSync, mkdtempSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { probeServer, resolveDiffdeck } from "../diff-server/ensure.ts";
+import { getTokenPath } from "../diff-server/token.ts";
+
+// Pins the diffdeck wire contract that ensure.ts leans on, against the REAL
+// installed package rather than a stub. The unit tests inject a fake probe, so
+// they cannot notice diffdeck renaming a header or moving its token path — the
+// exact drift that would make an upgrade ship silently ineffective. This spawns
+// the real CLI and asserts probeServer reads its marker, version, and pid, and
+// that the daemon writes a token where token.ts reads one.
+
+let child: ReturnType<typeof Bun.spawn> | null = null;
+let cacheHome = "";
+
+const freePort = (): number => {
+	const srv = Bun.serve({ port: 0, fetch: () => new Response(null) });
+	const port = srv.port;
+	void srv.stop(true);
+	return port;
+};
+
+afterEach(() => {
+	child?.kill("SIGKILL");
+	child = null;
+	if (cacheHome) rmSync(cacheHome, { recursive: true, force: true });
+});
+
+test("probeServer reads the version, pid, and token of a real diffdeck daemon", async () => {
+	const { cli, version } = resolveDiffdeck();
+	const port = freePort();
+	cacheHome = mkdtempSync(join(tmpdir(), "cc-contract-"));
+	const env = { ...process.env, XDG_CACHE_HOME: cacheHome };
+
+	// A directly-controlled child (not the detached nohup daemon) so the test
+	// can reliably kill it: here the daemon *is* child.pid, which lets us assert
+	// the wire pid matches the real process.
+	child = Bun.spawn(
+		[process.execPath, cli, "--no-open", "--port", String(port)],
+		{
+			env,
+			stdin: "ignore",
+			stdout: "ignore",
+			stderr: "ignore",
+		},
+	);
+
+	let probe: Awaited<ReturnType<typeof probeServer>> = null;
+	for (let i = 0; i < 100 && probe == null; i++) {
+		probe = await probeServer(port);
+		if (probe == null) await new Promise((r) => setTimeout(r, 50));
+	}
+
+	expect(probe).not.toBeNull();
+	expect(probe?.version).toBe(version);
+	expect(probe?.pid).toBe(child.pid);
+	expect(existsSync(getTokenPath(env))).toBe(true);
+});
