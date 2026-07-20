@@ -32,7 +32,12 @@ jobs:
 
   publish:
     needs: release-please
-    if: ${{ needs.release-please.outputs.release_created }}
+    # release-please emits the STRING "false" when it creates nothing, and GHA
+    # treats any non-empty string as truthy — so this must compare against
+    # 'true' or every push would run publish. The workflow_dispatch arm is a
+    # manual escape hatch to re-publish a release whose publish job failed (the
+    # release_created signal only fires once, on the release PR's merge).
+    if: ${{ needs.release-please.outputs.release_created == 'true' || github.event_name == 'workflow_dispatch' }}
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -42,9 +47,12 @@ jobs:
         with:
           ref: ${{ needs.release-please.outputs.tag_name }}
       - uses: oven-sh/setup-bun@v2
+      # Node 24 + a recent npm: tokenless OIDC trusted publishing needs
+      # npm >= 11.5.1, and `npm install -g npm@latest` (now npm 12, which
+      # requires Node >= 22) fails on the old Node 20 with EBADENGINE.
       - uses: actions/setup-node@v4
         with:
-          node-version: '20.x'
+          node-version: '24'
           registry-url: 'https://registry.npmjs.org'
       - run: npm install -g npm@latest
       - run: bun install
