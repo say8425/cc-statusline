@@ -1,5 +1,16 @@
 # Changelog
 
+## [4.0.0](https://github.com/say8425/cc-statusline/compare/v3.2.0...v4.0.0) (2026-07-20)
+
+
+### ⚠ BREAKING CHANGES
+
+* the diff viewer is no longer embedded in cc-statusline. The diff engine and browser viewer now live in the separately published @say8425/diffdeck package, added as a runtime dependency and spawned as the diff daemon; the in-repo `--diff-server` mode and the `@pierre/*` viewer internals are gone. `bunx @say8425/cc-statusline` pulls diffdeck automatically, so no action is needed for that path, but anything that drove the embedded server directly or pinned `@pierre/*` must switch to diffdeck.
+
+### Features
+
+* cut over to published @say8425/diffdeck for the diff viewer ([#55](https://github.com/say8425/cc-statusline/issues/55)) ([7c59e5f](https://github.com/say8425/cc-statusline/commit/7c59e5ffce144275f929583f1daa749d622a32b1))
+
 ## [3.2.0](https://github.com/say8425/cc-statusline/compare/v3.1.0...v3.2.0) (2026-07-06)
 
 
