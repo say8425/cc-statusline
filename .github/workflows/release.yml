@@ -15,20 +15,16 @@ jobs:
       release_created: ${{ steps.release.outputs.release_created }}
       tag_name: ${{ steps.release.outputs.tag_name }}
     steps:
+      # release-please opens/updates the release PR; a human merges it on
+      # purpose. A release is an npm publish, so it gets a review gate — and a
+      # human merge is what makes publish run at all: a push made by
+      # GITHUB_TOKEN does not re-trigger this workflow, so an auto-merged release
+      # PR would silently never publish. (Every release here has in fact been
+      # merged by hand; the removed `gh pr merge --auto` was a latent footgun.)
       - uses: googleapis/release-please-action@v4
         id: release
         with:
           release-type: node
-      - if: ${{ steps.release.outputs.prs_created }}
-        run: |
-          PR_NUMBER=$(gh pr list --label "autorelease: pending" --json number --jq '.[0].number')
-          if [ -n "$PR_NUMBER" ]; then
-            gh pr edit $PR_NUMBER --add-assignee say8425
-            gh pr merge $PR_NUMBER --auto --rebase
-          fi
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GH_REPO: ${{ github.repository }}
 
   publish:
     needs: release-please
