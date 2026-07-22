@@ -8,7 +8,7 @@ import {
 	getBranchCached,
 	getGitChangesCached,
 	getMainProjectCached,
-	getPrUrlCached,
+	getPrInfoCached,
 } from "./git/index.ts";
 import { renderStatusLine } from "./render.ts";
 import { readStdin } from "./stdin.ts";
@@ -26,15 +26,14 @@ export const main = async (): Promise<void> => {
 		"";
 
 	// 2. Git 정보 및 설정 (캐싱, 병렬 실행)
-	const [branch, gitChanges, prUrl, mainProject, ultracode] = await Promise.all(
-		[
+	const [branch, gitChanges, prInfo, mainProject, ultracode] =
+		await Promise.all([
 			getBranchCached(),
 			getGitChangesCached(),
-			getPrUrlCached(),
+			getPrInfoCached(),
 			getMainProjectCached(),
 			getUltracodeCached(repo),
-		],
-	);
+		]);
 	const mainProjectName = mainProject?.name ?? null;
 	const projectDirUrl = repo ? toFileUrl(repo) : null;
 	const mainProjectUrl = mainProject ? toFileUrl(mainProject.path) : null;
@@ -77,7 +76,7 @@ export const main = async (): Promise<void> => {
 		claudeJson,
 		branch,
 		gitChanges,
-		prUrl,
+		prInfo,
 		ultracode,
 		rateLimits: claudeJson.rate_limits ?? null,
 		mainProjectName,
