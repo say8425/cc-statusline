@@ -181,6 +181,14 @@ describe("prStateText", () => {
 	test("returns Closed for a closed PR", () => {
 		expect(prStateText("CLOSED", false)).toBe("Closed");
 	});
+
+	test("returns Draft even when state is MERGED (draft always wins)", () => {
+		expect(prStateText("MERGED", true)).toBe("Draft");
+	});
+
+	test("returns Draft even when state is CLOSED (draft always wins)", () => {
+		expect(prStateText("CLOSED", true)).toBe("Draft");
+	});
 });
 
 describe("prStateColor", () => {
@@ -198,6 +206,14 @@ describe("prStateColor", () => {
 
 	test("returns RED for a closed PR", () => {
 		expect(prStateColor("CLOSED", false)).toBe(C.RED);
+	});
+
+	test("returns WHITE even when state is MERGED (draft always wins)", () => {
+		expect(prStateColor("MERGED", true)).toBe(C.WHITE);
+	});
+
+	test("returns WHITE even when state is CLOSED (draft always wins)", () => {
+		expect(prStateColor("CLOSED", true)).toBe(C.WHITE);
 	});
 });
 
