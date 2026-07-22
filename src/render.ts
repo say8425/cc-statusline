@@ -22,9 +22,25 @@ export const renderStatusLine = (ctx: RenderContext): string[] => {
 	let line1: string;
 	if (ctx.mainProjectName) {
 		// 워크트리: "📁 cc-statusline | 🌲 rosy-floating-thimble"
-		line1 = `${C.WHITE}📁 ${ctx.mainProjectName}${C.RESET} | ${C.WHITE}🌲 ${folder}${C.RESET}`;
+		const mainU = ctx.mainProjectUrl ? C.UNDERLINE : "";
+		const mainText = `${C.WHITE}📁 ${mainU}${ctx.mainProjectName}${C.RESET}`;
+		const mainSeg = ctx.mainProjectUrl
+			? `\x1b]8;;${ctx.mainProjectUrl}\x07${mainText}\x1b]8;;\x07`
+			: mainText;
+
+		const folderU = ctx.projectDirUrl ? C.UNDERLINE : "";
+		const folderText = `${C.WHITE}🌲 ${folderU}${folder}${C.RESET}`;
+		const folderSeg = ctx.projectDirUrl
+			? `\x1b]8;;${ctx.projectDirUrl}\x07${folderText}\x1b]8;;\x07`
+			: folderText;
+
+		line1 = `${mainSeg} | ${folderSeg}`;
 	} else {
-		line1 = `${C.WHITE}📁 ${folder}${C.RESET}`;
+		const folderU = ctx.projectDirUrl ? C.UNDERLINE : "";
+		const folderText = `${C.WHITE}📁 ${folderU}${folder}${C.RESET}`;
+		line1 = ctx.projectDirUrl
+			? `\x1b]8;;${ctx.projectDirUrl}\x07${folderText}\x1b]8;;\x07`
+			: folderText;
 	}
 	if (ctx.branch) {
 		line1 += ` | ${C.WHITE}🌿 ${ctx.branch}${C.RESET}`;

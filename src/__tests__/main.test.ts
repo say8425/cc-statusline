@@ -51,6 +51,8 @@ const createRenderContext = (
 	diffViewerUrl: overrides.diffViewerUrl ?? null,
 	baseChanges: overrides.baseChanges ?? null,
 	baseDiffViewerUrl: overrides.baseDiffViewerUrl ?? null,
+	projectDirUrl: overrides.projectDirUrl ?? null,
+	mainProjectUrl: overrides.mainProjectUrl ?? null,
 });
 
 describe("renderStatusLine", () => {
@@ -151,6 +153,52 @@ describe("renderStatusLine", () => {
 
 			expect(lines[0]).toContain("my-project");
 			expect(lines[0]).not.toContain("(");
+		});
+
+		test("wraps 📁 in an OSC 8 link to projectDirUrl when mainProjectName is null", () => {
+			const ctx = createRenderContext({
+				mainProjectName: null,
+				projectDirUrl: "file:///Users/test/my-project",
+			});
+			const lines = renderStatusLine(ctx);
+
+			expect(lines[0]).toContain("\x1b]8;;file:///Users/test/my-project\x07");
+			expect(lines[0]).toContain("\x1b[4m"); // underline applied
+		});
+
+		test("renders 📁 as plain text when projectDirUrl is null", () => {
+			const ctx = createRenderContext({
+				mainProjectName: null,
+				projectDirUrl: null,
+			});
+			const lines = renderStatusLine(ctx);
+
+			expect(lines[0]).not.toContain("\x1b]8;;file://");
+		});
+
+		test("wraps 📁 in mainProjectUrl and 🌲 in projectDirUrl separately in worktree mode", () => {
+			const ctx = createRenderContext({
+				mainProjectName: "cc-statusline",
+				mainProjectUrl: "file:///Users/penguin/dev/cc-statusline",
+				projectDirUrl:
+					"file:///Users/penguin/dev/cc-statusline/.claude/worktrees/rosy-floating-thimble",
+				claudeJson: {
+					workspace: {
+						project_dir:
+							"/Users/penguin/dev/cc-statusline/.claude/worktrees/rosy-floating-thimble",
+						current_dir:
+							"/Users/penguin/dev/cc-statusline/.claude/worktrees/rosy-floating-thimble",
+					},
+				} as Partial<ClaudeStatusInput>,
+			});
+			const lines = renderStatusLine(ctx);
+
+			expect(lines[0]).toContain(
+				"\x1b]8;;file:///Users/penguin/dev/cc-statusline\x07",
+			);
+			expect(lines[0]).toContain(
+				"\x1b]8;;file:///Users/penguin/dev/cc-statusline/.claude/worktrees/rosy-floating-thimble\x07",
+			);
 		});
 	});
 

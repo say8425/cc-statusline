@@ -62,4 +62,6 @@ export interface RenderContext {
 		deletions: number;
 	} | null;
 	baseDiffViewerUrl: string | null;
+	projectDirUrl: string | null;
+	mainProjectUrl: string | null;
 }
