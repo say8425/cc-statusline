@@ -61,7 +61,7 @@ export interface RenderContext {
 	claudeJson: ClaudeStatusInput;
 	branch: string;
 	gitChanges: { files: number; insertions: number; deletions: number };
-	prUrl: string | null;
+	prInfo: PrInfo | null;
 	ultracode: boolean;
 	rateLimits: RateLimits | null;
 	mainProjectName: string | null;

@@ -44,7 +44,7 @@ const createRenderContext = (
 		insertions: 0,
 		deletions: 0,
 	},
-	prUrl: overrides.prUrl ?? null,
+	prInfo: overrides.prInfo ?? null,
 	ultracode: overrides.ultracode ?? false,
 	rateLimits: overrides.rateLimits ?? null,
 	mainProjectName: overrides.mainProjectName ?? null,
@@ -713,7 +713,7 @@ describe("renderStatusLine", () => {
 		test("omits git line when no changes", () => {
 			const ctx = createRenderContext({
 				gitChanges: { files: 0, insertions: 0, deletions: 0 },
-				prUrl: null,
+				prInfo: null,
 			});
 			const lines = renderStatusLine(ctx);
 
@@ -732,10 +732,15 @@ describe("renderStatusLine", () => {
 		});
 	});
 
-	describe("PR URL display", () => {
+	describe("PR display", () => {
 		test("shows PR URL with OSC 8 hyperlink", () => {
 			const ctx = createRenderContext({
-				prUrl: "https://github.com/owner/repo/pull/123",
+				prInfo: {
+					url: "https://github.com/owner/repo/pull/123",
+					state: "OPEN",
+					isDraft: false,
+					ciStatus: null,
+				},
 			});
 			const lines = renderStatusLine(ctx);
 
@@ -746,10 +751,15 @@ describe("renderStatusLine", () => {
 			expect(lastLine).toContain("\x07"); // Bell character
 		});
 
-		test("combines git changes and PR URL", () => {
+		test("combines git changes and PR display", () => {
 			const ctx = createRenderContext({
 				gitChanges: { files: 2, insertions: 30, deletions: 10 },
-				prUrl: "https://github.com/owner/repo/pull/456",
+				prInfo: {
+					url: "https://github.com/owner/repo/pull/456",
+					state: "OPEN",
+					isDraft: false,
+					ciStatus: null,
+				},
 			});
 			const lines = renderStatusLine(ctx);
 
@@ -757,6 +767,100 @@ describe("renderStatusLine", () => {
 			expect(lastLine).toContain("✏️");
 			expect(lastLine).toContain("📎");
 			expect(lastLine).toContain(" | ");
+		});
+
+		test("shows green Open with a check icon when CI succeeds", () => {
+			const ctx = createRenderContext({
+				prInfo: {
+					url: "https://github.com/owner/repo/pull/1",
+					state: "OPEN",
+					isDraft: false,
+					ciStatus: "success",
+				},
+			});
+			const lastLine = renderStatusLine(ctx).at(-1) as string;
+
+			expect(lastLine).toContain(C.GREEN);
+			expect(lastLine).toContain("Open");
+			expect(lastLine).toContain("✅");
+		});
+
+		test("shows a pending icon while checks are running", () => {
+			const ctx = createRenderContext({
+				prInfo: {
+					url: "https://github.com/owner/repo/pull/1",
+					state: "OPEN",
+					isDraft: false,
+					ciStatus: "pending",
+				},
+			});
+			const lastLine = renderStatusLine(ctx).at(-1) as string;
+
+			expect(lastLine).toContain("🟡");
+		});
+
+		test("shows a failure icon when a check fails", () => {
+			const ctx = createRenderContext({
+				prInfo: {
+					url: "https://github.com/owner/repo/pull/1",
+					state: "OPEN",
+					isDraft: false,
+					ciStatus: "failure",
+				},
+			});
+			const lastLine = renderStatusLine(ctx).at(-1) as string;
+
+			expect(lastLine).toContain("❌");
+		});
+
+		test("shows white Draft and no CI icon when there are no checks", () => {
+			const ctx = createRenderContext({
+				prInfo: {
+					url: "https://github.com/owner/repo/pull/1",
+					state: "OPEN",
+					isDraft: true,
+					ciStatus: null,
+				},
+			});
+			const lastLine = renderStatusLine(ctx).at(-1) as string;
+
+			expect(lastLine).toContain(C.WHITE);
+			expect(lastLine).toContain("Draft");
+			expect(lastLine).not.toContain("✅");
+			expect(lastLine).not.toContain("🟡");
+			expect(lastLine).not.toContain("❌");
+		});
+
+		test("shows magenta Merged and omits the CI icon even if ciStatus is set", () => {
+			const ctx = createRenderContext({
+				prInfo: {
+					url: "https://github.com/owner/repo/pull/1",
+					state: "MERGED",
+					isDraft: false,
+					ciStatus: "success",
+				},
+			});
+			const lastLine = renderStatusLine(ctx).at(-1) as string;
+
+			expect(lastLine).toContain(C.MAGENTA);
+			expect(lastLine).toContain("Merged");
+			expect(lastLine).not.toContain("✅");
+		});
+
+		test("shows red Closed and omits the CI icon", () => {
+			const ctx = createRenderContext({
+				prInfo: {
+					url: "https://github.com/owner/repo/pull/1",
+					state: "CLOSED",
+					isDraft: false,
+					ciStatus: "failure",
+				},
+			});
+			const lastLine = renderStatusLine(ctx).at(-1) as string;
+
+			expect(lastLine).toContain(C.RED);
+			expect(lastLine).toContain("Closed");
+			expect(lastLine).not.toContain("❌");
 		});
 	});
 

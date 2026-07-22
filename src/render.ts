@@ -1,5 +1,12 @@
 import { C, getUsageColor } from "./colors.ts";
-import { formatNumber, formatResetDate, formatTime } from "./format/index.ts";
+import {
+	ciStatusIcon,
+	formatNumber,
+	formatResetDate,
+	formatTime,
+	prStateColor,
+	prStateText,
+} from "./format/index.ts";
 import type { RenderContext } from "./types.ts";
 
 // 상태 라인 렌더링 (순수 함수 - 테스트 가능)
@@ -118,7 +125,7 @@ export const renderStatusLine = (ctx: RenderContext): string[] => {
 		ctx.gitChanges.files > 0 ||
 		ctx.gitChanges.insertions > 0 ||
 		ctx.gitChanges.deletions > 0;
-	if (hasGitChanges || ctx.baseChanges || ctx.prUrl) {
+	if (hasGitChanges || ctx.baseChanges || ctx.prInfo) {
 		let line4 = "";
 		if (hasGitChanges) {
 			// 클릭 가능할 때(diffViewerUrl 존재)는 밑줄로 표시 (PR 링크와 동일).
@@ -145,14 +152,21 @@ export const renderStatusLine = (ctx: RenderContext): string[] => {
 				? `\x1b]8;;${ctx.baseDiffViewerUrl}\x07${baseText}\x1b]8;;\x07`
 				: baseText;
 		}
-		if (ctx.prUrl) {
+		if (ctx.prInfo) {
+			const { url, state, isDraft, ciStatus } = ctx.prInfo;
 			// GitHub Enterprise 지원을 위해 정규식으로 도메인 제거
-			const prLabel = ctx.prUrl
+			const prLabel = url
 				.replace(/^https?:\/\/[^/]+\//, "")
 				.replace("/pull/", "#");
+			const stateText = prStateText(state, isDraft);
+			const stateColor = prStateColor(state, isDraft);
+			const icon = state === "OPEN" ? ciStatusIcon(ciStatus) : "";
+			const suffix = icon ? ` ${icon}` : "";
 			if (line4) line4 += " | ";
-			// OSC 8 하이퍼링크
-			line4 += `📎 ${C.WHITE}${C.UNDERLINE}\x1b]8;;${ctx.prUrl}\x07${prLabel}\x1b]8;;\x07${C.RESET}`;
+			// OSC 8 하이퍼링크 — 라벨 + 상태 + CI 아이콘 전체가 하나의 링크
+			line4 +=
+				`📎 ${C.WHITE}${C.UNDERLINE}\x1b]8;;${url}\x07${prLabel} ` +
+				`${stateColor}${C.UNDERLINE}${stateText}${suffix}${C.RESET}\x1b]8;;\x07`;
 		}
 		lines.push(line4);
 	}
