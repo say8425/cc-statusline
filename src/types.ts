@@ -45,6 +45,13 @@ export interface ClaudeStatusInput {
 	rate_limits?: RateLimits;
 }
 
+export interface PrInfo {
+	url: string;
+	state: PrState;
+	isDraft: boolean;
+	ciStatus: CiStatus;
+}
+
 export type PrState = "OPEN" | "MERGED" | "CLOSED";
 
 export type CiStatus = "success" | "pending" | "failure" | null;

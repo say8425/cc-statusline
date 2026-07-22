@@ -4,7 +4,7 @@ import {
 	getBranchCached,
 	getGitChangesCached,
 	getMainProjectCached,
-	getPrUrlCached,
+	getPrInfoCached,
 } from "../git/index.ts";
 
 // 이 테스트들은 실제 git/gh 명령어를 실행합니다.
@@ -70,20 +70,28 @@ describe("async functions (integration)", () => {
 		});
 	});
 
-	describe("getPrUrlCached", () => {
-		test("returns PR URL or null", async () => {
-			const prUrl = await getPrUrlCached();
+	describe("getPrInfoCached", () => {
+		test("returns null or a PrInfo object", async () => {
+			const prInfo = await getPrInfoCached();
 
-			// Should be string (URL) or null
-			expect(prUrl === null || typeof prUrl === "string").toBe(true);
+			if (prInfo !== null) {
+				expect(typeof prInfo.url).toBe("string");
+				expect(["OPEN", "MERGED", "CLOSED"]).toContain(prInfo.state);
+				expect(typeof prInfo.isDraft).toBe("boolean");
+				expect([null, "success", "pending", "failure"]).toContain(
+					prInfo.ciStatus,
+				);
+			} else {
+				expect(prInfo).toBeNull();
+			}
 		});
 
 		test("caches result on subsequent calls", async () => {
-			await getPrUrlCached();
-			const timestamp1 = cache.prUrl.timestamp;
+			await getPrInfoCached();
+			const timestamp1 = cache.prInfo.timestamp;
 
-			await getPrUrlCached();
-			const timestamp2 = cache.prUrl.timestamp;
+			await getPrInfoCached();
+			const timestamp2 = cache.prInfo.timestamp;
 
 			expect(timestamp1).toBe(timestamp2);
 		});
