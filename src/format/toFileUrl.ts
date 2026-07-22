@@ -4,5 +4,9 @@ export const toFileUrl = (absolutePath: string): string => {
 	const withLeadingSlash = normalized.startsWith("/")
 		? normalized
 		: `/${normalized}`;
-	return `file://${encodeURI(withLeadingSlash)}`;
+	try {
+		return `file://${encodeURI(withLeadingSlash)}`;
+	} catch {
+		return `file://${withLeadingSlash}`;
+	}
 };

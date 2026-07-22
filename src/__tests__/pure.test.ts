@@ -154,4 +154,10 @@ describe("toFileUrl", () => {
 	test("returns file:/// for an empty string (callers guard against this)", () => {
 		expect(toFileUrl("")).toBe("file:///");
 	});
+
+	test("does not throw for a path containing an unpaired surrogate", () => {
+		const path = "/Users/test/\uD800-weird";
+		expect(() => toFileUrl(path)).not.toThrow();
+		expect(toFileUrl(path)).toBe(`file://${path}`);
+	});
 });
