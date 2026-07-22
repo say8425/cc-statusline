@@ -69,8 +69,8 @@ Add the following to `~/.claude/settings.json`:
 
 | Emoji | Description              |
 | ----- | ------------------------ |
-| 📁    | Project folder name      |
-| 🌲    | Worktree name (shown in worktree sessions) |
+| 📁    | Project folder name (click to open in file manager) |
+| 🌲    | Worktree name (click to open worktree folder) |
 | 🌿    | Current Git branch       |
 | ⏱️    | Session elapsed time     |
 | 💰    | Session cost in USD      |

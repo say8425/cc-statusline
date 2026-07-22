@@ -69,8 +69,8 @@ Agrega lo siguiente a `~/.claude/settings.json`:
 
 | Emoji | Descripción                          |
 | ----- | ------------------------------------ |
-| 📁    | Nombre de la carpeta del proyecto    |
-| 🌲    | Nombre del worktree (en sesiones worktree) |
+| 📁    | Nombre de la carpeta del proyecto (haz clic para abrir el gestor de archivos) |
+| 🌲    | Nombre del worktree (haz clic para abrir la carpeta del worktree) |
 | 🌿    | Rama Git actual                      |
 | ⏱️    | Tiempo transcurrido de sesión        |
 | 💰    | Costo de sesión en USD               |
