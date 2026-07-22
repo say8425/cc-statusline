@@ -5,6 +5,7 @@ import {
 	formatResetDate,
 	formatTime,
 	getTimeUntilReset,
+	toFileUrl,
 } from "../format/index.ts";
 
 describe("getUsageColor", () => {
@@ -122,5 +123,35 @@ describe("getTimeUntilReset", () => {
 
 		const resetTime = new Date("2024-01-01T12:45:00Z");
 		expect(getTimeUntilReset(resetTime)).toEqual({ hours: 2, minutes: 45 });
+	});
+});
+
+describe("toFileUrl", () => {
+	test("converts a POSIX absolute path", () => {
+		expect(toFileUrl("/Users/test/my-project")).toBe(
+			"file:///Users/test/my-project",
+		);
+	});
+
+	test("percent-encodes spaces", () => {
+		expect(toFileUrl("/Users/test/my project")).toBe(
+			"file:///Users/test/my%20project",
+		);
+	});
+
+	test("converts a Windows path with a drive letter", () => {
+		expect(toFileUrl("C:\\Users\\test\\project")).toBe(
+			"file:///C:/Users/test/project",
+		);
+	});
+
+	test("converts a Windows UNC-style backslash path under a drive", () => {
+		expect(toFileUrl("D:\\work\\my project")).toBe(
+			"file:///D:/work/my%20project",
+		);
+	});
+
+	test("returns file:/// for an empty string (callers guard against this)", () => {
+		expect(toFileUrl("")).toBe("file:///");
 	});
 });
