@@ -81,7 +81,7 @@ Claude Code 自定义状态栏。
 | ⏰   | 每周限制重置时间    |
 | 📅   | 7天使用率 %         |
 | ✏️   | 未提交的更改（点击打开 diff 查看器）        |
-| 📎   | Pull Request 链接   |
+| 📎   | Pull Request 链接（按状态显示颜色：Open/Draft/Merged/Closed；处于 Open 状态时附带 CI 检查图标 ✅/🟡/❌） |
 
 ## Diff 查看器
 

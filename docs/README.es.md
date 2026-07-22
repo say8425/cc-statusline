@@ -81,7 +81,7 @@ Agrega lo siguiente a `~/.claude/settings.json`:
 | ⏰    | Tiempo de reinicio semanal           |
 | 📅    | Utilización de 7 días %              |
 | ✏️    | Cambios sin confirmar (haz clic para abrir el visor de diff)                |
-| 📎    | Enlace de Pull Request               |
+| 📎    | Enlace de Pull Request con estado codificado por colores (Open/Draft/Merged/Closed) y, mientras está abierto, un icono de estado de CI (✅/🟡/❌) |
 
 ## Visor de Diff
 

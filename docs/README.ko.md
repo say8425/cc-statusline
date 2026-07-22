@@ -81,7 +81,7 @@ Claude Code를 위한 커스텀 상태표시줄.
 | ⏰    | 주간 제한 리셋 시간    |
 | 📅    | 7일 사용률 %           |
 | ✏️    | 커밋되지 않은 변경사항 (클릭하면 diff 뷰어 열림) |
-| 📎    | Pull Request 링크      |
+| 📎    | Pull Request 링크, PR 상태(Open/Draft/Merged/Closed, 색상별)와 Open 상태일 때 CI 체크 아이콘(✅/🟡/❌) 표시 |
 
 ## Diff 뷰어
 

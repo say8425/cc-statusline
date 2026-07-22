@@ -81,7 +81,7 @@ Claude Code用カスタムステータスライン。
 | ⏰     | 週間制限リセット時間         |
 | 📅     | 7日使用率 %                  |
 | ✏️     | コミットされていない変更（クリックで diff ビューアを開く）     |
-| 📎     | Pull Requestリンク           |
+| 📎     | Pull Requestリンク（状態を色分け表示: Open/Draft/Merged/Closed、オープン中は CI チェックアイコン ✅/🟡/❌ も表示） |
 
 ## Diff ビューア
 
