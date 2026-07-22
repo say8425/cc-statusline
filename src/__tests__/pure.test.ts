@@ -1,10 +1,13 @@
 import { afterEach, describe, expect, setSystemTime, test } from "bun:test";
 import { C, getUsageColor } from "../colors.ts";
 import {
+	ciStatusIcon,
 	formatNumber,
 	formatResetDate,
 	formatTime,
 	getTimeUntilReset,
+	prStateColor,
+	prStateText,
 	toFileUrl,
 } from "../format/index.ts";
 
@@ -159,5 +162,59 @@ describe("toFileUrl", () => {
 		const path = "/Users/test/\uD800-weird";
 		expect(() => toFileUrl(path)).not.toThrow();
 		expect(toFileUrl(path)).toBe(`file://${path}`);
+	});
+});
+
+describe("prStateText", () => {
+	test("returns Open for a non-draft open PR", () => {
+		expect(prStateText("OPEN", false)).toBe("Open");
+	});
+
+	test("returns Draft for a draft open PR", () => {
+		expect(prStateText("OPEN", true)).toBe("Draft");
+	});
+
+	test("returns Merged for a merged PR", () => {
+		expect(prStateText("MERGED", false)).toBe("Merged");
+	});
+
+	test("returns Closed for a closed PR", () => {
+		expect(prStateText("CLOSED", false)).toBe("Closed");
+	});
+});
+
+describe("prStateColor", () => {
+	test("returns GREEN for a non-draft open PR", () => {
+		expect(prStateColor("OPEN", false)).toBe(C.GREEN);
+	});
+
+	test("returns WHITE for a draft open PR", () => {
+		expect(prStateColor("OPEN", true)).toBe(C.WHITE);
+	});
+
+	test("returns MAGENTA for a merged PR", () => {
+		expect(prStateColor("MERGED", false)).toBe(C.MAGENTA);
+	});
+
+	test("returns RED for a closed PR", () => {
+		expect(prStateColor("CLOSED", false)).toBe(C.RED);
+	});
+});
+
+describe("ciStatusIcon", () => {
+	test("returns a check mark for success", () => {
+		expect(ciStatusIcon("success")).toBe("✅");
+	});
+
+	test("returns a yellow circle for pending", () => {
+		expect(ciStatusIcon("pending")).toBe("🟡");
+	});
+
+	test("returns a cross mark for failure", () => {
+		expect(ciStatusIcon("failure")).toBe("❌");
+	});
+
+	test("returns an empty string for null", () => {
+		expect(ciStatusIcon(null)).toBe("");
 	});
 });

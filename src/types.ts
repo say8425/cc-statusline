@@ -45,6 +45,8 @@ export interface ClaudeStatusInput {
 	rate_limits?: RateLimits;
 }
 
+export type PrState = "OPEN" | "MERGED" | "CLOSED";
+
 export type CiStatus = "success" | "pending" | "failure" | null;
 
 // 렌더링 컨텍스트 타입 (테스트를 위한 의존성 주입)
