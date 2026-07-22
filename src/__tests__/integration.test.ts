@@ -211,4 +211,44 @@ describe("main function (integration)", () => {
 			Bun.stdin.stream = originalStream;
 		}
 	});
+
+	test("main function emits a file:// hyperlink for the project folder", async () => {
+		const testInput = JSON.stringify({
+			cost: { total_duration_ms: 0, total_cost_usd: 0 },
+			context_window: {
+				context_window_size: 200000,
+				current_usage: {
+					input_tokens: 0,
+					output_tokens: 0,
+					cache_creation_input_tokens: 0,
+					cache_read_input_tokens: 0,
+				},
+			},
+			workspace: {
+				project_dir: "/Users/test/my-project",
+				current_dir: "/Users/test/my-project",
+			},
+		});
+
+		const encoder = new TextEncoder();
+		const stream = new ReadableStream({
+			start(controller) {
+				controller.enqueue(encoder.encode(testInput));
+				controller.close();
+			},
+		});
+
+		const originalStream = Bun.stdin.stream;
+		// @ts-expect-error - mocking stdin
+		Bun.stdin.stream = () => stream;
+
+		try {
+			await main();
+
+			expect(logs[0]).toContain("\x1b]8;;file:///Users/test/my-project\x07");
+		} finally {
+			// @ts-expect-error - restoring stdin
+			Bun.stdin.stream = originalStream;
+		}
+	});
 });
