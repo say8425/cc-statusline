@@ -3,6 +3,7 @@ import { CACHE_TTL, cache, resetCache } from "../cache.ts";
 import {
 	getBranchCached,
 	getGitChangesCached,
+	getMainProjectCached,
 	getPrUrlCached,
 } from "../git/index.ts";
 
@@ -83,6 +84,29 @@ describe("async functions (integration)", () => {
 
 			await getPrUrlCached();
 			const timestamp2 = cache.prUrl.timestamp;
+
+			expect(timestamp1).toBe(timestamp2);
+		});
+	});
+
+	describe("getMainProjectCached", () => {
+		test("returns null or a {name, path} object", async () => {
+			const mainProject = await getMainProjectCached();
+
+			if (mainProject !== null) {
+				expect(typeof mainProject.name).toBe("string");
+				expect(typeof mainProject.path).toBe("string");
+			} else {
+				expect(mainProject).toBeNull();
+			}
+		});
+
+		test("caches result on subsequent calls", async () => {
+			await getMainProjectCached();
+			const timestamp1 = cache.mainProject.timestamp;
+
+			await getMainProjectCached();
+			const timestamp2 = cache.mainProject.timestamp;
 
 			expect(timestamp1).toBe(timestamp2);
 		});

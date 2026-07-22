@@ -90,37 +90,38 @@ describe("cache mechanism", () => {
 		});
 	});
 
-	describe("mainProjectName cache", () => {
+	describe("mainProject cache", () => {
 		test("cache hit when timestamp is fresh", () => {
-			cache.mainProjectName = {
-				value: "cc-statusline",
+			cache.mainProject = {
+				value: { name: "cc-statusline", path: "/Users/test/cc-statusline" },
 				timestamp: Date.now(),
 			};
 
 			const isFresh =
-				Date.now() - cache.mainProjectName.timestamp <
-				CACHE_TTL.mainProjectName;
+				Date.now() - cache.mainProject.timestamp < CACHE_TTL.mainProject;
 			expect(isFresh).toBe(true);
-			expect(cache.mainProjectName.value).toBe("cc-statusline");
+			expect(cache.mainProject.value).toEqual({
+				name: "cc-statusline",
+				path: "/Users/test/cc-statusline",
+			});
 		});
 
 		test("cache miss when timestamp is stale", () => {
 			const now = Date.now();
 			setSystemTime(now);
 
-			cache.mainProjectName = {
-				value: "cc-statusline",
-				timestamp: now - CACHE_TTL.mainProjectName - 1000,
+			cache.mainProject = {
+				value: { name: "cc-statusline", path: "/Users/test/cc-statusline" },
+				timestamp: now - CACHE_TTL.mainProject - 1000,
 			};
 
-			const isFresh =
-				now - cache.mainProjectName.timestamp < CACHE_TTL.mainProjectName;
+			const isFresh = now - cache.mainProject.timestamp < CACHE_TTL.mainProject;
 			expect(isFresh).toBe(false);
 		});
 
 		test("cache stores null for non-worktree repo", () => {
-			cache.mainProjectName = { value: null, timestamp: Date.now() };
-			expect(cache.mainProjectName.value).toBeNull();
+			cache.mainProject = { value: null, timestamp: Date.now() };
+			expect(cache.mainProject.value).toBeNull();
 		});
 	});
 
@@ -135,8 +136,8 @@ describe("cache mechanism", () => {
 				timestamp: Date.now(),
 			};
 			cache.prUrl = { value: "https://example.com", timestamp: Date.now() };
-			cache.mainProjectName = {
-				value: "cc-statusline",
+			cache.mainProject = {
+				value: { name: "cc-statusline", path: "/Users/test/cc-statusline" },
 				timestamp: Date.now(),
 			};
 			cache.ultracode = { value: true, timestamp: Date.now() };
@@ -151,7 +152,7 @@ describe("cache mechanism", () => {
 				timestamp: 0,
 			});
 			expect(cache.prUrl).toEqual({ value: null, timestamp: 0 });
-			expect(cache.mainProjectName).toEqual({ value: null, timestamp: 0 });
+			expect(cache.mainProject).toEqual({ value: null, timestamp: 0 });
 			expect(cache.ultracode).toEqual({ value: false, timestamp: 0 });
 		});
 	});
@@ -170,8 +171,8 @@ describe("CACHE_TTL values", () => {
 		expect(CACHE_TTL.prUrl).toBe(30000);
 	});
 
-	test("mainProjectName TTL is 300 seconds (5 minutes)", () => {
-		expect(CACHE_TTL.mainProjectName).toBe(300000);
+	test("mainProject TTL is 300 seconds (5 minutes)", () => {
+		expect(CACHE_TTL.mainProject).toBe(300000);
 	});
 
 	test("ultracode TTL is 5 seconds", () => {
