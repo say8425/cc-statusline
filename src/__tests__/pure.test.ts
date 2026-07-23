@@ -1,7 +1,8 @@
 import { afterEach, describe, expect, setSystemTime, test } from "bun:test";
 import { C, getUsageColor } from "../colors.ts";
 import {
-	ciStatusIcon,
+	ciSummaryColor,
+	ciSummaryText,
 	formatNumber,
 	formatResetDate,
 	formatTime,
@@ -229,20 +230,40 @@ describe("prStateColor", () => {
 	});
 });
 
-describe("ciStatusIcon", () => {
-	test("returns a check mark for success", () => {
-		expect(ciStatusIcon("success")).toBe("✅");
-	});
-
-	test("returns a yellow circle for pending", () => {
-		expect(ciStatusIcon("pending")).toBe("🟡");
-	});
-
-	test("returns a cross mark for failure", () => {
-		expect(ciStatusIcon("failure")).toBe("❌");
-	});
-
+describe("ciSummaryText", () => {
 	test("returns an empty string for null", () => {
-		expect(ciStatusIcon(null)).toBe("");
+		expect(ciSummaryText(null)).toBe("");
+	});
+
+	test("formats a failure count", () => {
+		expect(ciSummaryText({ conclusion: "failure", count: 2 })).toBe("2 failed");
+	});
+
+	test("formats a pending count", () => {
+		expect(ciSummaryText({ conclusion: "pending", count: 3 })).toBe(
+			"3 running",
+		);
+	});
+
+	test("formats a success count", () => {
+		expect(ciSummaryText({ conclusion: "success", count: 5 })).toBe("5 passed");
+	});
+});
+
+describe("ciSummaryColor", () => {
+	test("returns an empty string for null", () => {
+		expect(ciSummaryColor(null)).toBe("");
+	});
+
+	test("returns RED for failure", () => {
+		expect(ciSummaryColor({ conclusion: "failure", count: 1 })).toBe(C.RED);
+	});
+
+	test("returns YELLOW for pending", () => {
+		expect(ciSummaryColor({ conclusion: "pending", count: 1 })).toBe(C.YELLOW);
+	});
+
+	test("returns GREEN for success", () => {
+		expect(ciSummaryColor({ conclusion: "success", count: 1 })).toBe(C.GREEN);
 	});
 });

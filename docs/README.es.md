@@ -81,7 +81,7 @@ Agrega lo siguiente a `~/.claude/settings.json`:
 | ⏰    | Tiempo de reinicio semanal           |
 | 📅    | Utilización de 7 días %              |
 | ✏️    | Cambios sin confirmar (haz clic para abrir el visor de diff)                |
-| 📎    | Enlace de Pull Request con estado codificado por colores (Open/Draft/Merged/Closed) y, mientras está abierto, un icono de estado de CI (✅/🟡/❌) |
+| 📎    | Enlace de Pull Request — estado entre corchetes (`[Open]`/`[Draft]`/`[Merged]`/`[Closed]`, codificado por colores) más un resumen de CI codificado por colores entre paréntesis (`(N passed)`/`(N running)`/`(N failed)`) cuando existen checks |
 
 ## Visor de Diff
 
@@ -145,6 +145,21 @@ Las métricas de uso se **muestran automáticamente** cuando `rate_limits` está
 | ---------------- | --------------- | ---------------------- | -------------- |
 | Contexto %       | < 50%           | 50-80%                 | > 80%          |
 | Uso del bloque % | < 50%           | 50-80%                 | > 80%          |
+
+## Colores de PR y CI
+
+| Estado de PR | Color   |
+| ------------- | ------- |
+| Open          | verde   |
+| Draft         | blanco  |
+| Merged        | magenta |
+| Closed        | rojo    |
+
+| Resumen de CI | Color    |
+| -------------- | -------- |
+| N passed       | verde    |
+| N running      | amarillo |
+| N failed       | rojo     |
 
 ## Licencia
 

@@ -1,4 +1,4 @@
-import type { CiStatus } from "../types.ts";
+import type { CiSummary } from "../types.ts";
 
 interface CheckItem {
 	status?: string; // CheckRun: QUEUED | IN_PROGRESS | COMPLETED | ...
@@ -16,22 +16,32 @@ const FAILURE_CONCLUSIONS = new Set([
 const PASS_CONCLUSIONS = new Set(["SUCCESS", "NEUTRAL", "SKIPPED"]);
 const FAILURE_STATES = new Set(["FAILURE", "ERROR"]);
 
-// gh pr view의 statusCheckRollup(CheckRun/StatusContext 혼재)을 단일 상태로 집계.
-// GitHub의 실제 rollup 알고리즘의 근사치 (required/optional 구분 없음).
-export const aggregateCiStatus = (checks: readonly CheckItem[]): CiStatus => {
+// gh pr view의 statusCheckRollup(CheckRun/StatusContext 혼재)을 집계해 실패/진행중/통과
+// 건수를 센다. failure > pending > success 우선순위로 대표 상태를 고르고, 그 카테고리의
+// 건수를 함께 반환한다. GitHub의 실제 rollup 알고리즘의 근사치(required/optional 구분 없음).
+export const aggregateCiStatus = (
+	checks: readonly CheckItem[],
+): CiSummary | null => {
 	if (checks.length === 0) return null;
 
-	let hasPending = false;
+	let failedCount = 0;
+	let pendingCount = 0;
+	let passedCount = 0;
 	for (const check of checks) {
 		if (check.conclusion != null) {
-			if (FAILURE_CONCLUSIONS.has(check.conclusion)) return "failure";
-			if (!PASS_CONCLUSIONS.has(check.conclusion)) hasPending = true;
+			if (FAILURE_CONCLUSIONS.has(check.conclusion)) failedCount++;
+			else if (PASS_CONCLUSIONS.has(check.conclusion)) passedCount++;
+			else pendingCount++;
 		} else if (check.status != null && check.status !== "COMPLETED") {
-			hasPending = true;
+			pendingCount++;
 		} else if (check.state != null) {
-			if (FAILURE_STATES.has(check.state)) return "failure";
-			if (check.state !== "SUCCESS") hasPending = true;
+			if (FAILURE_STATES.has(check.state)) failedCount++;
+			else if (check.state === "SUCCESS") passedCount++;
+			else pendingCount++;
 		}
 	}
-	return hasPending ? "pending" : "success";
+
+	if (failedCount > 0) return { conclusion: "failure", count: failedCount };
+	if (pendingCount > 0) return { conclusion: "pending", count: pendingCount };
+	return { conclusion: "success", count: passedCount };
 };

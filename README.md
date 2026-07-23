@@ -81,7 +81,7 @@ Add the following to `~/.claude/settings.json`:
 | ⏰    | Weekly limit reset time  |
 | 📅    | 7-day utilization %      |
 | ✏️    | Uncommitted changes (click to open diff viewer) |
-| 📎    | Pull request link with color-coded state (Open/Draft/Merged/Closed) and, while open, a CI check icon (✅/🟡/❌) |
+| 📎    | Pull request link — state in brackets (`[Open]`/`[Draft]`/`[Merged]`/`[Closed]`, color-coded) plus a color-coded CI check summary in parens (`(N passed)`/`(N running)`/`(N failed)`) when checks exist |
 
 ## Diff Viewer
 
@@ -170,6 +170,21 @@ bun run format
 | ------------- | -------------- | ---------------- | -------------- |
 | Context %     | < 50%          | 50-80%           | > 80%          |
 | Block Usage % | < 50%          | 50-80%           | > 80%          |
+
+## PR & CI Colors
+
+| PR State | Color   |
+| -------- | ------- |
+| Open     | green   |
+| Draft    | white   |
+| Merged   | magenta |
+| Closed   | red     |
+
+| CI Summary | Color  |
+| ---------- | ------ |
+| N passed   | green  |
+| N running  | yellow |
+| N failed   | red    |
 
 ## License
 

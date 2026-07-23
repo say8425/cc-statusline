@@ -747,6 +747,7 @@ describe("renderStatusLine", () => {
 			const lastLine = lines[lines.length - 1];
 			expect(lastLine).toContain("📎");
 			expect(lastLine).toContain("owner/repo#123");
+			expect(lastLine).toContain("[Open]");
 			expect(lastLine).toContain("\x1b]8;;"); // OSC 8 start
 			expect(lastLine).toContain("\x07"); // Bell character
 		});
@@ -769,51 +770,53 @@ describe("renderStatusLine", () => {
 			expect(lastLine).toContain(" | ");
 		});
 
-		test("shows green Open with a check icon when CI succeeds", () => {
+		test("shows green [Open] with a passed count when CI succeeds", () => {
 			const ctx = createRenderContext({
 				prInfo: {
 					url: "https://github.com/owner/repo/pull/1",
 					state: "OPEN",
 					isDraft: false,
-					ciStatus: "success",
+					ciStatus: { conclusion: "success", count: 5 },
 				},
 			});
 			const lastLine = renderStatusLine(ctx).at(-1) as string;
 
 			expect(lastLine).toContain(C.GREEN);
-			expect(lastLine).toContain("Open");
-			expect(lastLine).toContain("✅");
+			expect(lastLine).toContain("[Open]");
+			expect(lastLine).toContain("(5 passed)");
 		});
 
-		test("shows a pending icon while checks are running", () => {
+		test("shows a running count in yellow while checks are running", () => {
 			const ctx = createRenderContext({
 				prInfo: {
 					url: "https://github.com/owner/repo/pull/1",
 					state: "OPEN",
 					isDraft: false,
-					ciStatus: "pending",
+					ciStatus: { conclusion: "pending", count: 3 },
 				},
 			});
 			const lastLine = renderStatusLine(ctx).at(-1) as string;
 
-			expect(lastLine).toContain("🟡");
+			expect(lastLine).toContain(C.YELLOW);
+			expect(lastLine).toContain("(3 running)");
 		});
 
-		test("shows a failure icon when a check fails", () => {
+		test("shows a failed count in red when checks fail", () => {
 			const ctx = createRenderContext({
 				prInfo: {
 					url: "https://github.com/owner/repo/pull/1",
 					state: "OPEN",
 					isDraft: false,
-					ciStatus: "failure",
+					ciStatus: { conclusion: "failure", count: 2 },
 				},
 			});
 			const lastLine = renderStatusLine(ctx).at(-1) as string;
 
-			expect(lastLine).toContain("❌");
+			expect(lastLine).toContain(C.RED);
+			expect(lastLine).toContain("(2 failed)");
 		});
 
-		test("shows white Draft and no CI icon when there are no checks", () => {
+		test("shows white [Draft] and no CI parenthetical when there are no checks", () => {
 			const ctx = createRenderContext({
 				prInfo: {
 					url: "https://github.com/owner/repo/pull/1",
@@ -825,42 +828,40 @@ describe("renderStatusLine", () => {
 			const lastLine = renderStatusLine(ctx).at(-1) as string;
 
 			expect(lastLine).toContain(C.WHITE);
-			expect(lastLine).toContain("Draft");
-			expect(lastLine).not.toContain("✅");
-			expect(lastLine).not.toContain("🟡");
-			expect(lastLine).not.toContain("❌");
+			expect(lastLine).toContain("[Draft]");
+			expect(lastLine).not.toContain("(");
 		});
 
-		test("shows magenta Merged and omits the CI icon even if ciStatus is set", () => {
+		test("shows magenta [Merged] with the CI summary still shown", () => {
 			const ctx = createRenderContext({
 				prInfo: {
 					url: "https://github.com/owner/repo/pull/1",
 					state: "MERGED",
 					isDraft: false,
-					ciStatus: "success",
+					ciStatus: { conclusion: "success", count: 5 },
 				},
 			});
 			const lastLine = renderStatusLine(ctx).at(-1) as string;
 
 			expect(lastLine).toContain(C.MAGENTA);
-			expect(lastLine).toContain("Merged");
-			expect(lastLine).not.toContain("✅");
+			expect(lastLine).toContain("[Merged]");
+			expect(lastLine).toContain("(5 passed)");
 		});
 
-		test("shows red Closed and omits the CI icon", () => {
+		test("shows red [Closed] with the last CI summary still shown", () => {
 			const ctx = createRenderContext({
 				prInfo: {
 					url: "https://github.com/owner/repo/pull/1",
 					state: "CLOSED",
 					isDraft: false,
-					ciStatus: "failure",
+					ciStatus: { conclusion: "failure", count: 1 },
 				},
 			});
 			const lastLine = renderStatusLine(ctx).at(-1) as string;
 
 			expect(lastLine).toContain(C.RED);
-			expect(lastLine).toContain("Closed");
-			expect(lastLine).not.toContain("❌");
+			expect(lastLine).toContain("[Closed]");
+			expect(lastLine).toContain("(1 failed)");
 		});
 	});
 

@@ -81,7 +81,7 @@ Claude Code 自定义状态栏。
 | ⏰   | 每周限制重置时间    |
 | 📅   | 7天使用率 %         |
 | ✏️   | 未提交的更改（点击打开 diff 查看器）        |
-| 📎   | Pull Request 链接（按状态显示颜色：Open/Draft/Merged/Closed；处于 Open 状态时附带 CI 检查图标 ✅/🟡/❌） |
+| 📎   | Pull Request 链接 — 方括号中显示状态（`[Open]`/`[Draft]`/`[Merged]`/`[Closed]`，按颜色区分），存在检查时括号中显示按颜色区分的 CI 汇总（`(N passed)`/`(N running)`/`(N failed)`） |
 
 ## Diff 查看器
 
@@ -145,6 +145,21 @@ Claude Code 通过 stdin JSON 输入传递 `rate_limits`（CLI 2.1.80+）：
 | ---------- | ------------ | ------------ | ------------ |
 | 上下文 %   | < 50%        | 50-80%       | > 80%        |
 | 块使用量 % | < 50%        | 50-80%       | > 80%        |
+
+## PR 与 CI 颜色
+
+| PR 状态 | 颜色   |
+| -------- | ------ |
+| Open     | 绿色   |
+| Draft    | 白色   |
+| Merged   | 品红色 |
+| Closed   | 红色   |
+
+| CI 汇总   | 颜色   |
+| --------- | ------ |
+| N passed  | 绿色   |
+| N running | 黄色   |
+| N failed  | 红色   |
 
 ## 许可证
 

@@ -1,5 +1,5 @@
 import { C } from "../colors.ts";
-import type { CiStatus, PrState } from "../types.ts";
+import type { CiSummary, PrState } from "../types.ts";
 
 export const prStateText = (state: PrState, isDraft: boolean): string => {
 	if (isDraft) return "Draft";
@@ -15,9 +15,16 @@ export const prStateColor = (state: PrState, isDraft: boolean): string => {
 	return C.RED;
 };
 
-export const ciStatusIcon = (ciStatus: CiStatus): string => {
-	if (ciStatus === "success") return "✅";
-	if (ciStatus === "pending") return "🟡";
-	if (ciStatus === "failure") return "❌";
-	return "";
+export const ciSummaryText = (ci: CiSummary | null): string => {
+	if (ci === null) return "";
+	if (ci.conclusion === "failure") return `${ci.count} failed`;
+	if (ci.conclusion === "pending") return `${ci.count} running`;
+	return `${ci.count} passed`;
+};
+
+export const ciSummaryColor = (ci: CiSummary | null): string => {
+	if (ci === null) return "";
+	if (ci.conclusion === "failure") return C.RED;
+	if (ci.conclusion === "pending") return C.YELLOW;
+	return C.GREEN;
 };

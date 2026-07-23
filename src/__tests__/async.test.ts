@@ -78,9 +78,12 @@ describe("async functions (integration)", () => {
 				expect(typeof prInfo.url).toBe("string");
 				expect(["OPEN", "MERGED", "CLOSED"]).toContain(prInfo.state);
 				expect(typeof prInfo.isDraft).toBe("boolean");
-				expect([null, "success", "pending", "failure"]).toContain(
-					prInfo.ciStatus,
-				);
+				if (prInfo.ciStatus !== null) {
+					expect(["success", "pending", "failure"]).toContain(
+						prInfo.ciStatus.conclusion,
+					);
+					expect(typeof prInfo.ciStatus.count).toBe("number");
+				}
 			} else {
 				expect(prInfo).toBeNull();
 			}

@@ -49,12 +49,17 @@ export interface PrInfo {
 	url: string;
 	state: PrState;
 	isDraft: boolean;
-	ciStatus: CiStatus;
+	ciStatus: CiSummary | null;
 }
 
 export type PrState = "OPEN" | "MERGED" | "CLOSED";
 
-export type CiStatus = "success" | "pending" | "failure" | null;
+export type CiConclusion = "success" | "pending" | "failure";
+
+export interface CiSummary {
+	conclusion: CiConclusion;
+	count: number;
+}
 
 // 렌더링 컨텍스트 타입 (테스트를 위한 의존성 주입)
 export interface RenderContext {

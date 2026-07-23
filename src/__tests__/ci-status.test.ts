@@ -6,43 +6,54 @@ describe("aggregateCiStatus", () => {
 		expect(aggregateCiStatus([])).toBeNull();
 	});
 
-	test("returns success when all CheckRuns succeed", () => {
+	test("returns success with a count when all CheckRuns succeed", () => {
 		expect(
 			aggregateCiStatus([
 				{ status: "COMPLETED", conclusion: "SUCCESS" },
 				{ status: "COMPLETED", conclusion: "NEUTRAL" },
 			]),
-		).toBe("success");
+		).toEqual({ conclusion: "success", count: 2 });
 	});
 
-	test("returns failure when any CheckRun fails", () => {
+	test("returns failure with the failed count when some CheckRuns fail", () => {
 		expect(
 			aggregateCiStatus([
 				{ status: "COMPLETED", conclusion: "SUCCESS" },
 				{ status: "COMPLETED", conclusion: "FAILURE" },
+				{ status: "COMPLETED", conclusion: "FAILURE" },
 			]),
-		).toBe("failure");
+		).toEqual({ conclusion: "failure", count: 2 });
 	});
 
-	test("returns pending when a CheckRun is still in progress", () => {
+	test("returns pending with the pending count when CheckRuns are still in progress", () => {
 		expect(
 			aggregateCiStatus([
 				{ status: "COMPLETED", conclusion: "SUCCESS" },
 				{ status: "IN_PROGRESS" },
+				{ status: "QUEUED" },
 			]),
-		).toBe("pending");
+		).toEqual({ conclusion: "pending", count: 2 });
 	});
 
-	test("returns success for a passing legacy StatusContext", () => {
-		expect(aggregateCiStatus([{ state: "SUCCESS" }])).toBe("success");
+	test("returns success with a count for a passing legacy StatusContext", () => {
+		expect(aggregateCiStatus([{ state: "SUCCESS" }])).toEqual({
+			conclusion: "success",
+			count: 1,
+		});
 	});
 
-	test("returns failure for a failing legacy StatusContext", () => {
-		expect(aggregateCiStatus([{ state: "ERROR" }])).toBe("failure");
+	test("returns failure with a count for a failing legacy StatusContext", () => {
+		expect(aggregateCiStatus([{ state: "ERROR" }])).toEqual({
+			conclusion: "failure",
+			count: 1,
+		});
 	});
 
-	test("returns pending for a pending legacy StatusContext", () => {
-		expect(aggregateCiStatus([{ state: "PENDING" }])).toBe("pending");
+	test("returns pending with a count for a pending legacy StatusContext", () => {
+		expect(aggregateCiStatus([{ state: "PENDING" }])).toEqual({
+			conclusion: "pending",
+			count: 1,
+		});
 	});
 
 	test("handles a mix of CheckRun and StatusContext items", () => {
@@ -51,12 +62,16 @@ describe("aggregateCiStatus", () => {
 				{ status: "COMPLETED", conclusion: "SUCCESS" },
 				{ state: "SUCCESS" },
 			]),
-		).toBe("success");
+		).toEqual({ conclusion: "success", count: 2 });
 	});
 
-	test("failure from any item wins over pending from another", () => {
+	test("failure wins over pending, and the count reflects only the failed items", () => {
 		expect(
-			aggregateCiStatus([{ status: "IN_PROGRESS" }, { state: "ERROR" }]),
-		).toBe("failure");
+			aggregateCiStatus([
+				{ status: "IN_PROGRESS" },
+				{ state: "ERROR" },
+				{ status: "COMPLETED", conclusion: "FAILURE" },
+			]),
+		).toEqual({ conclusion: "failure", count: 2 });
 	});
 });

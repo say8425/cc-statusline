@@ -1,6 +1,7 @@
 import { C, getUsageColor } from "./colors.ts";
 import {
-	ciStatusIcon,
+	ciSummaryColor,
+	ciSummaryText,
 	formatNumber,
 	formatResetDate,
 	formatTime,
@@ -160,13 +161,17 @@ export const renderStatusLine = (ctx: RenderContext): string[] => {
 				.replace("/pull/", "#");
 			const stateText = prStateText(state, isDraft);
 			const stateColor = prStateColor(state, isDraft);
-			const icon = state === "OPEN" ? ciStatusIcon(ciStatus) : "";
-			const suffix = icon ? ` ${icon}` : "";
+			const ciText = ciSummaryText(ciStatus);
+			const ciColor = ciSummaryColor(ciStatus);
+			const ciSuffix = ciText
+				? ` ${ciColor}${C.UNDERLINE}(${ciText})${C.RESET}`
+				: "";
 			if (line4) line4 += " | ";
-			// OSC 8 하이퍼링크 — 라벨 + 상태 + CI 아이콘 전체가 하나의 링크
+			// OSC 8 하이퍼링크 — 라벨 + 상태 + CI 요약 전체가 하나의 링크.
+			// CI 요약은 PR 상태와 무관하게(Merged/Closed 포함) 체크가 있으면 표시.
 			line4 +=
 				`📎 ${C.WHITE}${C.UNDERLINE}\x1b]8;;${url}\x07${prLabel} ` +
-				`${stateColor}${C.UNDERLINE}${stateText}${suffix}${C.RESET}\x1b]8;;\x07`;
+				`${stateColor}${C.UNDERLINE}[${stateText}]${C.RESET}${ciSuffix}\x1b]8;;\x07`;
 		}
 		lines.push(line4);
 	}
