@@ -1,10 +1,15 @@
 import { afterEach, describe, expect, setSystemTime, test } from "bun:test";
 import { C, getUsageColor } from "../colors.ts";
 import {
+	ciSummaryColor,
+	ciSummaryText,
 	formatNumber,
 	formatResetDate,
 	formatTime,
 	getTimeUntilReset,
+	prStateColor,
+	prStateText,
+	toFileUrl,
 } from "../format/index.ts";
 
 describe("getUsageColor", () => {
@@ -122,5 +127,141 @@ describe("getTimeUntilReset", () => {
 
 		const resetTime = new Date("2024-01-01T12:45:00Z");
 		expect(getTimeUntilReset(resetTime)).toEqual({ hours: 2, minutes: 45 });
+	});
+});
+
+describe("toFileUrl", () => {
+	test("converts a POSIX absolute path", () => {
+		expect(toFileUrl("/Users/test/my-project")).toBe(
+			"file:///Users/test/my-project",
+		);
+	});
+
+	test("percent-encodes spaces", () => {
+		expect(toFileUrl("/Users/test/my project")).toBe(
+			"file:///Users/test/my%20project",
+		);
+	});
+
+	test("converts a Windows path with a drive letter", () => {
+		expect(toFileUrl("C:\\Users\\test\\project")).toBe(
+			"file:///C:/Users/test/project",
+		);
+	});
+
+	test("converts a Windows UNC-style backslash path under a drive", () => {
+		expect(toFileUrl("D:\\work\\my project")).toBe(
+			"file:///D:/work/my%20project",
+		);
+	});
+
+	test("returns file:/// for an empty string (callers guard against this)", () => {
+		expect(toFileUrl("")).toBe("file:///");
+	});
+
+	test("does not throw for a path containing an unpaired surrogate", () => {
+		const path = "/Users/test/\uD800-weird";
+		expect(() => toFileUrl(path)).not.toThrow();
+		expect(toFileUrl(path)).toBe("file:///Users/test/%EF%BF%BD-weird");
+	});
+
+	test("escapes control characters even when the fallback path is taken", () => {
+		// Regression test for a terminal-escape-injection finding: when
+		// encodeURI throws (unpaired surrogate), the fallback must still
+		// percent-encode any raw BEL/ESC bytes in the path, or they could
+		// break out of the OSC 8 hyperlink this URL gets embedded in.
+		const path = "/foo\uD800\x07\x1b bar";
+		const result = toFileUrl(path);
+		expect(result).not.toContain("\x07");
+		expect(result).not.toContain("\x1b");
+		expect(result).toBe("file:///foo%EF%BF%BD%07%1B%20bar");
+	});
+});
+
+describe("prStateText", () => {
+	test("returns Open for a non-draft open PR", () => {
+		expect(prStateText("OPEN", false)).toBe("Open");
+	});
+
+	test("returns Draft for a draft open PR", () => {
+		expect(prStateText("OPEN", true)).toBe("Draft");
+	});
+
+	test("returns Merged for a merged PR", () => {
+		expect(prStateText("MERGED", false)).toBe("Merged");
+	});
+
+	test("returns Closed for a closed PR", () => {
+		expect(prStateText("CLOSED", false)).toBe("Closed");
+	});
+
+	test("returns Draft even when state is MERGED (draft always wins)", () => {
+		expect(prStateText("MERGED", true)).toBe("Draft");
+	});
+
+	test("returns Draft even when state is CLOSED (draft always wins)", () => {
+		expect(prStateText("CLOSED", true)).toBe("Draft");
+	});
+});
+
+describe("prStateColor", () => {
+	test("returns muted GREEN for a non-draft open PR", () => {
+		expect(prStateColor("OPEN", false)).toBe(C.GREEN_MUTED);
+	});
+
+	test("returns WHITE for a draft open PR", () => {
+		expect(prStateColor("OPEN", true)).toBe(C.WHITE);
+	});
+
+	test("returns muted MAGENTA for a merged PR", () => {
+		expect(prStateColor("MERGED", false)).toBe(C.MAGENTA_MUTED);
+	});
+
+	test("returns muted RED for a closed PR", () => {
+		expect(prStateColor("CLOSED", false)).toBe(C.RED_MUTED);
+	});
+});
+
+describe("ciSummaryText", () => {
+	test("returns an empty string for null", () => {
+		expect(ciSummaryText(null)).toBe("");
+	});
+
+	test("formats a failure count", () => {
+		expect(ciSummaryText({ conclusion: "failure", count: 2 })).toBe("2 failed");
+	});
+
+	test("formats a pending count", () => {
+		expect(ciSummaryText({ conclusion: "pending", count: 3 })).toBe(
+			"3 running",
+		);
+	});
+
+	test("formats a success count", () => {
+		expect(ciSummaryText({ conclusion: "success", count: 5 })).toBe("5 passed");
+	});
+});
+
+describe("ciSummaryColor", () => {
+	test("returns an empty string for null", () => {
+		expect(ciSummaryColor(null)).toBe("");
+	});
+
+	test("returns muted RED for failure", () => {
+		expect(ciSummaryColor({ conclusion: "failure", count: 1 })).toBe(
+			C.RED_MUTED,
+		);
+	});
+
+	test("returns muted YELLOW for pending", () => {
+		expect(ciSummaryColor({ conclusion: "pending", count: 1 })).toBe(
+			C.YELLOW_MUTED,
+		);
+	});
+
+	test("returns muted GREEN for success", () => {
+		expect(ciSummaryColor({ conclusion: "success", count: 1 })).toBe(
+			C.GREEN_MUTED,
+		);
 	});
 });

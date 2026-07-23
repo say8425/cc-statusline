@@ -1,5 +1,13 @@
 import { C, getUsageColor } from "./colors.ts";
-import { formatNumber, formatResetDate, formatTime } from "./format/index.ts";
+import {
+	ciSummaryColor,
+	ciSummaryText,
+	formatNumber,
+	formatResetDate,
+	formatTime,
+	prStateColor,
+	prStateText,
+} from "./format/index.ts";
 import type { RenderContext } from "./types.ts";
 
 // 상태 라인 렌더링 (순수 함수 - 테스트 가능)
@@ -22,9 +30,25 @@ export const renderStatusLine = (ctx: RenderContext): string[] => {
 	let line1: string;
 	if (ctx.mainProjectName) {
 		// 워크트리: "📁 cc-statusline | 🌲 rosy-floating-thimble"
-		line1 = `${C.WHITE}📁 ${ctx.mainProjectName}${C.RESET} | ${C.WHITE}🌲 ${folder}${C.RESET}`;
+		const mainU = ctx.mainProjectUrl ? C.UNDERLINE : "";
+		const mainText = `${C.WHITE}📁 ${mainU}${ctx.mainProjectName}${C.RESET}`;
+		const mainSeg = ctx.mainProjectUrl
+			? `\x1b]8;;${ctx.mainProjectUrl}\x07${mainText}\x1b]8;;\x07`
+			: mainText;
+
+		const folderU = ctx.projectDirUrl ? C.UNDERLINE : "";
+		const folderText = `${C.WHITE}🌲 ${folderU}${folder}${C.RESET}`;
+		const folderSeg = ctx.projectDirUrl
+			? `\x1b]8;;${ctx.projectDirUrl}\x07${folderText}\x1b]8;;\x07`
+			: folderText;
+
+		line1 = `${mainSeg} | ${folderSeg}`;
 	} else {
-		line1 = `${C.WHITE}📁 ${folder}${C.RESET}`;
+		const folderU = ctx.projectDirUrl ? C.UNDERLINE : "";
+		const folderText = `${C.WHITE}📁 ${folderU}${folder}${C.RESET}`;
+		line1 = ctx.projectDirUrl
+			? `\x1b]8;;${ctx.projectDirUrl}\x07${folderText}\x1b]8;;\x07`
+			: folderText;
 	}
 	if (ctx.branch) {
 		line1 += ` | ${C.WHITE}🌿 ${ctx.branch}${C.RESET}`;
@@ -102,7 +126,7 @@ export const renderStatusLine = (ctx: RenderContext): string[] => {
 		ctx.gitChanges.files > 0 ||
 		ctx.gitChanges.insertions > 0 ||
 		ctx.gitChanges.deletions > 0;
-	if (hasGitChanges || ctx.baseChanges || ctx.prUrl) {
+	if (hasGitChanges || ctx.baseChanges || ctx.prInfo) {
 		let line4 = "";
 		if (hasGitChanges) {
 			// 클릭 가능할 때(diffViewerUrl 존재)는 밑줄로 표시 (PR 링크와 동일).
@@ -129,14 +153,24 @@ export const renderStatusLine = (ctx: RenderContext): string[] => {
 				? `\x1b]8;;${ctx.baseDiffViewerUrl}\x07${baseText}\x1b]8;;\x07`
 				: baseText;
 		}
-		if (ctx.prUrl) {
+		if (ctx.prInfo) {
+			const { url, state, isDraft, ciStatus } = ctx.prInfo;
 			// GitHub Enterprise 지원을 위해 정규식으로 도메인 제거
-			const prLabel = ctx.prUrl
+			const prLabel = url
 				.replace(/^https?:\/\/[^/]+\//, "")
 				.replace("/pull/", "#");
+			const stateText = prStateText(state, isDraft);
+			const stateColor = prStateColor(state, isDraft);
+			const ciText = ciSummaryText(ciStatus);
+			const ciColor = ciSummaryColor(ciStatus);
+			const ciSuffix = ciText ? `${ciColor}${C.UNDERLINE}(${ciText})` : "";
 			if (line4) line4 += " | ";
-			// OSC 8 하이퍼링크
-			line4 += `📎 ${C.WHITE}${C.UNDERLINE}\x1b]8;;${ctx.prUrl}\x07${prLabel}\x1b]8;;\x07${C.RESET}`;
+			// OSC 8 하이퍼링크 — 라벨 + 상태 + CI 요약 전체가 하나의 링크.
+			// [state]와 (ci) 사이에 RESET 없이 색상만 전환해 밑줄이 끊기지 않는다.
+			// CI 요약은 PR 상태와 무관하게(Merged/Closed 포함) 체크가 있으면 표시.
+			line4 +=
+				`📎 ${C.WHITE}${C.UNDERLINE}\x1b]8;;${url}\x07${prLabel} ` +
+				`${stateColor}${C.UNDERLINE}[${stateText}]${ciSuffix}${C.RESET}\x1b]8;;\x07`;
 		}
 		lines.push(line4);
 	}

@@ -3,7 +3,8 @@ import { CACHE_TTL, cache, resetCache } from "../cache.ts";
 import {
 	getBranchCached,
 	getGitChangesCached,
-	getPrUrlCached,
+	getMainProjectCached,
+	getPrInfoCached,
 } from "../git/index.ts";
 
 // 이 테스트들은 실제 git/gh 명령어를 실행합니다.
@@ -69,20 +70,54 @@ describe("async functions (integration)", () => {
 		});
 	});
 
-	describe("getPrUrlCached", () => {
-		test("returns PR URL or null", async () => {
-			const prUrl = await getPrUrlCached();
+	describe("getPrInfoCached", () => {
+		test("returns null or a PrInfo object", async () => {
+			const prInfo = await getPrInfoCached();
 
-			// Should be string (URL) or null
-			expect(prUrl === null || typeof prUrl === "string").toBe(true);
+			if (prInfo !== null) {
+				expect(typeof prInfo.url).toBe("string");
+				expect(["OPEN", "MERGED", "CLOSED"]).toContain(prInfo.state);
+				expect(typeof prInfo.isDraft).toBe("boolean");
+				if (prInfo.ciStatus !== null) {
+					expect(["success", "pending", "failure"]).toContain(
+						prInfo.ciStatus.conclusion,
+					);
+					expect(typeof prInfo.ciStatus.count).toBe("number");
+				}
+			} else {
+				expect(prInfo).toBeNull();
+			}
 		});
 
 		test("caches result on subsequent calls", async () => {
-			await getPrUrlCached();
-			const timestamp1 = cache.prUrl.timestamp;
+			await getPrInfoCached();
+			const timestamp1 = cache.prInfo.timestamp;
 
-			await getPrUrlCached();
-			const timestamp2 = cache.prUrl.timestamp;
+			await getPrInfoCached();
+			const timestamp2 = cache.prInfo.timestamp;
+
+			expect(timestamp1).toBe(timestamp2);
+		});
+	});
+
+	describe("getMainProjectCached", () => {
+		test("returns null or a {name, path} object", async () => {
+			const mainProject = await getMainProjectCached();
+
+			if (mainProject !== null) {
+				expect(typeof mainProject.name).toBe("string");
+				expect(typeof mainProject.path).toBe("string");
+			} else {
+				expect(mainProject).toBeNull();
+			}
+		});
+
+		test("caches result on subsequent calls", async () => {
+			await getMainProjectCached();
+			const timestamp1 = cache.mainProject.timestamp;
+
+			await getMainProjectCached();
+			const timestamp2 = cache.mainProject.timestamp;
 
 			expect(timestamp1).toBe(timestamp2);
 		});

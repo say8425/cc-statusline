@@ -69,8 +69,8 @@ Agrega lo siguiente a `~/.claude/settings.json`:
 
 | Emoji | Descripción                          |
 | ----- | ------------------------------------ |
-| 📁    | Nombre de la carpeta del proyecto    |
-| 🌲    | Nombre del worktree (en sesiones worktree) |
+| 📁    | Nombre de la carpeta del proyecto (haz clic para abrir el gestor de archivos) |
+| 🌲    | Nombre del worktree (haz clic para abrir la carpeta del worktree) |
 | 🌿    | Rama Git actual                      |
 | ⏱️    | Tiempo transcurrido de sesión        |
 | 💰    | Costo de sesión en USD               |
@@ -81,7 +81,7 @@ Agrega lo siguiente a `~/.claude/settings.json`:
 | ⏰    | Tiempo de reinicio semanal           |
 | 📅    | Utilización de 7 días %              |
 | ✏️    | Cambios sin confirmar (haz clic para abrir el visor de diff)                |
-| 📎    | Enlace de Pull Request               |
+| 📎    | Enlace de Pull Request — estado entre corchetes (`[Open]`/`[Draft]`/`[Merged]`/`[Closed]`) más un resumen de CI entre paréntesis (`(N passed)`/`(N running)`/`(N failed)`) cuando existen checks |
 
 ## Visor de Diff
 

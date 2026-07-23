@@ -69,8 +69,8 @@ Add the following to `~/.claude/settings.json`:
 
 | Emoji | Description              |
 | ----- | ------------------------ |
-| 📁    | Project folder name      |
-| 🌲    | Worktree name (shown in worktree sessions) |
+| 📁    | Project folder name (click to open in file manager) |
+| 🌲    | Worktree name (click to open worktree folder) |
 | 🌿    | Current Git branch       |
 | ⏱️    | Session elapsed time     |
 | 💰    | Session cost in USD      |
@@ -81,7 +81,7 @@ Add the following to `~/.claude/settings.json`:
 | ⏰    | Weekly limit reset time  |
 | 📅    | 7-day utilization %      |
 | ✏️    | Uncommitted changes (click to open diff viewer) |
-| 📎    | Pull request link        |
+| 📎    | Pull request link — color-coded state in brackets (`[Open]`/`[Draft]`/`[Merged]`/`[Closed]`) immediately followed by a color-coded CI check summary in parens (`(N passed)`/`(N running)`/`(N failed)`) when checks exist |
 
 ## Diff Viewer
 

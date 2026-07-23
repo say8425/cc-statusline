@@ -45,12 +45,28 @@ export interface ClaudeStatusInput {
 	rate_limits?: RateLimits;
 }
 
+export interface PrInfo {
+	url: string;
+	state: PrState;
+	isDraft: boolean;
+	ciStatus: CiSummary | null;
+}
+
+export type PrState = "OPEN" | "MERGED" | "CLOSED";
+
+export type CiConclusion = "success" | "pending" | "failure";
+
+export interface CiSummary {
+	conclusion: CiConclusion;
+	count: number;
+}
+
 // 렌더링 컨텍스트 타입 (테스트를 위한 의존성 주입)
 export interface RenderContext {
 	claudeJson: ClaudeStatusInput;
 	branch: string;
 	gitChanges: { files: number; insertions: number; deletions: number };
-	prUrl: string | null;
+	prInfo: PrInfo | null;
 	ultracode: boolean;
 	rateLimits: RateLimits | null;
 	mainProjectName: string | null;
@@ -62,4 +78,6 @@ export interface RenderContext {
 		deletions: number;
 	} | null;
 	baseDiffViewerUrl: string | null;
+	projectDirUrl: string | null;
+	mainProjectUrl: string | null;
 }

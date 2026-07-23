@@ -44,13 +44,15 @@ const createRenderContext = (
 		insertions: 0,
 		deletions: 0,
 	},
-	prUrl: overrides.prUrl ?? null,
+	prInfo: overrides.prInfo ?? null,
 	ultracode: overrides.ultracode ?? false,
 	rateLimits: overrides.rateLimits ?? null,
 	mainProjectName: overrides.mainProjectName ?? null,
 	diffViewerUrl: overrides.diffViewerUrl ?? null,
 	baseChanges: overrides.baseChanges ?? null,
 	baseDiffViewerUrl: overrides.baseDiffViewerUrl ?? null,
+	projectDirUrl: overrides.projectDirUrl ?? null,
+	mainProjectUrl: overrides.mainProjectUrl ?? null,
 });
 
 describe("renderStatusLine", () => {
@@ -151,6 +153,52 @@ describe("renderStatusLine", () => {
 
 			expect(lines[0]).toContain("my-project");
 			expect(lines[0]).not.toContain("(");
+		});
+
+		test("wraps 📁 in an OSC 8 link to projectDirUrl when mainProjectName is null", () => {
+			const ctx = createRenderContext({
+				mainProjectName: null,
+				projectDirUrl: "file:///Users/test/my-project",
+			});
+			const lines = renderStatusLine(ctx);
+
+			expect(lines[0]).toContain("\x1b]8;;file:///Users/test/my-project\x07");
+			expect(lines[0]).toContain("\x1b[4m"); // underline applied
+		});
+
+		test("renders 📁 as plain text when projectDirUrl is null", () => {
+			const ctx = createRenderContext({
+				mainProjectName: null,
+				projectDirUrl: null,
+			});
+			const lines = renderStatusLine(ctx);
+
+			expect(lines[0]).not.toContain("\x1b]8;;file://");
+		});
+
+		test("wraps 📁 in mainProjectUrl and 🌲 in projectDirUrl separately in worktree mode", () => {
+			const ctx = createRenderContext({
+				mainProjectName: "cc-statusline",
+				mainProjectUrl: "file:///Users/penguin/dev/cc-statusline",
+				projectDirUrl:
+					"file:///Users/penguin/dev/cc-statusline/.claude/worktrees/rosy-floating-thimble",
+				claudeJson: {
+					workspace: {
+						project_dir:
+							"/Users/penguin/dev/cc-statusline/.claude/worktrees/rosy-floating-thimble",
+						current_dir:
+							"/Users/penguin/dev/cc-statusline/.claude/worktrees/rosy-floating-thimble",
+					},
+				} as Partial<ClaudeStatusInput>,
+			});
+			const lines = renderStatusLine(ctx);
+
+			expect(lines[0]).toContain(
+				"\x1b]8;;file:///Users/penguin/dev/cc-statusline\x07",
+			);
+			expect(lines[0]).toContain(
+				"\x1b]8;;file:///Users/penguin/dev/cc-statusline/.claude/worktrees/rosy-floating-thimble\x07",
+			);
 		});
 	});
 
@@ -665,7 +713,7 @@ describe("renderStatusLine", () => {
 		test("omits git line when no changes", () => {
 			const ctx = createRenderContext({
 				gitChanges: { files: 0, insertions: 0, deletions: 0 },
-				prUrl: null,
+				prInfo: null,
 			});
 			const lines = renderStatusLine(ctx);
 
@@ -684,24 +732,35 @@ describe("renderStatusLine", () => {
 		});
 	});
 
-	describe("PR URL display", () => {
+	describe("PR display", () => {
 		test("shows PR URL with OSC 8 hyperlink", () => {
 			const ctx = createRenderContext({
-				prUrl: "https://github.com/owner/repo/pull/123",
+				prInfo: {
+					url: "https://github.com/owner/repo/pull/123",
+					state: "OPEN",
+					isDraft: false,
+					ciStatus: null,
+				},
 			});
 			const lines = renderStatusLine(ctx);
 
 			const lastLine = lines[lines.length - 1];
 			expect(lastLine).toContain("📎");
 			expect(lastLine).toContain("owner/repo#123");
+			expect(lastLine).toContain("[Open]");
 			expect(lastLine).toContain("\x1b]8;;"); // OSC 8 start
 			expect(lastLine).toContain("\x07"); // Bell character
 		});
 
-		test("combines git changes and PR URL", () => {
+		test("combines git changes and PR display", () => {
 			const ctx = createRenderContext({
 				gitChanges: { files: 2, insertions: 30, deletions: 10 },
-				prUrl: "https://github.com/owner/repo/pull/456",
+				prInfo: {
+					url: "https://github.com/owner/repo/pull/456",
+					state: "OPEN",
+					isDraft: false,
+					ciStatus: null,
+				},
 			});
 			const lines = renderStatusLine(ctx);
 
@@ -709,6 +768,143 @@ describe("renderStatusLine", () => {
 			expect(lastLine).toContain("✏️");
 			expect(lastLine).toContain("📎");
 			expect(lastLine).toContain(" | ");
+		});
+
+		test("shows a muted-green [Open] immediately followed by a muted-green (N passed), no space", () => {
+			const ctx = createRenderContext({
+				prInfo: {
+					url: "https://github.com/owner/repo/pull/1",
+					state: "OPEN",
+					isDraft: false,
+					ciStatus: { conclusion: "success", count: 5 },
+				},
+			});
+			const lastLine = renderStatusLine(ctx).at(-1) as string;
+
+			expect(lastLine).toContain("[Open]");
+			expect(lastLine).toContain("(5 passed)");
+			expect(lastLine).toContain(C.GREEN_MUTED);
+			expect(lastLine).not.toContain(C.GREEN);
+		});
+
+		test("shows a muted-yellow (N running) while checks are running", () => {
+			const ctx = createRenderContext({
+				prInfo: {
+					url: "https://github.com/owner/repo/pull/1",
+					state: "OPEN",
+					isDraft: false,
+					ciStatus: { conclusion: "pending", count: 3 },
+				},
+			});
+			const lastLine = renderStatusLine(ctx).at(-1) as string;
+
+			expect(lastLine).toContain("(3 running)");
+			expect(lastLine).toContain(C.YELLOW_MUTED);
+			expect(lastLine).not.toContain(C.YELLOW);
+		});
+
+		test("shows a muted-red (N failed) when checks fail", () => {
+			const ctx = createRenderContext({
+				prInfo: {
+					url: "https://github.com/owner/repo/pull/1",
+					state: "OPEN",
+					isDraft: false,
+					ciStatus: { conclusion: "failure", count: 2 },
+				},
+			});
+			const lastLine = renderStatusLine(ctx).at(-1) as string;
+
+			expect(lastLine).toContain("(2 failed)");
+			expect(lastLine).toContain(C.RED_MUTED);
+			expect(lastLine).not.toContain(C.RED);
+		});
+
+		test("shows white [Draft] with no CI suffix when there are no checks", () => {
+			const ctx = createRenderContext({
+				prInfo: {
+					url: "https://github.com/owner/repo/pull/1",
+					state: "OPEN",
+					isDraft: true,
+					ciStatus: null,
+				},
+			});
+			const lastLine = renderStatusLine(ctx).at(-1) as string;
+
+			expect(lastLine).toContain("[Draft]");
+			expect(lastLine).toContain(C.WHITE);
+			expect(lastLine).not.toContain("(");
+		});
+
+		test("shows muted-magenta [Merged] with the CI summary still shown", () => {
+			const ctx = createRenderContext({
+				prInfo: {
+					url: "https://github.com/owner/repo/pull/1",
+					state: "MERGED",
+					isDraft: false,
+					ciStatus: { conclusion: "success", count: 5 },
+				},
+			});
+			const lastLine = renderStatusLine(ctx).at(-1) as string;
+
+			expect(lastLine).toContain("[Merged]");
+			expect(lastLine).toContain("(5 passed)");
+			expect(lastLine).toContain(C.MAGENTA_MUTED);
+			expect(lastLine).not.toContain(C.MAGENTA);
+		});
+
+		test("shows red [Closed] with the last CI summary still shown", () => {
+			const ctx = createRenderContext({
+				prInfo: {
+					url: "https://github.com/owner/repo/pull/1",
+					state: "CLOSED",
+					isDraft: false,
+					ciStatus: { conclusion: "failure", count: 1 },
+				},
+			});
+			const lastLine = renderStatusLine(ctx).at(-1) as string;
+
+			expect(lastLine).toContain("[Closed]");
+			expect(lastLine).toContain("(1 failed)");
+		});
+
+		test("has no space between the state bracket and the CI parenthetical", () => {
+			const ctx = createRenderContext({
+				prInfo: {
+					url: "https://github.com/owner/repo/pull/1",
+					state: "OPEN",
+					isDraft: false,
+					ciStatus: { conclusion: "pending", count: 2 },
+				},
+			});
+			const lastLine = renderStatusLine(ctx).at(-1) as string;
+			// Strip ANSI color escapes (but not the OSC 8 hyperlink codes) so the
+			// visible text can be checked for a tight "]("  with no space.
+			// oxlint-disable-next-line no-control-regex -- \x1b is the ANSI escape we're intentionally matching
+			const visible = lastLine.replace(/\x1b\[[0-9;]*m/g, "");
+			expect(visible).toContain("[Open](2 running)");
+		});
+
+		test("underline is continuous across the state bracket and CI parenthetical", () => {
+			// Regression test: a prior version reset color/underline between
+			// `[state]` and `(ci summary)`, leaving an unstyled gap around the
+			// space between them. The whole segment after the emoji must now
+			// be one continuous underlined span with no C.RESET in the middle.
+			const ctx = createRenderContext({
+				prInfo: {
+					url: "https://github.com/owner/repo/pull/1",
+					state: "OPEN",
+					isDraft: false,
+					ciStatus: { conclusion: "success", count: 5 },
+				},
+			});
+			const lastLine = renderStatusLine(ctx).at(-1) as string;
+			const prSegment = lastLine.slice(lastLine.indexOf("📎"));
+
+			// No C.RESET ("\x1b[0m") appears before the final one that closes
+			// the segment — i.e. there is exactly one RESET, at the very end.
+			const resetCount = prSegment.split("\x1b[0m").length - 1;
+			expect(resetCount).toBe(1);
+			expect(prSegment.endsWith(`${C.RESET}\x1b]8;;\x07`)).toBe(true);
 		});
 	});
 
