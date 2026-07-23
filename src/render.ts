@@ -159,14 +159,14 @@ export const renderStatusLine = (ctx: RenderContext): string[] => {
 				.replace("/pull/", "#");
 			const stateText = prStateText(state, isDraft);
 			const ciText = ciSummaryText(ciStatus);
-			const ciSuffix = ciText ? ` (${ciText})` : "";
+			const badge = ciText ? `${stateText} - ${ciText}` : stateText;
 			if (line4) line4 += " | ";
 			// OSC 8 하이퍼링크 — 라벨 + 상태 + CI 요약 전체가 하나의 링크, 색상 없이
 			// 단일 밑줄 span으로 유지(끊김 없는 밑줄). CI 요약은 PR 상태와 무관하게
 			// (Merged/Closed 포함) 체크가 있으면 표시.
 			line4 +=
 				`📎 ${C.WHITE}${C.UNDERLINE}\x1b]8;;${url}\x07${prLabel} ` +
-				`[${stateText}]${ciSuffix}${C.RESET}\x1b]8;;\x07`;
+				`[${badge}]${C.RESET}\x1b]8;;\x07`;
 		}
 		lines.push(line4);
 	}

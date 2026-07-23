@@ -770,7 +770,7 @@ describe("renderStatusLine", () => {
 			expect(lastLine).toContain(" | ");
 		});
 
-		test("shows [Open] with a passed count, no color codes on the PR segment", () => {
+		test("shows a combined [State - N passed] badge, no color codes on the PR segment", () => {
 			const ctx = createRenderContext({
 				prInfo: {
 					url: "https://github.com/owner/repo/pull/1",
@@ -781,8 +781,7 @@ describe("renderStatusLine", () => {
 			});
 			const lastLine = renderStatusLine(ctx).at(-1) as string;
 
-			expect(lastLine).toContain("[Open]");
-			expect(lastLine).toContain("(5 passed)");
+			expect(lastLine).toContain("[Open - 5 passed]");
 			expect(lastLine).not.toContain(C.GREEN);
 			expect(lastLine).not.toContain(C.MAGENTA);
 			expect(lastLine).not.toContain(C.RED);
@@ -800,7 +799,7 @@ describe("renderStatusLine", () => {
 			});
 			const lastLine = renderStatusLine(ctx).at(-1) as string;
 
-			expect(lastLine).toContain("(3 running)");
+			expect(lastLine).toContain("[Open - 3 running]");
 			expect(lastLine).not.toContain(C.YELLOW);
 		});
 
@@ -815,11 +814,11 @@ describe("renderStatusLine", () => {
 			});
 			const lastLine = renderStatusLine(ctx).at(-1) as string;
 
-			expect(lastLine).toContain("(2 failed)");
+			expect(lastLine).toContain("[Open - 2 failed]");
 			expect(lastLine).not.toContain(C.RED);
 		});
 
-		test("shows [Draft] and no CI parenthetical when there are no checks", () => {
+		test("shows bare [Draft] with no dash/CI suffix when there are no checks", () => {
 			const ctx = createRenderContext({
 				prInfo: {
 					url: "https://github.com/owner/repo/pull/1",
@@ -831,10 +830,10 @@ describe("renderStatusLine", () => {
 			const lastLine = renderStatusLine(ctx).at(-1) as string;
 
 			expect(lastLine).toContain("[Draft]");
-			expect(lastLine).not.toContain("(");
+			expect(lastLine).not.toContain("-");
 		});
 
-		test("shows [Merged] with the CI summary still shown", () => {
+		test("shows [Merged - N passed] with the CI summary still shown", () => {
 			const ctx = createRenderContext({
 				prInfo: {
 					url: "https://github.com/owner/repo/pull/1",
@@ -845,11 +844,10 @@ describe("renderStatusLine", () => {
 			});
 			const lastLine = renderStatusLine(ctx).at(-1) as string;
 
-			expect(lastLine).toContain("[Merged]");
-			expect(lastLine).toContain("(5 passed)");
+			expect(lastLine).toContain("[Merged - 5 passed]");
 		});
 
-		test("shows [Closed] with the last CI summary still shown", () => {
+		test("shows [Closed - N failed] with the last CI summary still shown", () => {
 			const ctx = createRenderContext({
 				prInfo: {
 					url: "https://github.com/owner/repo/pull/1",
@@ -860,8 +858,7 @@ describe("renderStatusLine", () => {
 			});
 			const lastLine = renderStatusLine(ctx).at(-1) as string;
 
-			expect(lastLine).toContain("[Closed]");
-			expect(lastLine).toContain("(1 failed)");
+			expect(lastLine).toContain("[Closed - 1 failed]");
 		});
 
 		test("underline is continuous across the state bracket and CI parenthetical", () => {
