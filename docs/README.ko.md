@@ -81,7 +81,7 @@ Claude Code를 위한 커스텀 상태표시줄.
 | ⏰    | 주간 제한 리셋 시간    |
 | 📅    | 7일 사용률 %           |
 | ✏️    | 커밋되지 않은 변경사항 (클릭하면 diff 뷰어 열림) |
-| 📎    | Pull Request 링크, 대괄호로 표시되는 PR 상태(`[Open]`/`[Draft]`/`[Merged]`/`[Closed]`, 색상별)와 체크가 있을 때 괄호로 표시되는 CI 요약(`(N passed)`/`(N running)`/`(N failed)`, 색상별) |
+| 📎    | Pull Request 링크, 대괄호로 표시되는 PR 상태(`[Open]`/`[Draft]`/`[Merged]`/`[Closed]`)와 체크가 있을 때 괄호로 표시되는 CI 요약(`(N passed)`/`(N running)`/`(N failed)`) |
 
 ## Diff 뷰어
 
@@ -145,21 +145,6 @@ Claude Code가 stdin JSON 입력으로 `rate_limits`를 전달합니다 (CLI 2.1
 | ------------- | ----------- | ------------- | ------------- |
 | 컨텍스트 %    | < 50%       | 50-80%        | > 80%         |
 | 블록 사용량 % | < 50%       | 50-80%        | > 80%         |
-
-## PR 및 CI 색상
-
-| PR 상태 | 색상   |
-| -------- | ------ |
-| Open     | 녹색   |
-| Draft    | 흰색   |
-| Merged   | 마젠타 |
-| Closed   | 빨간색 |
-
-| CI 요약   | 색상   |
-| --------- | ------ |
-| N passed  | 녹색   |
-| N running | 노란색 |
-| N failed  | 빨간색 |
 
 ## 라이선스
 

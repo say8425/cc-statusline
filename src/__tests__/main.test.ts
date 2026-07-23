@@ -770,7 +770,7 @@ describe("renderStatusLine", () => {
 			expect(lastLine).toContain(" | ");
 		});
 
-		test("shows green [Open] with a passed count when CI succeeds", () => {
+		test("shows [Open] with a passed count, no color codes on the PR segment", () => {
 			const ctx = createRenderContext({
 				prInfo: {
 					url: "https://github.com/owner/repo/pull/1",
@@ -781,12 +781,15 @@ describe("renderStatusLine", () => {
 			});
 			const lastLine = renderStatusLine(ctx).at(-1) as string;
 
-			expect(lastLine).toContain(C.GREEN);
 			expect(lastLine).toContain("[Open]");
 			expect(lastLine).toContain("(5 passed)");
+			expect(lastLine).not.toContain(C.GREEN);
+			expect(lastLine).not.toContain(C.MAGENTA);
+			expect(lastLine).not.toContain(C.RED);
+			expect(lastLine).not.toContain(C.YELLOW);
 		});
 
-		test("shows a running count in yellow while checks are running", () => {
+		test("shows a running count with no color codes", () => {
 			const ctx = createRenderContext({
 				prInfo: {
 					url: "https://github.com/owner/repo/pull/1",
@@ -797,11 +800,11 @@ describe("renderStatusLine", () => {
 			});
 			const lastLine = renderStatusLine(ctx).at(-1) as string;
 
-			expect(lastLine).toContain(C.YELLOW);
 			expect(lastLine).toContain("(3 running)");
+			expect(lastLine).not.toContain(C.YELLOW);
 		});
 
-		test("shows a failed count in red when checks fail", () => {
+		test("shows a failed count with no color codes", () => {
 			const ctx = createRenderContext({
 				prInfo: {
 					url: "https://github.com/owner/repo/pull/1",
@@ -812,11 +815,11 @@ describe("renderStatusLine", () => {
 			});
 			const lastLine = renderStatusLine(ctx).at(-1) as string;
 
-			expect(lastLine).toContain(C.RED);
 			expect(lastLine).toContain("(2 failed)");
+			expect(lastLine).not.toContain(C.RED);
 		});
 
-		test("shows white [Draft] and no CI parenthetical when there are no checks", () => {
+		test("shows [Draft] and no CI parenthetical when there are no checks", () => {
 			const ctx = createRenderContext({
 				prInfo: {
 					url: "https://github.com/owner/repo/pull/1",
@@ -827,12 +830,11 @@ describe("renderStatusLine", () => {
 			});
 			const lastLine = renderStatusLine(ctx).at(-1) as string;
 
-			expect(lastLine).toContain(C.WHITE);
 			expect(lastLine).toContain("[Draft]");
 			expect(lastLine).not.toContain("(");
 		});
 
-		test("shows magenta [Merged] with the CI summary still shown", () => {
+		test("shows [Merged] with the CI summary still shown", () => {
 			const ctx = createRenderContext({
 				prInfo: {
 					url: "https://github.com/owner/repo/pull/1",
@@ -843,12 +845,11 @@ describe("renderStatusLine", () => {
 			});
 			const lastLine = renderStatusLine(ctx).at(-1) as string;
 
-			expect(lastLine).toContain(C.MAGENTA);
 			expect(lastLine).toContain("[Merged]");
 			expect(lastLine).toContain("(5 passed)");
 		});
 
-		test("shows red [Closed] with the last CI summary still shown", () => {
+		test("shows [Closed] with the last CI summary still shown", () => {
 			const ctx = createRenderContext({
 				prInfo: {
 					url: "https://github.com/owner/repo/pull/1",
@@ -859,9 +860,31 @@ describe("renderStatusLine", () => {
 			});
 			const lastLine = renderStatusLine(ctx).at(-1) as string;
 
-			expect(lastLine).toContain(C.RED);
 			expect(lastLine).toContain("[Closed]");
 			expect(lastLine).toContain("(1 failed)");
+		});
+
+		test("underline is continuous across the state bracket and CI parenthetical", () => {
+			// Regression test: a prior version reset color/underline between
+			// `[state]` and `(ci summary)`, leaving an unstyled gap around the
+			// space between them. The whole segment after the emoji must now
+			// be one continuous underlined span with no C.RESET in the middle.
+			const ctx = createRenderContext({
+				prInfo: {
+					url: "https://github.com/owner/repo/pull/1",
+					state: "OPEN",
+					isDraft: false,
+					ciStatus: { conclusion: "success", count: 5 },
+				},
+			});
+			const lastLine = renderStatusLine(ctx).at(-1) as string;
+			const prSegment = lastLine.slice(lastLine.indexOf("📎"));
+
+			// No C.RESET ("\x1b[0m") appears before the final one that closes
+			// the segment — i.e. there is exactly one RESET, at the very end.
+			const resetCount = prSegment.split("\x1b[0m").length - 1;
+			expect(resetCount).toBe(1);
+			expect(prSegment.endsWith(`${C.RESET}\x1b]8;;\x07`)).toBe(true);
 		});
 	});
 

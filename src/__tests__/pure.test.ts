@@ -1,13 +1,11 @@
 import { afterEach, describe, expect, setSystemTime, test } from "bun:test";
 import { C, getUsageColor } from "../colors.ts";
 import {
-	ciSummaryColor,
 	ciSummaryText,
 	formatNumber,
 	formatResetDate,
 	formatTime,
 	getTimeUntilReset,
-	prStateColor,
 	prStateText,
 	toFileUrl,
 } from "../format/index.ts";
@@ -204,32 +202,6 @@ describe("prStateText", () => {
 	});
 });
 
-describe("prStateColor", () => {
-	test("returns GREEN for a non-draft open PR", () => {
-		expect(prStateColor("OPEN", false)).toBe(C.GREEN);
-	});
-
-	test("returns WHITE for a draft open PR", () => {
-		expect(prStateColor("OPEN", true)).toBe(C.WHITE);
-	});
-
-	test("returns MAGENTA for a merged PR", () => {
-		expect(prStateColor("MERGED", false)).toBe(C.MAGENTA);
-	});
-
-	test("returns RED for a closed PR", () => {
-		expect(prStateColor("CLOSED", false)).toBe(C.RED);
-	});
-
-	test("returns WHITE even when state is MERGED (draft always wins)", () => {
-		expect(prStateColor("MERGED", true)).toBe(C.WHITE);
-	});
-
-	test("returns WHITE even when state is CLOSED (draft always wins)", () => {
-		expect(prStateColor("CLOSED", true)).toBe(C.WHITE);
-	});
-});
-
 describe("ciSummaryText", () => {
 	test("returns an empty string for null", () => {
 		expect(ciSummaryText(null)).toBe("");
@@ -247,23 +219,5 @@ describe("ciSummaryText", () => {
 
 	test("formats a success count", () => {
 		expect(ciSummaryText({ conclusion: "success", count: 5 })).toBe("5 passed");
-	});
-});
-
-describe("ciSummaryColor", () => {
-	test("returns an empty string for null", () => {
-		expect(ciSummaryColor(null)).toBe("");
-	});
-
-	test("returns RED for failure", () => {
-		expect(ciSummaryColor({ conclusion: "failure", count: 1 })).toBe(C.RED);
-	});
-
-	test("returns YELLOW for pending", () => {
-		expect(ciSummaryColor({ conclusion: "pending", count: 1 })).toBe(C.YELLOW);
-	});
-
-	test("returns GREEN for success", () => {
-		expect(ciSummaryColor({ conclusion: "success", count: 1 })).toBe(C.GREEN);
 	});
 });
