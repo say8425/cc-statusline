@@ -8,6 +8,12 @@ export const C = {
 	RED: "\x1b[38;2;255;100;100m",
 	BLUE: "\x1b[38;2;100;150;255m",
 	WHITE: "\x1b[38;2;200;200;200m",
+	// 채도 낮춘 버전 — PR 배지([Open](3 running) 등) 전용, 다른 세그먼트(✏️, 사용량
+	// 임계치)의 선명한 색상에는 영향 없음
+	GREEN_MUTED: "\x1b[38;2;140;195;140m",
+	YELLOW_MUTED: "\x1b[38;2;210;185;130m",
+	RED_MUTED: "\x1b[38;2;210;130;130m",
+	MAGENTA_MUTED: "\x1b[38;2;195;140;175m",
 	UNDERLINE: "\x1b[4m",
 };
 

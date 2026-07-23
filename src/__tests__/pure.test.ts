@@ -205,20 +205,20 @@ describe("prStateText", () => {
 });
 
 describe("prStateColor", () => {
-	test("returns GREEN for a non-draft open PR", () => {
-		expect(prStateColor("OPEN", false)).toBe(C.GREEN);
+	test("returns muted GREEN for a non-draft open PR", () => {
+		expect(prStateColor("OPEN", false)).toBe(C.GREEN_MUTED);
 	});
 
 	test("returns WHITE for a draft open PR", () => {
 		expect(prStateColor("OPEN", true)).toBe(C.WHITE);
 	});
 
-	test("returns MAGENTA for a merged PR", () => {
-		expect(prStateColor("MERGED", false)).toBe(C.MAGENTA);
+	test("returns muted MAGENTA for a merged PR", () => {
+		expect(prStateColor("MERGED", false)).toBe(C.MAGENTA_MUTED);
 	});
 
-	test("returns RED for a closed PR", () => {
-		expect(prStateColor("CLOSED", false)).toBe(C.RED);
+	test("returns muted RED for a closed PR", () => {
+		expect(prStateColor("CLOSED", false)).toBe(C.RED_MUTED);
 	});
 });
 
@@ -247,15 +247,21 @@ describe("ciSummaryColor", () => {
 		expect(ciSummaryColor(null)).toBe("");
 	});
 
-	test("returns RED for failure", () => {
-		expect(ciSummaryColor({ conclusion: "failure", count: 1 })).toBe(C.RED);
+	test("returns muted RED for failure", () => {
+		expect(ciSummaryColor({ conclusion: "failure", count: 1 })).toBe(
+			C.RED_MUTED,
+		);
 	});
 
-	test("returns YELLOW for pending", () => {
-		expect(ciSummaryColor({ conclusion: "pending", count: 1 })).toBe(C.YELLOW);
+	test("returns muted YELLOW for pending", () => {
+		expect(ciSummaryColor({ conclusion: "pending", count: 1 })).toBe(
+			C.YELLOW_MUTED,
+		);
 	});
 
-	test("returns GREEN for success", () => {
-		expect(ciSummaryColor({ conclusion: "success", count: 1 })).toBe(C.GREEN);
+	test("returns muted GREEN for success", () => {
+		expect(ciSummaryColor({ conclusion: "success", count: 1 })).toBe(
+			C.GREEN_MUTED,
+		);
 	});
 });

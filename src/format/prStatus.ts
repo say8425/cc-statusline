@@ -10,9 +10,9 @@ export const prStateText = (state: PrState, isDraft: boolean): string => {
 
 export const prStateColor = (state: PrState, isDraft: boolean): string => {
 	if (isDraft) return C.WHITE;
-	if (state === "OPEN") return C.GREEN;
-	if (state === "MERGED") return C.MAGENTA;
-	return C.RED;
+	if (state === "OPEN") return C.GREEN_MUTED;
+	if (state === "MERGED") return C.MAGENTA_MUTED;
+	return C.RED_MUTED;
 };
 
 export const ciSummaryText = (ci: CiSummary | null): string => {
@@ -24,7 +24,7 @@ export const ciSummaryText = (ci: CiSummary | null): string => {
 
 export const ciSummaryColor = (ci: CiSummary | null): string => {
 	if (ci === null) return "";
-	if (ci.conclusion === "failure") return C.RED;
-	if (ci.conclusion === "pending") return C.YELLOW;
-	return C.GREEN;
+	if (ci.conclusion === "failure") return C.RED_MUTED;
+	if (ci.conclusion === "pending") return C.YELLOW_MUTED;
+	return C.GREEN_MUTED;
 };

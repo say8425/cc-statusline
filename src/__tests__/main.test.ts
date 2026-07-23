@@ -770,7 +770,7 @@ describe("renderStatusLine", () => {
 			expect(lastLine).toContain(" | ");
 		});
 
-		test("shows a green [Open] immediately followed by a green (N passed), no space", () => {
+		test("shows a muted-green [Open] immediately followed by a muted-green (N passed), no space", () => {
 			const ctx = createRenderContext({
 				prInfo: {
 					url: "https://github.com/owner/repo/pull/1",
@@ -783,10 +783,11 @@ describe("renderStatusLine", () => {
 
 			expect(lastLine).toContain("[Open]");
 			expect(lastLine).toContain("(5 passed)");
-			expect(lastLine).toContain(C.GREEN);
+			expect(lastLine).toContain(C.GREEN_MUTED);
+			expect(lastLine).not.toContain(C.GREEN);
 		});
 
-		test("shows a yellow (N running) while checks are running", () => {
+		test("shows a muted-yellow (N running) while checks are running", () => {
 			const ctx = createRenderContext({
 				prInfo: {
 					url: "https://github.com/owner/repo/pull/1",
@@ -798,10 +799,11 @@ describe("renderStatusLine", () => {
 			const lastLine = renderStatusLine(ctx).at(-1) as string;
 
 			expect(lastLine).toContain("(3 running)");
-			expect(lastLine).toContain(C.YELLOW);
+			expect(lastLine).toContain(C.YELLOW_MUTED);
+			expect(lastLine).not.toContain(C.YELLOW);
 		});
 
-		test("shows a red (N failed) when checks fail", () => {
+		test("shows a muted-red (N failed) when checks fail", () => {
 			const ctx = createRenderContext({
 				prInfo: {
 					url: "https://github.com/owner/repo/pull/1",
@@ -813,7 +815,8 @@ describe("renderStatusLine", () => {
 			const lastLine = renderStatusLine(ctx).at(-1) as string;
 
 			expect(lastLine).toContain("(2 failed)");
-			expect(lastLine).toContain(C.RED);
+			expect(lastLine).toContain(C.RED_MUTED);
+			expect(lastLine).not.toContain(C.RED);
 		});
 
 		test("shows white [Draft] with no CI suffix when there are no checks", () => {
@@ -832,7 +835,7 @@ describe("renderStatusLine", () => {
 			expect(lastLine).not.toContain("(");
 		});
 
-		test("shows magenta [Merged] with the CI summary still shown", () => {
+		test("shows muted-magenta [Merged] with the CI summary still shown", () => {
 			const ctx = createRenderContext({
 				prInfo: {
 					url: "https://github.com/owner/repo/pull/1",
@@ -845,7 +848,8 @@ describe("renderStatusLine", () => {
 
 			expect(lastLine).toContain("[Merged]");
 			expect(lastLine).toContain("(5 passed)");
-			expect(lastLine).toContain(C.MAGENTA);
+			expect(lastLine).toContain(C.MAGENTA_MUTED);
+			expect(lastLine).not.toContain(C.MAGENTA);
 		});
 
 		test("shows red [Closed] with the last CI summary still shown", () => {
