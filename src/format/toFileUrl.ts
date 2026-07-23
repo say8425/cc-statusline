@@ -7,6 +7,19 @@ export const toFileUrl = (absolutePath: string): string => {
 	try {
 		return `file://${encodeURI(withLeadingSlash)}`;
 	} catch {
-		return `file://${withLeadingSlash}`;
+		// encodeURI throws on an unpaired UTF-16 surrogate. Encode
+		// character-by-character so control chars still get escaped and a
+		// lone surrogate can't smuggle a raw byte into the OSC 8 sequence
+		// this URL gets embedded in.
+		const safe = Array.from(withLeadingSlash)
+			.map((ch) => {
+				try {
+					return encodeURI(ch);
+				} catch {
+					return "%EF%BF%BD"; // U+FFFD replacement character
+				}
+			})
+			.join("");
+		return `file://${safe}`;
 	}
 };

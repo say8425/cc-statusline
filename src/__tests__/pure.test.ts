@@ -161,7 +161,19 @@ describe("toFileUrl", () => {
 	test("does not throw for a path containing an unpaired surrogate", () => {
 		const path = "/Users/test/\uD800-weird";
 		expect(() => toFileUrl(path)).not.toThrow();
-		expect(toFileUrl(path)).toBe(`file://${path}`);
+		expect(toFileUrl(path)).toBe("file:///Users/test/%EF%BF%BD-weird");
+	});
+
+	test("escapes control characters even when the fallback path is taken", () => {
+		// Regression test for a terminal-escape-injection finding: when
+		// encodeURI throws (unpaired surrogate), the fallback must still
+		// percent-encode any raw BEL/ESC bytes in the path, or they could
+		// break out of the OSC 8 hyperlink this URL gets embedded in.
+		const path = "/foo\uD800\x07\x1b bar";
+		const result = toFileUrl(path);
+		expect(result).not.toContain("\x07");
+		expect(result).not.toContain("\x1b");
+		expect(result).toBe("file:///foo%EF%BF%BD%07%1B%20bar");
 	});
 });
 
