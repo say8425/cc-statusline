@@ -770,7 +770,7 @@ describe("renderStatusLine", () => {
 			expect(lastLine).toContain(" | ");
 		});
 
-		test("shows a combined [State - N passed] badge, no color codes on the PR segment", () => {
+		test("shows a green [Open] immediately followed by a green (N passed), no space", () => {
 			const ctx = createRenderContext({
 				prInfo: {
 					url: "https://github.com/owner/repo/pull/1",
@@ -781,14 +781,12 @@ describe("renderStatusLine", () => {
 			});
 			const lastLine = renderStatusLine(ctx).at(-1) as string;
 
-			expect(lastLine).toContain("[Open - 5 passed]");
-			expect(lastLine).not.toContain(C.GREEN);
-			expect(lastLine).not.toContain(C.MAGENTA);
-			expect(lastLine).not.toContain(C.RED);
-			expect(lastLine).not.toContain(C.YELLOW);
+			expect(lastLine).toContain("[Open]");
+			expect(lastLine).toContain("(5 passed)");
+			expect(lastLine).toContain(C.GREEN);
 		});
 
-		test("shows a running count with no color codes", () => {
+		test("shows a yellow (N running) while checks are running", () => {
 			const ctx = createRenderContext({
 				prInfo: {
 					url: "https://github.com/owner/repo/pull/1",
@@ -799,11 +797,11 @@ describe("renderStatusLine", () => {
 			});
 			const lastLine = renderStatusLine(ctx).at(-1) as string;
 
-			expect(lastLine).toContain("[Open - 3 running]");
-			expect(lastLine).not.toContain(C.YELLOW);
+			expect(lastLine).toContain("(3 running)");
+			expect(lastLine).toContain(C.YELLOW);
 		});
 
-		test("shows a failed count with no color codes", () => {
+		test("shows a red (N failed) when checks fail", () => {
 			const ctx = createRenderContext({
 				prInfo: {
 					url: "https://github.com/owner/repo/pull/1",
@@ -814,11 +812,11 @@ describe("renderStatusLine", () => {
 			});
 			const lastLine = renderStatusLine(ctx).at(-1) as string;
 
-			expect(lastLine).toContain("[Open - 2 failed]");
-			expect(lastLine).not.toContain(C.RED);
+			expect(lastLine).toContain("(2 failed)");
+			expect(lastLine).toContain(C.RED);
 		});
 
-		test("shows bare [Draft] with no dash/CI suffix when there are no checks", () => {
+		test("shows white [Draft] with no CI suffix when there are no checks", () => {
 			const ctx = createRenderContext({
 				prInfo: {
 					url: "https://github.com/owner/repo/pull/1",
@@ -830,10 +828,11 @@ describe("renderStatusLine", () => {
 			const lastLine = renderStatusLine(ctx).at(-1) as string;
 
 			expect(lastLine).toContain("[Draft]");
-			expect(lastLine).not.toContain("-");
+			expect(lastLine).toContain(C.WHITE);
+			expect(lastLine).not.toContain("(");
 		});
 
-		test("shows [Merged - N passed] with the CI summary still shown", () => {
+		test("shows magenta [Merged] with the CI summary still shown", () => {
 			const ctx = createRenderContext({
 				prInfo: {
 					url: "https://github.com/owner/repo/pull/1",
@@ -844,10 +843,12 @@ describe("renderStatusLine", () => {
 			});
 			const lastLine = renderStatusLine(ctx).at(-1) as string;
 
-			expect(lastLine).toContain("[Merged - 5 passed]");
+			expect(lastLine).toContain("[Merged]");
+			expect(lastLine).toContain("(5 passed)");
+			expect(lastLine).toContain(C.MAGENTA);
 		});
 
-		test("shows [Closed - N failed] with the last CI summary still shown", () => {
+		test("shows red [Closed] with the last CI summary still shown", () => {
 			const ctx = createRenderContext({
 				prInfo: {
 					url: "https://github.com/owner/repo/pull/1",
@@ -858,7 +859,25 @@ describe("renderStatusLine", () => {
 			});
 			const lastLine = renderStatusLine(ctx).at(-1) as string;
 
-			expect(lastLine).toContain("[Closed - 1 failed]");
+			expect(lastLine).toContain("[Closed]");
+			expect(lastLine).toContain("(1 failed)");
+		});
+
+		test("has no space between the state bracket and the CI parenthetical", () => {
+			const ctx = createRenderContext({
+				prInfo: {
+					url: "https://github.com/owner/repo/pull/1",
+					state: "OPEN",
+					isDraft: false,
+					ciStatus: { conclusion: "pending", count: 2 },
+				},
+			});
+			const lastLine = renderStatusLine(ctx).at(-1) as string;
+			// Strip ANSI color escapes (but not the OSC 8 hyperlink codes) so the
+			// visible text can be checked for a tight "]("  with no space.
+			// oxlint-disable-next-line no-control-regex -- \x1b is the ANSI escape we're intentionally matching
+			const visible = lastLine.replace(/\x1b\[[0-9;]*m/g, "");
+			expect(visible).toContain("[Open](2 running)");
 		});
 
 		test("underline is continuous across the state bracket and CI parenthetical", () => {
