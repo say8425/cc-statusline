@@ -88,7 +88,7 @@ Claude Code 기본 statusbar에 다음 정보를 추가로 표시:
 - Git diff 통계 (파일 수, +insertions, -deletions)
 - 클릭 가능한 diff 뷰어: `✏️` 클릭 시 로컬 diff 뷰어를 브라우저로 표시. 뷰어 자체(파일트리, working/vs-base 모드 전환 UI, watch 자동 갱신, 파일 폴딩, 이미지 diff, in-app 검색 등)는 별도 패키지 **[`@say8425/diffdeck`](https://github.com/say8425/diffdeck)**(runtime dependency)가 제공 — cc-statusline은 그 데몬을 spawn-if-not-running으로 띄우고 링크만 구성한다. 뷰어 기능 상세는 diffdeck 저장소 문서 참고
 - 클릭 가능한 폴더 링크: `📁`(및 워크트리 세션의 `🌲`)를 클릭하면 OS 기본 파일 관리자(Finder/Explorer/xdg-open 대상)에서 해당 폴더가 열림 — `file://` OSC 8 하이퍼링크, `src/format/toFileUrl.ts`. GUI 없는 headless 리눅스 세션은 열어줄 파일 관리자가 없어 지원 범위 밖.
-- PR 상태 배지: `📎` 라벨 옆에 `[Open]`/`[Draft]`/`[Merged]`/`[Closed]` 상태와 CI 체크 집계를 `(N passed)`/`(N running)`/`(N failed)` 텍스트로 표시(색상 없이 단일 밑줄 span, PR 상태와 무관하게 체크가 있으면 항상 표시). `gh pr view --json url,state,isDraft,statusCheckRollup`, 집계 로직은 `src/git/ciStatus.ts`
+- PR 상태 배지: `📎` 라벨 옆에 `[Open]`/`[Draft]`/`[Merged]`/`[Closed]` 상태(색상별: 녹색/흰색/보라/빨강)와 CI 체크 집계를 `(N passed)`/`(N running)`/`(N failed)` 텍스트(색상별: 녹색/노랑/빨강)로 표시 — 상태와 CI 요약 사이 공백 없이 붙여 쓰고(`[Open](3 running)`) 색상 전환 시 RESET 없이 밑줄만 연속 유지, PR 상태와 무관하게 체크가 있으면 항상 표시. `gh pr view --json url,state,isDraft,statusCheckRollup`, 집계 로직은 `src/git/ciStatus.ts`
 - diff 뷰어 모드: `Working tree`(HEAD 대비) / `vs <base>`(PR 타겟 또는 기본 브랜치 대비) — base는 cc-statusline의 `src/git/baseRef.ts`(resolveBaseRef)가 `gh pr view`→`origin/HEAD`→main/master 순으로 결정해 뷰어에 전달
 - `✏️` 진입점 유지: working 변경이 없어도 브랜치가 base보다 앞서면 `✏️ vs <base> N files +X -Y`로 표시되고 클릭 시 뷰어가 base 모드로 열림 — 진입점 트리거는 `repo && (hasChanges || baseChanges)`(`src/index.ts`)
 - PR URL (클릭 가능한 OSC 8 하이퍼링크)
