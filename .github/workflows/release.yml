@@ -21,7 +21,7 @@ jobs:
       # GITHUB_TOKEN does not re-trigger this workflow, so an auto-merged release
       # PR would silently never publish. (Every release here has in fact been
       # merged by hand; the removed `gh pr merge --auto` was a latent footgun.)
-      - uses: googleapis/release-please-action@v4
+      - uses: googleapis/release-please-action@v5
         id: release
         with:
           release-type: node
@@ -39,18 +39,18 @@ jobs:
       contents: read
       id-token: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           ref: ${{ needs.release-please.outputs.tag_name }}
       - uses: oven-sh/setup-bun@v2
-      # Node 24 + a recent npm: tokenless OIDC trusted publishing needs
-      # npm >= 11.5.1, and `npm install -g npm@latest` (now npm 12, which
-      # requires Node >= 22) fails on the old Node 20 with EBADENGINE.
-      - uses: actions/setup-node@v4
+      # Tokenless OIDC trusted publishing needs npm >= 11.5.1; Node 24's
+      # bundled npm already satisfies that, so no global npm upgrade step.
+      # setup-node v7 exports NODE_AUTH_TOKEN only when explicitly provided —
+      # npm >= 11 tolerates the unresolved ${NODE_AUTH_TOKEN} .npmrc reference.
+      - uses: actions/setup-node@v7
         with:
           node-version: '24'
           registry-url: 'https://registry.npmjs.org'
-      - run: npm install -g npm@latest
       - run: bun install
       - run: bun run build
       - run: npm publish --provenance --access public

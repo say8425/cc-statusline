@@ -19,7 +19,9 @@ cc-statusline/
 │   │   ├── formatNumber.ts         # formatNumber
 │   │   ├── formatResetDate.ts      # formatResetDate
 │   │   ├── formatTime.ts           # formatTime
-│   │   └── getTimeUntilReset.ts    # getTimeUntilReset
+│   │   ├── getTimeUntilReset.ts    # getTimeUntilReset
+│   │   ├── prStatus.ts             # prStateText/prStateColor/ciSummaryText/ciSummaryColor (📎 상태·CI 배지)
+│   │   └── toFileUrl.ts            # toFileUrl (📁/🌲 클릭용 file:// OSC 8 링크)
 │   ├── git/
 │   │   ├── index.ts                # barrel re-export
 │   │   ├── branch.ts               # getBranchCached
@@ -27,7 +29,8 @@ cc-statusline/
 │   │   ├── shortstat.ts            # parseShortstat (git --shortstat 출력 파싱)
 │   │   ├── baseChanges.ts          # getBaseChangesCached (✏️ vs base 진입점 유지용)
 │   │   ├── baseRef.ts              # resolveBaseRef (PR 타겟/기본 브랜치 결정)
-│   │   ├── pr.ts                   # getPrUrlCached
+│   │   ├── ciStatus.ts             # aggregateCiStatus (statusCheckRollup 집계)
+│   │   ├── pr.ts                   # getPrInfoCached (PR URL·상태·CI 롤업)
 │   │   └── worktree.ts             # getMainProjectNameCached
 │   ├── diff-server/
 │   │   ├── config.ts               # getCacheDir, getDiffdeckCacheDir, resolveDiffPort, isDiffViewerDisabled
@@ -45,10 +48,13 @@ cc-statusline/
 │       ├── shortstat.test.ts       # parseShortstat 테스트
 │       ├── base-changes.test.ts    # getBaseChangesCached 테스트
 │       ├── base-ref.test.ts        # resolveBaseRef 테스트
+│       ├── ci-status.test.ts       # aggregateCiStatus 테스트
 │       ├── diff-config.test.ts     # diff-server/config 테스트
 │       ├── diff-token.test.ts      # diff-server/token 테스트
 │       ├── diff-ensure.test.ts     # diff-server/ensure 테스트
-│       └── diff-link.test.ts       # diff-server/link 테스트
+│       ├── diff-link.test.ts       # diff-server/link 테스트
+│       └── diff-contract.test.ts   # 실제 설치된 diffdeck와의 데몬 계약(핑 헤더·토큰 경로) 테스트
+├── build.ts           # src/index.ts → dist/index.js 번들 스크립트
 ├── .oxlintrc.json     # oxlint 설정 (rule 구성, type-aware 포함)
 ├── .oxfmtrc.json      # oxfmt 설정 (탭 인덴트, 더블쿼트 — biome에서 이관)
 ├── bunfig.toml        # Bun 테스트 설정
@@ -163,6 +169,12 @@ bun test --coverage
 - `async.test.ts`: 비동기 함수 통합 테스트 (실제 git/gh 호출)
 - `integration.test.ts`: main 함수 E2E 테스트
 - `stdin.test.ts`: stdin 읽기 테스트
+- `ultracode.test.ts`: ultracode settings 경로·우선순위·캐시
+- `shortstat.test.ts`: parseShortstat
+- `base-changes.test.ts` / `base-ref.test.ts`: vs-base 진입점 유지·base 결정
+- `ci-status.test.ts`: aggregateCiStatus (PR 체크 집계)
+- `diff-config/token/ensure/link.test.ts`: diff-server 모듈별 테스트
+- `diff-contract.test.ts`: 실제 설치된 diffdeck 데몬과의 계약(핑 헤더·토큰 경로) 검증
 
 **커버리지**: 함수 98%+, 라인 94%+ (diff-server 데몬 spawn/에러 경로 등 일부 브랜치 제외)
 
