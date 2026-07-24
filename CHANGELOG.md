@@ -1,5 +1,17 @@
 # Changelog
 
+## [4.1.0](https://github.com/say8425/cc-statusline/compare/v4.0.0...v4.1.0) (2026-07-24)
+
+
+### Features
+
+* clickable folder links + PR status/CI badge ([8da01a4](https://github.com/say8425/cc-statusline/commit/8da01a42ed1b020526d624bcd5753ce4e3fc5d8d))
+
+
+### Bug Fixes
+
+* **deps:** repo audit — update deps to current, sync docs, align CI ([#61](https://github.com/say8425/cc-statusline/issues/61)) ([e08a099](https://github.com/say8425/cc-statusline/commit/e08a099ef56ffb474e4cf88457ae9b16974a3789))
+
 ## [4.0.0](https://github.com/say8425/cc-statusline/compare/v3.2.0...v4.0.0) (2026-07-20)
 
 
