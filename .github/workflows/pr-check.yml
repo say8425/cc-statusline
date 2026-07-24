@@ -20,8 +20,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: oven-sh/setup-bun@v2
-      - run: bun install
-      - run: bun run tsc --noEmit
+      - run: bun install --frozen-lockfile
+      - run: bun run typecheck
 
   test:
     runs-on: ubuntu-latest
