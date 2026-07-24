@@ -98,7 +98,7 @@ Haz clic en `✏️` en el statusline para abrir un visor de diff local en tu na
 ![image_diff](image_diff.png)
 - Alternancia de vista **Unified / Split**
 - **Modo Watch**: actualización automática (~2s de sondeo) que detecta cambios preservando la posición de desplazamiento
-- **Árbol de archivos**: alternancia de posición izquierda/derecha, flatten (colapsar directorios vacíos) y ocultar la barra lateral
+- **Árbol de archivos**: alternancia de posición izquierda/derecha, ancho ajustable arrastrando, flatten (colapsar directorios vacíos) y ocultar la barra lateral
 - **Plegado de archivos**: haz clic en la cabecera de un archivo para plegarlo/desplegarlo; los lockfiles y los archivos con más de 1.500 líneas modificadas comienzan plegados
 - **Búsqueda integrada** (`Cmd/Ctrl+F`): busca en todo el diff, incluidas las líneas eliminadas, con navegación entre coincidencias y resaltado
 - **Copiar ruta**: pasa el cursor sobre la cabecera de un archivo para copiar su ruta relativa
