@@ -102,6 +102,7 @@ Haz clic en `✏️` en el statusline para abrir un visor de diff local en tu na
 - **Plegado de archivos**: haz clic en la cabecera de un archivo para plegarlo/desplegarlo; los lockfiles y los archivos con más de 1.500 líneas modificadas comienzan plegados
 - **Búsqueda integrada** (`Cmd/Ctrl+F`): busca en todo el diff, incluidas las líneas eliminadas, con navegación entre coincidencias y resaltado
 - **Copiar ruta**: pasa el cursor sobre la cabecera de un archivo para copiar su ruta relativa
+- **diff-grab**: selecciona líneas en el diff (arrastrando el texto o con el botón `+` del margen), escribe un prompt y pulsa Enter — la ruta del archivo, el rango de líneas, el fragmento de código y tu prompt se copian al portapapeles, listos para pegar en un agente como Claude Code
 - Alternancia para **incluir archivos sin seguimiento**
 
 ### Cómo Funciona (Visor de Diff)
