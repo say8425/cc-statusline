@@ -1,5 +1,12 @@
 # Changelog
 
+## [5.0.0](https://github.com/say8425/cc-statusline/compare/v4.1.0...v5.0.0) (2026-07-29)
+
+
+### Bug Fixes
+
+* **deps:** update diffdeck to 1.2.0 and oxlint to 1.76.0 ([#62](https://github.com/say8425/cc-statusline/issues/62)) ([6e562ad](https://github.com/say8425/cc-statusline/commit/6e562ad84d58550d8d129ad00eb7250f02c78a27))
+
 ## [4.1.0](https://github.com/say8425/cc-statusline/compare/v4.0.0...v4.1.0) (2026-07-24)
 
 
