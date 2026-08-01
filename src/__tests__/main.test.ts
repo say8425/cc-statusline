@@ -283,6 +283,12 @@ describe("renderStatusLine", () => {
 					cost: { total_duration_ms: 0, total_cost_usd: 0 },
 					context_window: {
 						context_window_size: 200000,
+						// Deliberately outside the type. `used_percentage` is `?: number`,
+						// so `null` is unrepresentable — but stdin is external input and
+						// can carry it, which is why this case is tested separately from
+						// the absent one above. The cast states that intent; widening the
+						// source type instead would claim Claude Code sends null, which
+						// has not been observed.
 						used_percentage: null as unknown as number,
 						current_usage: {
 							input_tokens: 100000,
