@@ -105,7 +105,7 @@ Click `✏️` in the statusline to open a local diff viewer in your browser. Th
 - **File folding**: click any file header to collapse/expand; lockfiles and files with more than 1,500 changed lines start collapsed
 - **In-app search** (`Cmd/Ctrl+F`): searches the entire diff including deleted lines, with match navigation and highlighting
 - **Copy path**: hover a file header to copy the file's relative path
-- **diff-grab**: select lines in the diff (drag the text, or use the gutter `+`), type a prompt, and press Enter — the file path, line range, code snippet, and your prompt are copied to the clipboard, ready to paste into an agent like Claude Code
+- **diff-grab**: select code in the diff (drag the text for a character-precise selection, or use the gutter `+` for whole lines), type a prompt, and press Enter — the file path, line range, code snippet, and your prompt are copied to the clipboard, ready to paste into an agent like Claude Code
 - **Include untracked** files toggle
 
 ### How It Works (Diff Viewer)
