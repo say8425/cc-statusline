@@ -113,18 +113,27 @@ test("the installed diffdeck satisfies the range the manifest declares", () => {
 // both reject — but bun's module loader parses it, so no hand-rolled parsing is
 // involved. A lockfile format change would break this loudly, which is the
 // failure mode we want.
+// `bun.lock` has no type to import, so the shape is narrowed at runtime instead
+// of asserted. Anything unexpected leaves `locked` undefined (missing
+// `packages`, a renamed key, a non-array entry) or a garbage slice (a
+// non-registry specifier like `link:../diffdeck` yields that string whole);
+// either way it fails the assertion by name rather than passing quietly.
+const lockedVersion = (mod: unknown): string | undefined => {
+	if (typeof mod !== "object" || mod === null) return undefined;
+	const { packages } = mod as { packages?: unknown };
+	if (typeof packages !== "object" || packages === null) return undefined;
+	const entry = (packages as Record<string, unknown>)["@say8425/diffdeck"];
+	const spec = Array.isArray(entry) ? entry[0] : undefined;
+	// Entries read `name@version`; slice at the LAST `@` so the scope's own
+	// leading `@` survives.
+	return typeof spec === "string"
+		? spec.slice(spec.lastIndexOf("@") + 1)
+		: undefined;
+};
+
 test("the installed diffdeck matches the version the lockfile resolves", async () => {
 	const { version } = resolveDiffdeck();
-	const { packages } = (await import("../../bun.lock")) as unknown as {
-		packages?: Record<string, unknown[]>;
-	};
-	const entry = packages?.["@say8425/diffdeck"]?.[0];
-	// Entries read `name@version`; slice at the LAST `@` so the scope's own
-	// leading `@` survives. Anything unexpected — missing key, missing entry, a
-	// non-registry specifier like `link:` — leaves `locked` undefined or garbage,
-	// which fails against `version` by name rather than passing quietly.
-	const locked =
-		typeof entry === "string" ? entry.slice(entry.lastIndexOf("@") + 1) : entry;
+	const locked = lockedVersion(await import("../../bun.lock"));
 
 	expect({ installed: version, locked }).toEqual({
 		installed: version,
