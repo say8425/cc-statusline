@@ -92,11 +92,19 @@ test("the installed diffdeck satisfies the range the manifest declares", () => {
 	}).toEqual({ version, range: expect.any(String), satisfied: true });
 });
 
-// The last leg. Both tests above read the installed tree on one side or the
-// other, so neither notices node_modules drifting from the lockfile while
-// staying inside the range — the state a branch switch leaves behind, since git
-// does not manage node_modules. That is not hypothetical: it is how #62 came to
-// report a "verified 1.2.0 contract" from a local run against a 1.0.0 tree.
+// A third independent anchor: the two above tie to the install and to
+// package.json, this one to bun.lock. It catches the install drifting from the
+// lockfile while *still* inside the declared range, which the range assertion
+// waves through — the state a branch switch leaves behind, since git does not
+// manage node_modules. Worked example, from developing this very test: main
+// declared `^1.2.0` while the tree held the 1.3.0 installed on another branch.
+// `satisfies("1.3.0", "^1.2.0")` is true, so only this assertion objects.
+//
+// (#62 is the reminder that such drift happens — its tree held 1.0.0 — but it
+// is not this test's case: #62 moved the range to `^1.2.0`, which 1.0.0 fails,
+// so the range assertion already covers it. Its CI installed with
+// --frozen-lockfile and passed, so the 1.2.0 contract was genuinely verified;
+// what drifted was a claim in the PR body about a local run.)
 //
 // `bun.lock` is trailing-comma JSONC, which `JSON.parse` and `Bun.file().json()`
 // both reject — but bun's module loader parses it, so no hand-rolled parsing is
@@ -105,12 +113,13 @@ test("the installed diffdeck satisfies the range the manifest declares", () => {
 test("the installed diffdeck matches the version the lockfile resolves", async () => {
 	const { version } = resolveDiffdeck();
 	const { packages } = (await import("../../bun.lock")) as unknown as {
-		packages: Record<string, unknown[]>;
+		packages?: Record<string, unknown[]>;
 	};
-	const entry = packages["@say8425/diffdeck"]?.[0];
+	const entry = packages?.["@say8425/diffdeck"]?.[0];
 	// Entries read `name@version`; slice at the LAST `@` so the scope's own
-	// leading `@` survives. A missing entry leaves `locked` undefined, which
-	// fails against `version` rather than passing quietly.
+	// leading `@` survives. Anything unexpected — missing key, missing entry, a
+	// non-registry specifier like `link:` — leaves `locked` undefined or garbage,
+	// which fails against `version` by name rather than passing quietly.
 	const locked =
 		typeof entry === "string" ? entry.slice(entry.lastIndexOf("@") + 1) : entry;
 
