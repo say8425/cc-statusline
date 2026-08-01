@@ -178,6 +178,8 @@ bun test --coverage
 
 **커버리지**: 함수 98%+, 라인 94%+ (diff-server 데몬 spawn/에러 경로 등 일부 브랜치 제외)
 
+**테스트도 typecheck 대상이다** — `tsconfig.json`의 `exclude`는 `node_modules`뿐이라 `bun run typecheck`가 `src/__tests__`까지 검사한다. `bun test`는 타입을 보지 않고 트랜스파일만 하므로, 테스트의 타입 오류는 이 게이트에서만 걸린다. 실질적 영향 둘: 테스트 헬퍼도 소스와 같은 수준으로 타입이 맞아야 하고, `@ts-expect-error`가 **실제로 검증된다**(가리키는 줄에 오류가 없으면 TS2578로 실패). 과거 `exclude`에 `src/__tests__`가 있던 시절엔 이 파일들이 한 번도 검사되지 않아, 붙어 있던 `@ts-expect-error` 16개가 전부 불필요한 것이었는데도 드러나지 않았다
+
 ### 릴리스
 
 [릴리스 가이드](docs/RELEASE_GUIDE.md) 참조. release-please + Conventional Commits 기반 자동 릴리스.

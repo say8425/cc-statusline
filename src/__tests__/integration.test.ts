@@ -49,7 +49,6 @@ describe("main function (integration)", () => {
 
 		// Override Bun.stdin.stream temporarily
 		const originalStream = Bun.stdin.stream;
-		// @ts-expect-error - mocking stdin
 		Bun.stdin.stream = () => stream;
 
 		try {
@@ -65,7 +64,6 @@ describe("main function (integration)", () => {
 			expect(logs[1]).toContain("01:00");
 			expect(logs[1]).toContain("$0.50");
 		} finally {
-			// @ts-expect-error - restoring stdin
 			Bun.stdin.stream = originalStream;
 		}
 	});
@@ -100,7 +98,6 @@ describe("main function (integration)", () => {
 		});
 
 		const originalStream = Bun.stdin.stream;
-		// @ts-expect-error - mocking stdin
 		Bun.stdin.stream = () => stream;
 
 		try {
@@ -109,7 +106,6 @@ describe("main function (integration)", () => {
 			// Should not throw; output still produced
 			expect(logs.length).toBeGreaterThanOrEqual(2);
 		} finally {
-			// @ts-expect-error - restoring stdin
 			Bun.stdin.stream = originalStream;
 		}
 	});
@@ -142,7 +138,6 @@ describe("main function (integration)", () => {
 		});
 
 		const originalStream = Bun.stdin.stream;
-		// @ts-expect-error - mocking stdin
 		Bun.stdin.stream = () => stream;
 
 		try {
@@ -151,7 +146,6 @@ describe("main function (integration)", () => {
 			// Should use pre-calculated 42% instead of manual calculation (34%)
 			expect(logs[1]).toContain("42%");
 		} finally {
-			// @ts-expect-error - restoring stdin
 			Bun.stdin.stream = originalStream;
 		}
 	});
@@ -193,7 +187,6 @@ describe("main function (integration)", () => {
 		});
 
 		const originalStream = Bun.stdin.stream;
-		// @ts-expect-error - mocking stdin
 		Bun.stdin.stream = () => stream;
 
 		try {
@@ -207,7 +200,6 @@ describe("main function (integration)", () => {
 			expect(allOutput).toContain("📊");
 			expect(allOutput).toContain("56/100");
 		} finally {
-			// @ts-expect-error - restoring stdin
 			Bun.stdin.stream = originalStream;
 		}
 	});
@@ -239,7 +231,6 @@ describe("main function (integration)", () => {
 		});
 
 		const originalStream = Bun.stdin.stream;
-		// @ts-expect-error - mocking stdin
 		Bun.stdin.stream = () => stream;
 
 		try {
@@ -247,7 +238,6 @@ describe("main function (integration)", () => {
 
 			expect(logs[0]).toContain("\x1b]8;;file:///Users/test/my-project\x07");
 		} finally {
-			// @ts-expect-error - restoring stdin
 			Bun.stdin.stream = originalStream;
 		}
 	});

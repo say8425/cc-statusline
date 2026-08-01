@@ -17,8 +17,11 @@ let cacheHome = "";
 
 const freePort = (): number => {
 	const srv = Bun.serve({ port: 0, fetch: () => new Response(null) });
-	const port = srv.port;
+	const { port } = srv;
 	void srv.stop(true);
+	// Typed optional even though `port: 0` always resolves to a real one. Checked
+	// rather than asserted so a future Bun that stops reporting it fails loudly.
+	if (port == null) throw new Error("Bun.serve reported no port");
 	return port;
 };
 
