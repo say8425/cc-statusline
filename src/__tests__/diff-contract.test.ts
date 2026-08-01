@@ -1,5 +1,5 @@
 import { afterEach, expect, test } from "bun:test";
-import { existsSync, mkdtempSync, rmSync } from "node:fs";
+import { existsSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { probeServer, resolveDiffdeck } from "../diff-server/ensure.ts";
@@ -57,4 +57,30 @@ test("probeServer reads the version, pid, and token of a real diffdeck daemon", 
 	expect(probe?.version).toBe(version);
 	expect(probe?.pid).toBe(child.pid);
 	expect(existsSync(getTokenPath(env))).toBe(true);
+});
+
+// The test above proves the *running* daemon is the *installed* build — the pid
+// and version agree — but it reads both sides out of the same install, so it
+// cannot notice node_modules drifting away from what we declare. This pins the
+// other leg: the installed build is one our manifest permits. Together the two
+// are non-circular.
+//
+// Scope, precisely: this catches an installed build outside the declared range
+// (local drift), and in CI — where `--frozen-lockfile` makes installed equal
+// the lockfile — a lockfile that has desynced from the manifest. It does NOT
+// catch installed != lockfile while both still satisfy the range.
+test("the installed diffdeck satisfies the range the manifest declares", () => {
+	const { version } = resolveDiffdeck();
+	const manifest = JSON.parse(
+		readFileSync(join(import.meta.dir, "..", "..", "package.json"), "utf8"),
+	) as { dependencies: Record<string, string> };
+	const range = manifest.dependencies["@say8425/diffdeck"];
+
+	// Compared as an object so a failure names the offending version and range
+	// — the whole point here is to make a silent drift loud.
+	expect({
+		version,
+		range,
+		satisfied: Bun.semver.satisfies(version, range),
+	}).toEqual({ version, range, satisfied: true });
 });
