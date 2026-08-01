@@ -1,5 +1,12 @@
 # Changelog
 
+## [5.0.2](https://github.com/say8425/cc-statusline/compare/v5.0.1...v5.0.2) (2026-08-01)
+
+
+### Bug Fixes
+
+* **deps:** pin diffdeck exactly instead of by caret ([#72](https://github.com/say8425/cc-statusline/issues/72)) ([ea6c0f4](https://github.com/say8425/cc-statusline/commit/ea6c0f4aee8dab43779063e774acad6fb95317d3))
+
 ## [5.0.1](https://github.com/say8425/cc-statusline/compare/v5.0.0...v5.0.1) (2026-08-01)
 
 
