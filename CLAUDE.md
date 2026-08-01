@@ -31,7 +31,7 @@ cc-statusline/
 │   │   ├── baseRef.ts              # resolveBaseRef (PR 타겟/기본 브랜치 결정)
 │   │   ├── ciStatus.ts             # aggregateCiStatus (statusCheckRollup 집계)
 │   │   ├── pr.ts                   # getPrInfoCached (PR URL·상태·CI 롤업)
-│   │   └── worktree.ts             # getMainProjectNameCached
+│   │   └── worktree.ts             # getMainProjectCached ({name, path} 반환)
 │   ├── diff-server/
 │   │   ├── config.ts               # getCacheDir, getDiffdeckCacheDir, resolveDiffPort, isDiffViewerDisabled
 │   │   ├── link.ts                 # buildDiffViewerUrl
@@ -61,8 +61,14 @@ cc-statusline/
 ├── .npmrc             # registry를 public npm으로 고정 (전역 npmrc가 다른 레지스트리를 가리켜도 무관하게)
 ├── package.json
 ├── tsconfig.json
+├── bun.lock           # diff-contract.test.ts가 resolved 버전을 읽는 대상
+├── docs/
+│   ├── RELEASE_GUIDE.md        # 아래 「릴리스」 절이 참조
+│   └── README.{ko,ja,zh,es}.md # 다국어 README (루트 README.md가 영문)
 └── CLAUDE.md
 ```
+
+> 트리는 루트 설정 파일과 `src/`, 그리고 이 문서가 직접 참조하는 경로만 싣는다. `.github/`·`.gitignore`·`CHANGELOG.md`·`LICENSE`·스크린샷 등은 생략.
 
 **기술 스택**: Bun, TypeScript, gh CLI, oxlint/oxfmt (린트·포맷)
 
@@ -82,7 +88,7 @@ cc-statusline/
 | 주간 사용량 | `rate_limits.seven_day.used_percentage` |
 | 주간 리셋 시간 | `rate_limits.seven_day.resets_at` |
 | Git 브랜치 | `git branch --show-current` |
-| Git diff | `git diff --shortstat` |
+| Git diff | `git diff --shortstat` + `git diff --cached --shortstat` (unstaged·staged 합산, `src/git/changes.ts`) |
 | PR URL/상태/CI | `gh pr view --json url,state,isDraft,statusCheckRollup` |
 | 메인 프로젝트명 | `git rev-parse --git-common-dir` (워크트리) |
 
@@ -128,13 +134,18 @@ Claude Code 기본 statusbar에 다음 정보를 추가로 표시:
 ### 수동 테스트
 
 ```bash
-# rate_limits 포함 (사용량 줄 표시)
+# 전체 표시 (사용량 줄 + 🧠 컨텍스트 + 🤖 모델)
+# 🧠는 used_percentage, 🤖는 model.display_name이 있을 때만 렌더된다 (render.ts) —
+# 둘 다 빼면 그 세그먼트가 통째로 사라지므로 스니펫에 넣어 둔다
 echo '{
   "cost":{"total_duration_ms":3600000,"total_cost_usd":0.50},
   "context_window":{
     "context_window_size":200000,
+    "used_percentage":34,
     "current_usage":{"input_tokens":50000,"output_tokens":10000,"cache_creation_input_tokens":5000,"cache_read_input_tokens":2000}
   },
+  "model":{"display_name":"Fable 5"},
+  "effort":{"level":"high"},
   "workspace":{"project_dir":"/Users/penguin/dev/cc-statusline"},
   "rate_limits":{
     "five_hour":{"used_percentage":56,"resets_at":1704114000},
@@ -142,7 +153,7 @@ echo '{
   }
 }' | bun src/index.ts
 
-# rate_limits 없음 (사용량 줄 미표시)
+# rate_limits·used_percentage·model 없음 (사용량 줄·🧠·🤖 전부 미표시)
 echo '{
   "cost":{"total_duration_ms":3600000,"total_cost_usd":0.50},
   "context_window":{
