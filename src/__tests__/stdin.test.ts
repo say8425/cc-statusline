@@ -7,7 +7,6 @@ describe("readStdin", () => {
 
 		// Mock Bun.stdin.stream with multiple chunks
 		const originalStream = Bun.stdin.stream;
-		// @ts-expect-error - mocking stdin
 		Bun.stdin.stream = () =>
 			new ReadableStream({
 				start(controller) {
@@ -22,14 +21,12 @@ describe("readStdin", () => {
 			const result = await readStdin();
 			expect(result).toBe('{"test": "data"}');
 		} finally {
-			// @ts-expect-error - restoring stdin
 			Bun.stdin.stream = originalStream;
 		}
 	});
 
 	test("handles empty stdin", async () => {
 		const originalStream = Bun.stdin.stream;
-		// @ts-expect-error - mocking stdin
 		Bun.stdin.stream = () =>
 			new ReadableStream({
 				start(controller) {
@@ -41,7 +38,6 @@ describe("readStdin", () => {
 			const result = await readStdin();
 			expect(result).toBe("");
 		} finally {
-			// @ts-expect-error - restoring stdin
 			Bun.stdin.stream = originalStream;
 		}
 	});
@@ -51,7 +47,6 @@ describe("readStdin", () => {
 		const encoder = new TextEncoder();
 
 		const originalStream = Bun.stdin.stream;
-		// @ts-expect-error - mocking stdin
 		Bun.stdin.stream = () =>
 			new ReadableStream({
 				start(controller) {
@@ -64,7 +59,6 @@ describe("readStdin", () => {
 			const result = await readStdin();
 			expect(result).toBe(testData);
 		} finally {
-			// @ts-expect-error - restoring stdin
 			Bun.stdin.stream = originalStream;
 		}
 	});

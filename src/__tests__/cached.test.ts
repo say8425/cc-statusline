@@ -66,7 +66,7 @@ describe("cache mechanism", () => {
 					url: "https://github.com/test/repo/pull/1",
 					state: "OPEN",
 					isDraft: false,
-					ciStatus: "success",
+					ciStatus: { conclusion: "success", count: 1 },
 				},
 				timestamp: Date.now(),
 			};

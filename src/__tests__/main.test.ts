@@ -32,7 +32,12 @@ const createClaudeInput = (
 
 // Helper to create render context
 const createRenderContext = (
-	overrides: Partial<RenderContext> & {
+	// `claudeJson` is widened to a partial because it is fed to
+	// `createClaudeInput`, which fills the rest in. Taking it as a full
+	// `ClaudeStatusInput` (what `Partial<RenderContext>` would give) forced every
+	// call site to cast.
+	overrides: Omit<Partial<RenderContext>, "claudeJson"> & {
+		claudeJson?: Partial<ClaudeStatusInput>;
 		fullClaudeJson?: ClaudeStatusInput;
 	} = {},
 ): RenderContext => ({
@@ -88,7 +93,7 @@ describe("renderStatusLine", () => {
 			const ctx = createRenderContext({
 				claudeJson: {
 					cost: { total_duration_ms: 3600000, total_cost_usd: 0.5 },
-				} as Partial<ClaudeStatusInput>,
+				},
 			});
 			const lines = renderStatusLine(ctx);
 
@@ -100,7 +105,7 @@ describe("renderStatusLine", () => {
 			const ctx = createRenderContext({
 				claudeJson: {
 					cost: { total_duration_ms: 0, total_cost_usd: 1.25 },
-				} as Partial<ClaudeStatusInput>,
+				},
 			});
 			const lines = renderStatusLine(ctx);
 
@@ -129,7 +134,7 @@ describe("renderStatusLine", () => {
 						current_dir:
 							"/Users/penguin/dev/cc-statusline/.claude/worktrees/rosy-floating-thimble",
 					},
-				} as Partial<ClaudeStatusInput>,
+				},
 			});
 			const lines = renderStatusLine(ctx);
 
@@ -147,7 +152,7 @@ describe("renderStatusLine", () => {
 						project_dir: "/Users/test/my-project",
 						current_dir: "/Users/test/my-project",
 					},
-				} as Partial<ClaudeStatusInput>,
+				},
 			});
 			const lines = renderStatusLine(ctx);
 
@@ -189,7 +194,7 @@ describe("renderStatusLine", () => {
 						current_dir:
 							"/Users/penguin/dev/cc-statusline/.claude/worktrees/rosy-floating-thimble",
 					},
-				} as Partial<ClaudeStatusInput>,
+				},
 			});
 			const lines = renderStatusLine(ctx);
 
@@ -309,7 +314,7 @@ describe("renderStatusLine", () => {
 							cache_read_input_tokens: 0,
 						},
 					},
-				} as Partial<ClaudeStatusInput>,
+				},
 			});
 			const lines = renderStatusLine(ctx);
 
@@ -330,7 +335,7 @@ describe("renderStatusLine", () => {
 							cache_read_input_tokens: 0,
 						},
 					},
-				} as Partial<ClaudeStatusInput>,
+				},
 			});
 			const lines = renderStatusLine(ctx);
 
@@ -351,7 +356,7 @@ describe("renderStatusLine", () => {
 							cache_read_input_tokens: 0,
 						},
 					},
-				} as Partial<ClaudeStatusInput>,
+				},
 			});
 			const lines = renderStatusLine(ctx);
 
@@ -913,7 +918,7 @@ describe("renderStatusLine", () => {
 			const ctx = createRenderContext({
 				claudeJson: {
 					cost: { total_duration_ms: 0, total_cost_usd: 0 },
-				} as Partial<ClaudeStatusInput>,
+				},
 			});
 			const lines = renderStatusLine(ctx);
 
@@ -927,7 +932,7 @@ describe("renderStatusLine", () => {
 						total_duration_ms: 2 * 3600000 + 5 * 60000, // 2h 5m
 						total_cost_usd: 0,
 					},
-				} as Partial<ClaudeStatusInput>,
+				},
 			});
 			const lines = renderStatusLine(ctx);
 
@@ -941,7 +946,7 @@ describe("renderStatusLine", () => {
 						total_duration_ms: 12 * 3600000 + 45 * 60000, // 12h 45m
 						total_cost_usd: 0,
 					},
-				} as Partial<ClaudeStatusInput>,
+				},
 			});
 			const lines = renderStatusLine(ctx);
 
