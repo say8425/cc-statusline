@@ -58,6 +58,7 @@ cc-statusline/
 ├── .oxlintrc.json     # oxlint 설정 (rule 구성, type-aware 포함)
 ├── .oxfmtrc.json      # oxfmt 설정 (탭 인덴트, 더블쿼트 — biome에서 이관)
 ├── bunfig.toml        # Bun 테스트 설정
+├── .npmrc             # registry를 public npm으로 고정 (전역 npmrc가 다른 레지스트리를 가리켜도 무관하게)
 ├── package.json
 ├── tsconfig.json
 └── CLAUDE.md
@@ -176,7 +177,7 @@ bun test --coverage
 - `diff-config/token/ensure/link.test.ts`: diff-server 모듈별 테스트
 - `diff-contract.test.ts`: 실제 설치된 diffdeck 데몬과의 계약(핑 헤더·토큰 경로) + 버전 검증 3층(데몬=설치본 / 설치본∈range / 설치본=lockfile)
 
-**커버리지**: 함수 98%+, 라인 94%+ (diff-server 데몬 spawn/에러 경로 등 일부 브랜치 제외)
+**커버리지**: 함수 98%+, 라인 95%+ (diff-server 데몬 spawn/에러 경로 등 일부 브랜치 제외). 실측은 `bun test --coverage`의 `All files` 행으로 확인할 것 — 하한만 적어 두므로 실제 수치는 이보다 높다
 
 **테스트도 typecheck 대상이다** — `tsconfig.json`의 `exclude`는 `node_modules`뿐이라 `bun run typecheck`가 `src/__tests__`까지 검사한다. `bun test`는 타입을 보지 않고 트랜스파일만 하므로, 테스트의 타입 오류는 이 게이트에서만 걸린다. 실질적 영향 둘: 테스트 헬퍼도 소스와 같은 수준으로 타입이 맞아야 하고, `@ts-expect-error`가 **실제로 검증된다**(가리키는 줄에 오류가 없으면 TS2578로 실패). 과거 `exclude`에 `src/__tests__`가 있던 시절엔 이 파일들이 한 번도 검사되지 않아, 붙어 있던 `@ts-expect-error` 16개가 전부 불필요한 것이었는데도 드러나지 않았다
 
