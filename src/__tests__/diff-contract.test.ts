@@ -70,8 +70,8 @@ test("probeServer reads the version, pid, and token of a real diffdeck daemon", 
 // installed build outside the declared range: local drift, and in CI a lockfile
 // whose recorded range agrees with the manifest while its resolved version does
 // not satisfy it (the shape a botched conflict resolution leaves, the two
-// sitting ~100 lines apart). It does NOT catch installed != lockfile while both
-// still satisfy the range.
+// sitting ~100 lines apart). Installed != lockfile while both still satisfy the
+// range slips past this one — the test below is what pins that.
 test("the installed diffdeck satisfies the range the manifest declares", () => {
 	const { version } = resolveDiffdeck();
 	const manifest = JSON.parse(
@@ -90,4 +90,32 @@ test("the installed diffdeck satisfies the range the manifest declares", () => {
 		range,
 		satisfied: Bun.semver.satisfies(version, range),
 	}).toEqual({ version, range: expect.any(String), satisfied: true });
+});
+
+// The last leg. Both tests above read the installed tree on one side or the
+// other, so neither notices node_modules drifting from the lockfile while
+// staying inside the range — the state a branch switch leaves behind, since git
+// does not manage node_modules. That is not hypothetical: it is how #62 came to
+// report a "verified 1.2.0 contract" from a local run against a 1.0.0 tree.
+//
+// `bun.lock` is trailing-comma JSONC, which `JSON.parse` and `Bun.file().json()`
+// both reject — but bun's module loader parses it, so no hand-rolled parsing is
+// involved. A lockfile format change would break this loudly, which is the
+// failure mode we want.
+test("the installed diffdeck matches the version the lockfile resolves", async () => {
+	const { version } = resolveDiffdeck();
+	const { packages } = (await import("../../bun.lock")) as unknown as {
+		packages: Record<string, unknown[]>;
+	};
+	const entry = packages["@say8425/diffdeck"]?.[0];
+	// Entries read `name@version`; slice at the LAST `@` so the scope's own
+	// leading `@` survives. A missing entry leaves `locked` undefined, which
+	// fails against `version` rather than passing quietly.
+	const locked =
+		typeof entry === "string" ? entry.slice(entry.lastIndexOf("@") + 1) : entry;
+
+	expect({ installed: version, locked }).toEqual({
+		installed: version,
+		locked: version,
+	});
 });
