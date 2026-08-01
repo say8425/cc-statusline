@@ -285,10 +285,14 @@ describe("renderStatusLine", () => {
 						context_window_size: 200000,
 						// Deliberately outside the type. `used_percentage` is `?: number`,
 						// so `null` is unrepresentable — but stdin is external input and
-						// can carry it, which is why this case is tested separately from
-						// the absent one above. The cast states that intent; widening the
-						// source type instead would claim Claude Code sends null, which
-						// has not been observed.
+						// can carry it. The cast states that intent; widening the source
+						// type instead would claim Claude Code sends null, which has not
+						// been observed.
+						//
+						// This takes the same branch as the absent case above — render.ts
+						// guards with loose `!= null`, which catches both. What it buys is
+						// mutation resistance: rewriting that guard as `!== undefined`
+						// would still pass the absent test and fail this one.
 						used_percentage: null as unknown as number,
 						current_usage: {
 							input_tokens: 100000,

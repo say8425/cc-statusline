@@ -8,6 +8,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
+      # Pinned: Bun is the sole transpiler for the published dist/index.js, so an
+      # unpinned action would let the artifact ride on whatever Bun is current.
+      # Nothing bumps this automatically — move all four sites together.
       - uses: oven-sh/setup-bun@v2
         with:
           bun-version: 1.3.14

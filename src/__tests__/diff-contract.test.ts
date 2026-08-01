@@ -114,10 +114,10 @@ test("the installed diffdeck satisfies the range the manifest declares", () => {
 // involved. A lockfile format change would break this loudly, which is the
 // failure mode we want.
 // `bun.lock` has no type to import, so the shape is narrowed at runtime instead
-// of asserted. Every branch that cannot find a `name@version` string returns
-// undefined, which then fails the assertion by name — missing `packages`, a
-// renamed key, or a non-registry specifier like `link:` all surface rather than
-// passing quietly.
+// of asserted. Anything unexpected leaves `locked` undefined (missing
+// `packages`, a renamed key, a non-array entry) or a garbage slice (a
+// non-registry specifier like `link:../diffdeck` yields that string whole);
+// either way it fails the assertion by name rather than passing quietly.
 const lockedVersion = (mod: unknown): string | undefined => {
 	if (typeof mod !== "object" || mod === null) return undefined;
 	const { packages } = mod as { packages?: unknown };
