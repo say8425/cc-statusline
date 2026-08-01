@@ -96,12 +96,18 @@ test("the installed diffdeck satisfies the range the manifest declares", () => {
 });
 
 // A third independent anchor: the two above tie to the install and to
-// package.json, this one to bun.lock. It catches the install drifting from the
-// lockfile while *still* inside the declared range, which the range assertion
-// waves through — the state a branch switch leaves behind, since git does not
-// manage node_modules. Worked example, from developing this very test: main
-// declared `^1.2.0` while the tree held the 1.3.0 installed on another branch.
-// `satisfies("1.3.0", "^1.2.0")` is true, so only this assertion objects.
+// package.json, this one to bun.lock. What it alone catches, now that the dep is
+// pinned exactly, is the lockfile disagreeing with the manifest while the
+// install matches the manifest — a lockfile edited without a reinstall. Any
+// install of a *different* version now trips the range assertion too, since the
+// accepted set is the single pinned version.
+//
+// (Under the old caret range the niche was wider, and that is the shape this
+// test was written for: main declared `^1.2.0` while the tree held the 1.3.0
+// installed on another branch, and `satisfies("1.3.0", "^1.2.0")` is true, so
+// only this assertion objected. Branch switching produces that state on its own
+// because git does not manage node_modules. Kept as history — the pin narrowed
+// it, it did not stop node_modules from drifting.)
 //
 // (#62 is the reminder that such drift happens — its tree held 1.0.0 — but it
 // is not this test's case: #62 moved the range to `^1.2.0`, which 1.0.0 fails,
