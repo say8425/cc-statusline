@@ -15,8 +15,9 @@ updates:
   - package-ecosystem: bun
     directory: "/"
     # diffdeck은 19일간 10개 릴리스(평균 이틀에 하나) 페이스이고 주말에도 나온다
-    # — 1.3.1이 일요일 릴리스였다. `daily`는 평일만 돌아 주말 릴리스를 월요일까지
-    # 묵히므로 cron을 쓴다. `interval: cron`일 때 `cronjob`은 필수(5-field).
+    # — 1.3.1이 일요일 릴리스였다. **`daily`로 바꾸지 말 것**: 평일만 돌아 주말
+    # 릴리스를 월요일까지 묵힌다. `interval: cron`일 때 `cronjob`은 필수다.
+    # 시각은 `cronjob`이 아니라 `timezone`에 넣는다(GitHub 문서 지시).
     schedule:
       interval: cron
       cronjob: "0 9 * * *"
