@@ -5,7 +5,8 @@ version: 2
 # 옵션 레퍼런스: https://docs.github.com/en/code-security/reference/supply-chain-security/dependabot-options-reference
 updates:
   # `bun`은 `npm`과 별개 ecosystem이다. npm으로 두면 bun.lock을 안 건드려
-  # 모든 PR이 `bun install --frozen-lockfile`에서 죽는다.
+  # 모든 PR이 `bun install --frozen-lockfile`에서 죽는다. Bun은 버전 업데이트
+  # 전용(보안 업데이트 미지원)이라 아래 cooldown 0은 버전 타이밍만 바꾼다.
   - package-ecosystem: bun
     directory: "/"
     # `daily`로 바꾸지 말 것 — 평일만 돌아 주말 릴리스를 월요일까지 묵힌다.
@@ -13,9 +14,12 @@ updates:
       interval: cron
       cronjob: "0 9 * * *"
       timezone: Asia/Seoul
-    # 필수. 생략하면 GitHub이 기본 3일 cooldown을 걸어 갓 나온 버전을 건너뛰는데,
-    # job은 success인 채 PR만 안 열려 실패로 보이지 않는다. 실제 사례:
+    # 필수. 생략하면 updater가 기본 3일 cooldown을 걸어 갓 나온 버전을 3일간
+    # 미루는데, job은 success인 채 PR만 안 열려 실패로 보이지 않는다. 사례:
     # https://github.com/say8425/cc-statusline/actions/runs/30773993483
+    # 에디터가 이 줄을 빨갛게 표시할 수 있다(SchemaStore가 `default-days`를
+    # minimum 1로 둔 탓). 낡은 제약이니 지우거나 1로 바꾸지 말 것 — GitHub
+    # 검증기는 0을 통과시키고 dependabot-core도 0을 그대로 존중한다.
     cooldown:
       default-days: 0
     # diffdeck만 — 나머지는 캐럿이라 `bun outdated`로 직접 본다.
