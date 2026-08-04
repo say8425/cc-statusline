@@ -1,5 +1,12 @@
 # Changelog
 
+## [5.0.3](https://github.com/say8425/cc-statusline/compare/v5.0.2...v5.0.3) (2026-08-04)
+
+
+### Bug Fixes
+
+* **deps:** bump @say8425/diffdeck from 1.3.0 to 1.3.1 ([#78](https://github.com/say8425/cc-statusline/issues/78)) ([816bee2](https://github.com/say8425/cc-statusline/commit/816bee284adcf8054c39d570a18e409ad6545940))
+
 ## [5.0.2](https://github.com/say8425/cc-statusline/compare/v5.0.1...v5.0.2) (2026-08-01)
 
 
