@@ -83,6 +83,13 @@ Add the following to `~/.claude/settings.json`:
 | ✏️    | Uncommitted changes (click to open diff viewer) |
 | 📎    | Pull request link — color-coded state in brackets (`[Open]`/`[Draft]`/`[Merged]`/`[Closed]`) immediately followed by a color-coded CI check summary in parens (`(N passed)`/`(N running)`/`(N failed)`) when checks exist |
 
+## Color Thresholds
+
+| Metric        | Normal (white) | Warning (yellow) | Critical (red) |
+| ------------- | -------------- | ---------------- | -------------- |
+| Context %     | < 50%          | 50-80%           | > 80%          |
+| Block Usage % | < 50%          | 50-80%           | > 80%          |
+
 ## Diff Viewer
 
 Click `✏️` in the statusline to open a local diff viewer in your browser. The viewer itself is provided by [diffdeck](https://github.com/say8425/diffdeck) ([`@say8425/diffdeck`](https://www.npmjs.com/package/@say8425/diffdeck) on npm), installed automatically as a runtime dependency of cc-statusline — the statusline spawns it as a background daemon and links to it from the `✏️` entry point.
@@ -164,13 +171,6 @@ bun run lint
 # Format (oxfmt)
 bun run format
 ```
-
-## Color Thresholds
-
-| Metric        | Normal (white) | Warning (yellow) | Critical (red) |
-| ------------- | -------------- | ---------------- | -------------- |
-| Context %     | < 50%          | 50-80%           | > 80%          |
-| Block Usage % | < 50%          | 50-80%           | > 80%          |
 
 ## License
 
