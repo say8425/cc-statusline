@@ -25,6 +25,10 @@ updates:
     # diffdeck만 — 나머지는 캐럿이라 `bun outdated`로 직접 본다.
     allow:
       - dependency-name: "@say8425/diffdeck"
+    update-types:
+      - major
+      - minor
+      - patch
     open-pull-requests-limit: 1
     commit-message:
       prefix: "fix(deps)" # release-please가 patch를 내야 사용자에게 전파된다
