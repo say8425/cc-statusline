@@ -18,18 +18,48 @@ updates:
     # 미루는데, job은 success인 채 PR만 안 열려 실패로 보이지 않는다. 사례:
     # https://github.com/say8425/cc-statusline/actions/runs/30773993483
     # 에디터가 이 줄을 빨갛게 표시할 수 있다(SchemaStore가 `default-days`를
-    # minimum 1로 둔 탓). 낡은 제약이니 지우거나 1로 바꾸지 말 것 — GitHub
-    # 검증기는 0을 통과시키고 dependabot-core도 0을 그대로 존중한다.
+    # minimum 1로 둔 탓). 낡은 제약이니 지우거나 1로 바꾸지 말 것 — 근거 둘:
+    # ① 이 블록을 넣은 커밋 7f19f50의 dependabot 체크 런이 success였다
+    #    (2026-08-03T02:56:10Z, "All changes look good") — GitHub 검증기는 0을
+    #    통과시킨다. ② 2026-08-12 실행의 job 정의가 0을 전 semver 레벨로 그대로
+    #    확장했다: "cooldown":{"default-days":0,"semver-major-days":0,
+    #    "semver-minor-days":0,"semver-patch-days":0} — major도 안 미룬다.
+    # 같은 이유로 이 파일에 SchemaStore 기반 lint를 CI에 붙이지 말 것.
+    # 멀쩡한 config를 빨갛게 만들어 1로 "고치도록" 유도한다.
     cooldown:
       default-days: 0
     # diffdeck만 — 나머지는 캐럿이라 `bun outdated`로 직접 본다.
+    #
+    # `update-types`를 여기(updates 항목 직속)에 넣지 말 것. 2026-08-22 #82가
+    # 그렇게 넣었다가 파일 전체가 파싱 거부됐다:
+    #   The property '#/updates/0/' contains additional properties
+    #   ["update-types"] outside of the schema when none are allowed
+    # 키 하나만 무시되는 게 아니라 config 전체가 무효가 되어 cron·cooldown·
+    # allow·commit-message가 전부 죽는다. 이 신호는 Actions 로그가 아니라
+    # 커밋의 dependabot **체크 런**에 뜬다 (cooldown 사례처럼 job success로
+    # 위장되지 않는다): `gh api repos/say8425/cc-statusline/commits/main/\
+    # check-runs --jq '.check_runs[]|select(.app.slug=="dependabot")'`
+    #
+    # 그리고 `allow` 밑에도 넣지 않는다 — 넣을 이유가 없어서다. 공식 문서:
+    # "When `update-types` is omitted from an `allow` rule, all update types
+    # are allowed for that rule." 생략이 곧 major·minor·patch 전부 허용이고,
+    # `update-types`는 오직 *좁히는* 옵션이라 "최신을 따라가게 하려고" 추가하는
+    # 건 무의미하다. 2026-08-12 실행의 job 정의가 이를 실증한다 —
+    # `"allowed-updates":[{"dependency-name":"@say8425/diffdeck"}]`.
+    # (굳이 쓸 일이 생기면 값도 bare `major`가 아니라
+    #  `version-update:semver-major` 형태다 — bare는 `groups` 전용 어휘다.)
     allow:
       - dependency-name: "@say8425/diffdeck"
-    update-types:
-      - major
-      - minor
-      - patch
-    open-pull-requests-limit: 1
+    # 1로 두지 말 것 — 열린 PR 하나가 유일한 슬롯을 물면 **스케줄 실행 자체가
+    # dispatch되지 않는다**. "limit reached" 로그조차 안 남아 조용히 멈춘다
+    # (할 일 없는 틱은 `No update needed`를 남기고 실행 기록이 남으므로,
+    #  실행이 통째로 없는 건 유휴가 아니라 미dispatch라는 뜻).
+    # 실측 2/2, 예외 0건:
+    #   08-04 틱 없음 ← #78 열림(08-03T02:57~08-04T02:19)
+    #   08-13~08-22 틱 전부 없음 ← #80 열림(08-12T00:07~)
+    # 이 탓에 1.4.0(08-21T12:37Z 배포) 직후의 08-22T00:00Z 틱이 통째로 날아갔다.
+    # 감시 대상이 diffdeck 하나뿐이라 상한을 올려도 PR 폭증 위험은 없다.
+    open-pull-requests-limit: 3
     commit-message:
       prefix: "fix(deps)" # release-please가 patch를 내야 사용자에게 전파된다
     labels:
