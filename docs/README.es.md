@@ -52,7 +52,7 @@ Agrega lo siguiente a `~/.claude/settings.json`:
 ## Características
 
 - **Tiempo de sesión**: Tiempo transcurrido de la sesión actual
-- **Costo**: Costo de la sesión en USD
+- **Costo**: Costo de la sesión en USD — oculto por defecto, usa `CC_STATUSLINE_SHOW_COST=1` para mostrarlo (ver [Configuración](#configuración))
 - **Contexto**: Uso de tokens con porcentaje (codificado por colores)
 - **Modelo**: Nombre del modelo en uso y reasoning effort (p. ej., `Fable 5 high`; el effort solo se muestra en modelos compatibles), con una insignia `⚡ultra` cuando ultracode está habilitado en la configuración de Claude Code y la sesión reporta effort `xhigh`
 - **Git Diff**: Cantidad de archivos, inserciones, eliminaciones
@@ -64,6 +64,7 @@ Agrega lo siguiente a `~/.claude/settings.json`:
 - **Uso del bloque**: Porcentaje de utilización de 5 horas
 - **Temporizador de reinicio semanal**: Tiempo de reinicio del límite semanal (MM/DD HH:MM)
 - **Uso semanal**: Porcentaje de utilización de 7 días
+- **ID de sesión**: UUID completo de la sesión al final de la línea de uso, sin etiqueta de emoji — listo para copiar en `claude --resume <id>` o en una búsqueda de logs
 
 ## Guía de Emojis
 
@@ -73,15 +74,38 @@ Agrega lo siguiente a `~/.claude/settings.json`:
 | 🌲    | Nombre del worktree (haz clic para abrir la carpeta del worktree) |
 | 🌿    | Rama Git actual                      |
 | ⏱️    | Tiempo transcurrido de sesión        |
-| 💰    | Costo de sesión en USD               |
+| 💰    | Costo de sesión en USD — oculto por defecto (ver [Configuración](#configuración)) |
 | 🧠    | Uso de ventana de contexto           |
 | 🤖    | Modelo actual y effort               |
 | ⏳    | Hora de reinicio                     |
 | 📊    | Utilización de 5 horas %             |
 | ⏰    | Tiempo de reinicio semanal           |
 | 📅    | Utilización de 7 días %              |
+| _(ninguno)_ | ID de sesión — el UUID completo, mostrado después de 📅 sin etiqueta de emoji |
 | ✏️    | Cambios sin confirmar (haz clic para abrir el visor de diff)                |
 | 📎    | Enlace de Pull Request — estado entre corchetes (`[Open]`/`[Draft]`/`[Merged]`/`[Closed]`) más un resumen de CI entre paréntesis (`(N passed)`/`(N running)`/`(N failed)`) cuando existen checks |
+
+## Configuración
+
+El comportamiento por defecto se basa únicamente en el JSON que Claude Code entrega por stdin, así que no hay nada que configurar. Estas variables de entorno ajustan lo que se renderiza:
+
+| Variable de entorno | Efecto |
+| ------------------- | ------ |
+| `CC_STATUSLINE_SHOW_COST=1` | Muestra el segmento de costo de sesión `💰` (oculto por defecto) |
+| `CC_STATUSLINE_DIFF_PORT` | Cambia el puerto del visor de diff (predeterminado: `49573`) |
+| `CC_STATUSLINE_DIFF_DISABLE=1` | Desactiva el visor de diff por completo |
+
+Defínelas donde se ejecute el comando del statusline — por ejemplo en `~/.claude/settings.json`:
+
+```json
+{
+  "statusLine": {
+    "type": "command",
+    "command": "CC_STATUSLINE_SHOW_COST=1 bunx @say8425/cc-statusline",
+    "padding": 0
+  }
+}
+```
 
 ## Visor de Diff
 
@@ -109,10 +133,7 @@ Haz clic en `✏️` en el statusline para abrir un visor de diff local en tu na
 
 El statusline inicia diffdeck como un daemon en segundo plano bajo demanda en `127.0.0.1:49573` cuando el repositorio tiene algo que mostrar. Las solicitudes están protegidas por token y vinculadas a localhost.
 
-| Variable de entorno | Efecto |
-| ------------------- | ------ |
-| `CC_STATUSLINE_DIFF_PORT` | Cambiar el puerto (predeterminado: `49573`) |
-| `CC_STATUSLINE_DIFF_DISABLE=1` | Desactivar el visor de diff por completo |
+Las dos variables `CC_STATUSLINE_DIFF_*` que lo controlan están en la tabla de [Configuración](#configuración).
 
 > [!TIP]
 > Abre el visor a través del enlace `✏️` en lugar de un marcador — el enlace siempre lleva un token actualizado y garantiza que el servidor esté en ejecución.
@@ -131,6 +152,8 @@ Claude Code pasa `rate_limits` en la entrada JSON stdin (CLI 2.1.80+):
 4. **Temporizador de reinicio semanal** - Tiempo de reinicio del límite semanal (`rate_limits.seven_day.resets_at`), formato `MM/DD HH:MM` (ej., `02/15 17:00`)
 
 Las métricas de uso se **muestran automáticamente** cuando `rate_limits` está presente en el JSON stdin. No se necesitan flags ni configuración adicional.
+
+El ID de sesión (`session_id`) se añade al final de la misma línea, después de la utilización de 7 días. Proviene de un campo independiente, así que se muestra igual cuando `rate_limits` está ausente.
 
 > [!NOTE]
 > `rate_limits` solo está disponible para suscriptores de Claude.ai (Pro/Max) después de la primera respuesta de la API. Consulte la [documentación oficial de statusline](https://code.claude.com/docs/en/statusline) para el esquema JSON completo.

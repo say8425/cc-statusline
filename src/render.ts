@@ -55,10 +55,12 @@ export const renderStatusLine = (ctx: RenderContext): string[] => {
 	}
 	lines.push(line1);
 
-	// 2번째 줄: 세션 시간 | 비용 | 컨텍스트 (used_percentage가 있을 때만)
-	let line2 =
-		`${C.WHITE}⏱️ ${formatTime(sessionHrs, sessionMins)}${C.RESET}` +
-		` | ${C.WHITE}💰 $${costUsd.toFixed(2)}${C.RESET}`;
+	// 2번째 줄: 세션 시간 | 비용(옵트인) | 컨텍스트 (used_percentage가 있을 때만)
+	let line2 = `${C.WHITE}⏱️ ${formatTime(sessionHrs, sessionMins)}${C.RESET}`;
+	// 💰는 기본 숨김 — CC_STATUSLINE_SHOW_COST=1일 때만 붙인다 (src/config.ts)
+	if (ctx.showCost) {
+		line2 += ` | ${C.WHITE}💰 $${costUsd.toFixed(2)}${C.RESET}`;
+	}
 	const usedPercentage = ctx.claudeJson.context_window?.used_percentage;
 	if (usedPercentage != null) {
 		const usage = ctx.claudeJson.context_window?.current_usage;
@@ -86,39 +88,48 @@ export const renderStatusLine = (ctx: RenderContext): string[] => {
 	}
 	lines.push(line2);
 
-	// 3번째 줄: 리셋 타이머 | 5시간 사용량 | 7일 사용량 (rate_limits가 있을 때)
-	if (ctx.rateLimits) {
-		const parts: string[] = [];
+	// 3번째 줄: 리셋 타이머 | 5시간 사용량 | 7일 사용량 | 세션 ID
+	// rate_limits와 session_id는 서로 독립적인 출처라 각각 있을 때만 파트를 쌓고,
+	// 하나라도 남으면 줄을 만든다 (rate_limits가 없어도 세션 ID는 보이도록).
+	const usageParts: string[] = [];
 
-		// 5시간 사용량 및 리셋 시각
-		if (ctx.rateLimits.five_hour) {
-			const { resets_at, used_percentage } = ctx.rateLimits.five_hour;
-			if (resets_at) {
-				const resetTime = new Date(resets_at * 1000);
-				const h = resetTime.getHours();
-				const m = resetTime.getMinutes();
-				parts.push(`${C.WHITE}⏳ ${formatTime(h, m)}${C.RESET}`);
-			}
-			const usageColor = getUsageColor(used_percentage);
-			parts.push(
-				`${usageColor}📊 ${Math.round(used_percentage)}/100${C.RESET}`,
-			);
+	// 5시간 사용량 및 리셋 시각
+	if (ctx.rateLimits?.five_hour) {
+		const { resets_at, used_percentage } = ctx.rateLimits.five_hour;
+		if (resets_at) {
+			const resetTime = new Date(resets_at * 1000);
+			const h = resetTime.getHours();
+			const m = resetTime.getMinutes();
+			usageParts.push(`${C.WHITE}⏳ ${formatTime(h, m)}${C.RESET}`);
 		}
+		const usageColor = getUsageColor(used_percentage);
+		usageParts.push(
+			`${usageColor}📊 ${Math.round(used_percentage)}/100${C.RESET}`,
+		);
+	}
 
-		// 7일 사용량 및 리셋 시각
-		if (ctx.rateLimits.seven_day) {
-			const { resets_at, used_percentage } = ctx.rateLimits.seven_day;
-			if (resets_at) {
-				const resetTime = new Date(resets_at * 1000);
-				parts.push(`${C.WHITE}⏰ ${formatResetDate(resetTime)}${C.RESET}`);
-			}
-			const weekColor = getUsageColor(used_percentage);
-			parts.push(`${weekColor}📅 ${Math.round(used_percentage)}/100${C.RESET}`);
+	// 7일 사용량 및 리셋 시각
+	if (ctx.rateLimits?.seven_day) {
+		const { resets_at, used_percentage } = ctx.rateLimits.seven_day;
+		if (resets_at) {
+			const resetTime = new Date(resets_at * 1000);
+			usageParts.push(`${C.WHITE}⏰ ${formatResetDate(resetTime)}${C.RESET}`);
 		}
+		const weekColor = getUsageColor(used_percentage);
+		usageParts.push(
+			`${weekColor}📅 ${Math.round(used_percentage)}/100${C.RESET}`,
+		);
+	}
 
-		if (parts.length > 0) {
-			lines.push(parts.join(" | "));
-		}
+	// 세션 ID — 📅 오른쪽 끝. 이모지 없이 UUID 전체를 그대로 노출한다
+	// (복사해서 --resume·로그 조회 등에 바로 쓰기 위함).
+	const sessionId = ctx.claudeJson.session_id;
+	if (sessionId) {
+		usageParts.push(`${C.WHITE}${sessionId}${C.RESET}`);
+	}
+
+	if (usageParts.length > 0) {
+		lines.push(usageParts.join(" | "));
 	}
 
 	// 4번째 줄: git changes | PR URL

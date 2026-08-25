@@ -52,7 +52,7 @@ Claude Code를 위한 커스텀 상태표시줄.
 ## 기능
 
 - **세션 시간**: 현재 세션 경과 시간
-- **비용**: 세션 비용 (USD)
+- **비용**: 세션 비용 (USD) — 기본은 숨김, `CC_STATUSLINE_SHOW_COST=1`로 표시 ([설정](#설정) 참조)
 - **컨텍스트**: 토큰 사용량 및 백분율 (색상 표시)
 - **모델**: 현재 사용 중인 모델명과 reasoning effort (예: `Fable 5 high`, effort는 지원 모델에서만 표시), Claude Code 설정에서 ultracode가 켜져 있고 세션 effort가 `xhigh`일 때 `⚡ultra` 배지 표시
 - **Git Diff**: 파일 수, 추가, 삭제
@@ -64,6 +64,7 @@ Claude Code를 위한 커스텀 상태표시줄.
 - **블록 사용량**: 5시간 사용률
 - **주간 리셋 타이머**: 7일 사용량 리셋 시각 (MM/DD HH:MM)
 - **주간 사용량**: 7일 사용률
+- **세션 ID**: 사용량 줄 오른쪽 끝에 세션 UUID 전체를 이모지 없이 표시 — `claude --resume <id>`나 로그 조회에 그대로 복사해 쓸 수 있습니다
 
 ## Emoji 가이드
 
@@ -73,15 +74,38 @@ Claude Code를 위한 커스텀 상태표시줄.
 | 🌲    | 워크트리 이름 (클릭하면 워크트리 폴더 열림) |
 | 🌿    | 현재 Git 브랜치        |
 | ⏱️    | 세션 경과 시간         |
-| 💰    | 세션 비용 (USD)        |
+| 💰    | 세션 비용 (USD) — 기본은 숨김 ([설정](#설정) 참조) |
 | 🧠    | 컨텍스트 창 사용량     |
 | 🤖    | 현재 모델 및 effort    |
 | ⏳    | 리셋 시각              |
 | 📊    | 5시간 사용률 %         |
 | ⏰    | 주간 제한 리셋 시간    |
 | 📅    | 7일 사용률 %           |
+| _(없음)_ | 세션 ID — 📅 뒤에 이모지 라벨 없이 UUID 전체 표시 |
 | ✏️    | 커밋되지 않은 변경사항 (클릭하면 diff 뷰어 열림) |
 | 📎    | Pull Request 링크, 대괄호로 표시되는 PR 상태(`[Open]`/`[Draft]`/`[Merged]`/`[Closed]`)와 체크가 있을 때 괄호로 표시되는 CI 요약(`(N passed)`/`(N running)`/`(N failed)`) |
+
+## 설정
+
+기본 동작은 Claude Code가 stdin으로 넘겨주는 JSON만으로 돌아가므로 별도 설정이 필요 없습니다. 아래 환경변수로 렌더링 내용을 조정할 수 있습니다:
+
+| 환경변수 | 효과 |
+| -------- | ---- |
+| `CC_STATUSLINE_SHOW_COST=1` | `💰` 세션 비용 세그먼트 표시 (기본값: 숨김) |
+| `CC_STATUSLINE_DIFF_PORT` | diff 뷰어 포트 변경 (기본값: `49573`) |
+| `CC_STATUSLINE_DIFF_DISABLE=1` | diff 뷰어 완전 비활성화 |
+
+statusline 명령이 실행되는 곳에 지정하면 됩니다 — 예를 들어 `~/.claude/settings.json`에서:
+
+```json
+{
+  "statusLine": {
+    "type": "command",
+    "command": "CC_STATUSLINE_SHOW_COST=1 bunx @say8425/cc-statusline",
+    "padding": 0
+  }
+}
+```
 
 ## Diff 뷰어
 
@@ -109,10 +133,7 @@ statusline의 `✏️`를 클릭하면 로컬 diff 뷰어가 브라우저에 열
 
 레포에 보여줄 변경이 있으면 statusline이 diffdeck을 `127.0.0.1:49573`에 백그라운드 데몬으로 필요 시 띄웁니다. 요청은 토큰으로 보호되며 localhost에만 바인딩됩니다.
 
-| 환경 변수 | 효과 |
-| --------- | ---- |
-| `CC_STATUSLINE_DIFF_PORT` | 포트 변경 (기본값: `49573`) |
-| `CC_STATUSLINE_DIFF_DISABLE=1` | diff 뷰어 완전 비활성화 |
+이를 제어하는 `CC_STATUSLINE_DIFF_*` 환경변수 두 개는 [설정](#설정)의 표에 정리돼 있습니다.
 
 > [!TIP]
 > 북마크 대신 `✏️` 링크로 뷰어를 여세요 — 링크에는 항상 최신 토큰이 포함되며 서버 실행도 보장됩니다.
@@ -131,6 +152,8 @@ Claude Code가 stdin JSON 입력으로 `rate_limits`를 전달합니다 (CLI 2.1
 4. **주간 리셋 타이머** - 주간 제한 리셋 시각 (`rate_limits.seven_day.resets_at`), `MM/DD HH:MM` 포맷 (예: `02/15 17:00`)
 
 사용량 지표는 stdin JSON에 `rate_limits`가 포함되어 있으면 **자동으로 표시**됩니다. 추가 플래그나 설정이 필요 없습니다.
+
+세션 ID(`session_id`)는 같은 줄의 7일 사용률 뒤에 이어 붙습니다. 별개의 필드에서 오므로 `rate_limits`가 없어도 세션 ID는 그대로 표시됩니다.
 
 > [!NOTE]
 > `rate_limits`는 Claude.ai 구독자(Pro/Max)에게만 첫 API 응답 이후 제공됩니다. 전체 JSON 스키마는 [공식 statusline 문서](https://code.claude.com/docs/en/statusline)를 참조하세요.

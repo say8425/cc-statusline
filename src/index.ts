@@ -1,5 +1,6 @@
 #!/usr/bin/env bun
 
+import { isCostVisible } from "./config.ts";
 import { ensureDiffServer } from "./diff-server/ensure.ts";
 import { buildDiffViewerUrl } from "./diff-server/link.ts";
 import { toFileUrl } from "./format/index.ts";
@@ -78,6 +79,7 @@ export const main = async (): Promise<void> => {
 		gitChanges,
 		prInfo,
 		ultracode,
+		showCost: isCostVisible(),
 		rateLimits: claudeJson.rate_limits ?? null,
 		mainProjectName,
 		diffViewerUrl,

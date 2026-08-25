@@ -52,7 +52,7 @@ Claude Code 自定义状态栏。
 ## 功能
 
 - **会话时间**: 当前会话经过时间
-- **费用**: 会话费用（美元）
+- **费用**: 会话费用（美元）— 默认隐藏，设置 `CC_STATUSLINE_SHOW_COST=1` 后显示（参见[配置](#配置)）
 - **上下文**: 令牌使用量及百分比（颜色标识）
 - **模型**: 当前使用的模型名称和 reasoning effort（例如 `Fable 5 high`，effort 仅在支持的模型上显示），当 Claude Code 设置中启用 ultracode 且会话 effort 为 `xhigh` 时显示 `⚡ultra` 徽章
 - **Git Diff**: 文件数、新增、删除
@@ -64,6 +64,7 @@ Claude Code 自定义状态栏。
 - **块使用量**: 5小时使用率
 - **每周重置计时器**: 7天使用量重置时间（MM/DD HH:MM）
 - **周使用量**: 7天使用率
+- **会话 ID**: 在使用量行末尾显示完整的会话 UUID，不带表情符号 — 可直接复制到 `claude --resume <id>` 或日志查询中
 
 ## 表情符号指南
 
@@ -73,15 +74,38 @@ Claude Code 自定义状态栏。
 | 🌲   | 工作树名称（点击打开工作树文件夹） |
 | 🌿   | 当前 Git 分支       |
 | ⏱️   | 会话经过时间        |
-| 💰   | 会话费用（美元）    |
+| 💰   | 会话费用（美元）— 默认隐藏（参见[配置](#配置)） |
 | 🧠   | 上下文窗口使用量    |
 | 🤖   | 当前模型和 effort   |
 | ⏳   | 重置时间            |
 | 📊   | 5小时使用率 %       |
 | ⏰   | 每周限制重置时间    |
 | 📅   | 7天使用率 %         |
+| _(无)_ | 会话 ID — 在 📅 之后显示完整 UUID，不带表情符号标签 |
 | ✏️   | 未提交的更改（点击打开 diff 查看器）        |
 | 📎   | Pull Request 链接 — 方括号中显示状态（`[Open]`/`[Draft]`/`[Merged]`/`[Closed]`），存在检查时括号中显示 CI 汇总（`(N passed)`/`(N running)`/`(N failed)`） |
+
+## 配置
+
+默认行为完全依赖 Claude Code 通过 stdin 传入的 JSON，无需额外配置。以下环境变量可调整渲染内容:
+
+| 环境变量 | 效果 |
+| -------- | ---- |
+| `CC_STATUSLINE_SHOW_COST=1` | 显示 `💰` 会话费用段（默认: 隐藏） |
+| `CC_STATUSLINE_DIFF_PORT` | 修改 diff 查看器端口（默认: `49573`） |
+| `CC_STATUSLINE_DIFF_DISABLE=1` | 完全禁用 diff 查看器 |
+
+在运行 statusline 命令的位置设置即可 — 例如在 `~/.claude/settings.json` 中:
+
+```json
+{
+  "statusLine": {
+    "type": "command",
+    "command": "CC_STATUSLINE_SHOW_COST=1 bunx @say8425/cc-statusline",
+    "padding": 0
+  }
+}
+```
 
 ## Diff 查看器
 
@@ -109,10 +133,7 @@ Claude Code 自定义状态栏。
 
 当仓库有可展示的变更时，statusline 会按需将 diffdeck 作为后台守护进程在 `127.0.0.1:49573` 启动。请求受令牌保护，且仅绑定到 localhost。
 
-| 环境变量 | 效果 |
-| -------- | ---- |
-| `CC_STATUSLINE_DIFF_PORT` | 修改端口（默认: `49573`） |
-| `CC_STATUSLINE_DIFF_DISABLE=1` | 完全禁用 diff 查看器 |
+控制它的两个 `CC_STATUSLINE_DIFF_*` 环境变量集中在[配置](#配置)一节的表格中。
 
 > [!TIP]
 > 请通过 `✏️` 链接打开查看器，而不是使用书签 — 链接始终携带最新令牌，并确保服务已启动。
@@ -131,6 +152,8 @@ Claude Code 通过 stdin JSON 输入传递 `rate_limits`（CLI 2.1.80+）：
 4. **每周重置计时器** - 周限制重置时间（`rate_limits.seven_day.resets_at`），`MM/DD HH:MM` 格式（如 `02/15 17:00`）
 
 当 stdin JSON 中包含 `rate_limits` 时，使用量指标会**自动显示**。无需额外标志或配置。
+
+会话 ID（`session_id`）会追加在同一行的 7 天使用率之后。它来自独立的字段，因此即使没有 `rate_limits` 也照常显示。
 
 > [!NOTE]
 > `rate_limits` 仅在 Claude.ai 订阅用户（Pro/Max）首次 API 响应后提供。完整 JSON schema 请参阅[官方 statusline 文档](https://code.claude.com/docs/en/statusline)。
