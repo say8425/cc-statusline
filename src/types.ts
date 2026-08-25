@@ -12,6 +12,9 @@ export interface RateLimits {
 
 // 공식 Claude Code JSON input 타입 정의
 export interface ClaudeStatusInput {
+	// 세션 고유 식별자. 3번째 줄 오른쪽 끝에 UUID 전체를 그대로 표시한다.
+	// 구버전 CLI에는 없을 수 있어 optional — 없으면 세그먼트 자체를 생략.
+	session_id?: string;
 	cost: {
 		total_duration_ms: number;
 		total_cost_usd: number;
@@ -68,6 +71,9 @@ export interface RenderContext {
 	gitChanges: { files: number; insertions: number; deletions: number };
 	prInfo: PrInfo | null;
 	ultracode: boolean;
+	// 💰 비용 세그먼트 표시 여부 (기본 false, CC_STATUSLINE_SHOW_COST=1로 켬).
+	// env 판정은 src/config.ts가 하고 render는 결과만 받는다 (기존 DI 방식 유지).
+	showCost: boolean;
 	rateLimits: RateLimits | null;
 	mainProjectName: string | null;
 	diffViewerUrl: string | null;

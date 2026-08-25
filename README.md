@@ -52,7 +52,7 @@ Add the following to `~/.claude/settings.json`:
 ## Features
 
 - **Session Time**: Current session elapsed time
-- **Cost**: Session cost in USD
+- **Cost**: Session cost in USD — hidden by default, set `CC_STATUSLINE_SHOW_COST=1` to show (see [Configuration](#configuration))
 - **Context**: Token usage with percentage (color-coded)
 - **Model**: Current model name and reasoning effort (e.g., `Fable 5 high`; effort shown only for models that support it), with an `⚡ultra` badge when ultracode is enabled in your Claude Code settings and the session reports `xhigh` effort
 - **Git Diff**: File count, insertions, deletions
@@ -64,6 +64,7 @@ Add the following to `~/.claude/settings.json`:
 - **Block Usage**: 5-hour utilization percentage
 - **Weekly Reset Timer**: Weekly limit reset time (MM/DD HH:MM)
 - **Weekly Usage**: 7-day utilization percentage
+- **Session ID**: Full session UUID at the end of the usage line, with no emoji label — ready to copy into `claude --resume <id>` or a log lookup
 
 ## Emoji Guide
 
@@ -73,13 +74,14 @@ Add the following to `~/.claude/settings.json`:
 | 🌲    | Worktree name (click to open worktree folder) |
 | 🌿    | Current Git branch       |
 | ⏱️    | Session elapsed time     |
-| 💰    | Session cost in USD      |
+| 💰    | Session cost in USD (hidden by default — see [Configuration](#configuration)) |
 | 🧠    | Context window usage     |
 | 🤖    | Current model and effort |
 | ⏳    | Limit reset time         |
 | 📊    | 5-hour utilization %     |
 | ⏰    | Weekly limit reset time  |
 | 📅    | 7-day utilization %      |
+| _(none)_ | Session ID — the full UUID, shown after 📅 without an emoji label |
 | ✏️    | Uncommitted changes (click to open diff viewer) |
 | 📎    | Pull request link — color-coded state in brackets (`[Open]`/`[Draft]`/`[Merged]`/`[Closed]`) immediately followed by a color-coded CI check summary in parens (`(N passed)`/`(N running)`/`(N failed)`) when checks exist |
 
@@ -89,6 +91,28 @@ Add the following to `~/.claude/settings.json`:
 | ------------- | -------------- | ---------------- | -------------- |
 | Context %     | < 50%          | 50-80%           | > 80%          |
 | Block Usage % | < 50%          | 50-80%           | > 80%          |
+
+## Configuration
+
+Everything is driven by the stdin JSON Claude Code provides, so there is nothing to configure for the defaults. These environment variables adjust what is rendered:
+
+| Environment variable | Effect |
+| -------------------- | ------ |
+| `CC_STATUSLINE_SHOW_COST=1` | Show the `💰` session cost segment (hidden by default) |
+| `CC_STATUSLINE_DIFF_PORT` | Change the diff viewer port (default: `49573`) |
+| `CC_STATUSLINE_DIFF_DISABLE=1` | Disable the diff viewer entirely |
+
+Set them where your statusline command runs — for example in `~/.claude/settings.json`:
+
+```json
+{
+  "statusLine": {
+    "type": "command",
+    "command": "CC_STATUSLINE_SHOW_COST=1 bunx @say8425/cc-statusline",
+    "padding": 0
+  }
+}
+```
 
 ## Diff Viewer
 
@@ -119,10 +143,7 @@ Click `✏️` in the statusline to open a local diff viewer in your browser. Th
 
 The statusline spawns diffdeck as a background daemon on demand at `127.0.0.1:49573` whenever the repo has something to show. Requests are token-protected and bound to localhost.
 
-| Environment variable | Effect |
-| -------------------- | ------ |
-| `CC_STATUSLINE_DIFF_PORT` | Change the port (default: `49573`) |
-| `CC_STATUSLINE_DIFF_DISABLE=1` | Disable the diff viewer entirely |
+The two `CC_STATUSLINE_DIFF_*` variables that control it are listed in [Configuration](#configuration).
 
 > [!TIP]
 > Open the viewer through the `✏️` link instead of a bookmark — the link always carries a fresh token and makes sure the server is running.
@@ -141,6 +162,8 @@ Claude Code passes `rate_limits` in the stdin JSON input (CLI 2.1.80+):
 4. **Weekly reset timer** - Weekly limit reset time (`rate_limits.seven_day.resets_at`), shown as `MM/DD HH:MM` (e.g., `02/15 17:00`)
 
 Usage metrics are **automatically displayed** when `rate_limits` is present in the stdin JSON. No additional flags or configuration needed.
+
+The session ID (`session_id`) is appended to the end of the same line, after the 7-day utilization. It comes from a separate field, so it still shows on its own when `rate_limits` is absent.
 
 > [!NOTE]
 > `rate_limits` is only available for Claude.ai subscribers (Pro/Max) after the first API response. See the [official statusline docs](https://code.claude.com/docs/en/statusline) for the full JSON schema.

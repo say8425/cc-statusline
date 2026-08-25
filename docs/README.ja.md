@@ -52,7 +52,7 @@ Claude Code用カスタムステータスライン。
 ## 機能
 
 - **セッション時間**: 現在のセッション経過時間
-- **コスト**: セッションコスト（USD）
+- **コスト**: セッションコスト（USD） — デフォルトでは非表示、`CC_STATUSLINE_SHOW_COST=1` で表示（[設定](#設定)を参照）
 - **コンテキスト**: トークン使用量とパーセンテージ（色分け表示）
 - **モデル**: 現在使用中のモデル名と reasoning effort（例: `Fable 5 high`、effort は対応モデルのみ表示）、Claude Code 設定で ultracode が有効かつセッションの effort が `xhigh` の場合は `⚡ultra` バッジを表示
 - **Git Diff**: ファイル数、追加、削除
@@ -64,6 +64,7 @@ Claude Code用カスタムステータスライン。
 - **ブロック使用量**: 5時間使用率
 - **週間リセットタイマー**: 7日使用量リセット時刻（MM/DD HH:MM）
 - **週間使用量**: 7日使用率
+- **セッション ID**: 使用量行の右端にセッション UUID 全体を絵文字なしで表示 — `claude --resume <id>` やログ検索にそのままコピーできます
 
 ## 絵文字ガイド
 
@@ -73,15 +74,38 @@ Claude Code用カスタムステータスライン。
 | 🌲     | ワークツリー名（クリックでワークツリーフォルダを開く） |
 | 🌿     | 現在のGitブランチ            |
 | ⏱️     | セッション経過時間           |
-| 💰     | セッションコスト（USD）      |
+| 💰     | セッションコスト（USD） — デフォルトでは非表示（[設定](#設定)を参照） |
 | 🧠     | コンテキストウィンドウ使用量 |
 | 🤖     | 現在のモデルと effort        |
 | ⏳     | リセット時刻                 |
 | 📊     | 5時間使用率 %                |
 | ⏰     | 週間制限リセット時間         |
 | 📅     | 7日使用率 %                  |
+| _(なし)_ | セッション ID — 📅 の後に絵文字ラベルなしで UUID 全体を表示 |
 | ✏️     | コミットされていない変更（クリックで diff ビューアを開く）     |
 | 📎     | Pull Requestリンク — 角括弧で状態を表示（`[Open]`/`[Draft]`/`[Merged]`/`[Closed]`）、チェックが存在する場合は括弧内に CI サマリー（`(N passed)`/`(N running)`/`(N failed)`）も表示 |
+
+## 設定
+
+デフォルトの動作は Claude Code が stdin で渡す JSON だけで完結するため、設定は不要です。以下の環境変数で表示内容を調整できます:
+
+| 環境変数 | 効果 |
+| -------- | ---- |
+| `CC_STATUSLINE_SHOW_COST=1` | `💰` セッションコストのセグメントを表示（デフォルト: 非表示） |
+| `CC_STATUSLINE_DIFF_PORT` | diff ビューアのポートを変更（デフォルト: `49573`） |
+| `CC_STATUSLINE_DIFF_DISABLE=1` | diff ビューアを完全に無効化 |
+
+statusline コマンドが実行される場所で指定します — 例えば `~/.claude/settings.json` で:
+
+```json
+{
+  "statusLine": {
+    "type": "command",
+    "command": "CC_STATUSLINE_SHOW_COST=1 bunx @say8425/cc-statusline",
+    "padding": 0
+  }
+}
+```
 
 ## Diff ビューア
 
@@ -109,10 +133,7 @@ statusline の `✏️` をクリックすると、ローカル diff ビュー�
 
 リポジトリに表示すべき変更があると、statusline が diffdeck を `127.0.0.1:49573` にバックグラウンドデーモンとして必要に応じて起動します。リクエストはトークンで保護され、localhost のみにバインドされます。
 
-| 環境変数 | 効果 |
-| -------- | ---- |
-| `CC_STATUSLINE_DIFF_PORT` | ポート変更（デフォルト: `49573`） |
-| `CC_STATUSLINE_DIFF_DISABLE=1` | diff ビューアを完全に無効化 |
+これを制御する `CC_STATUSLINE_DIFF_*` 環境変数 2 つは[設定](#設定)の表にまとめてあります。
 
 > [!TIP]
 > ブックマークではなく `✏️` リンクからビューアを開いてください — リンクには常に最新のトークンが含まれ、サーバーの起動も保証されます。
@@ -131,6 +152,8 @@ Claude CodeがJSON入力で`rate_limits`を渡します（CLI 2.1.80+）：
 4. **週間リセットタイマー** - 週間制限リセット時刻（`rate_limits.seven_day.resets_at`）、`MM/DD HH:MM`形式（例：`02/15 17:00`）
 
 使用量メトリクスはstdin JSONに`rate_limits`が含まれている場合、**自動的に表示**されます。追加のフラグや設定は不要です。
+
+セッション ID（`session_id`）は同じ行の7日使用率の後ろに続きます。別のフィールド由来のため、`rate_limits` がなくてもセッション ID は表示されます。
 
 > [!NOTE]
 > `rate_limits`はClaude.aiサブスクライバー（Pro/Max）のみ、最初のAPIレスポンス後に提供されます。完全なJSONスキーマは[公式statuslineドキュメント](https://code.claude.com/docs/en/statusline)を参照してください。

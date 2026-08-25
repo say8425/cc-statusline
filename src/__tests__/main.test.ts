@@ -1,12 +1,17 @@
 import { afterEach, describe, expect, setSystemTime, test } from "bun:test";
 import { C } from "../colors.ts";
 import { renderStatusLine } from "../render.ts";
-import type { ClaudeStatusInput, RenderContext } from "../types.ts";
+import type { ClaudeStatusInput, RateLimits, RenderContext } from "../types.ts";
 
 // Helper to create Claude input JSON
 const createClaudeInput = (
 	overrides: Partial<ClaudeStatusInput> = {},
 ): ClaudeStatusInput => ({
+	// 최상위 optional 필드는 명시된 경우에만 실어 보낸다 — 기본 컨텍스트에
+	// session_id가 섞이면 "세그먼트 생략" 케이스를 검증할 수 없다
+	...(overrides.session_id === undefined
+		? {}
+		: { session_id: overrides.session_id }),
 	cost: {
 		total_duration_ms: 3600000, // 1 hour
 		total_cost_usd: 0.5,
@@ -51,6 +56,8 @@ const createRenderContext = (
 	},
 	prInfo: overrides.prInfo ?? null,
 	ultracode: overrides.ultracode ?? false,
+	// 프로덕션 기본과 동일하게 false — 💰를 보려면 테스트에서 명시적으로 켠다
+	showCost: overrides.showCost ?? false,
 	rateLimits: overrides.rateLimits ?? null,
 	mainProjectName: overrides.mainProjectName ?? null,
 	diffViewerUrl: overrides.diffViewerUrl ?? null,
@@ -58,6 +65,20 @@ const createRenderContext = (
 	baseDiffViewerUrl: overrides.baseDiffViewerUrl ?? null,
 	projectDirUrl: overrides.projectDirUrl ?? null,
 	mainProjectUrl: overrides.mainProjectUrl ?? null,
+});
+
+// 세션 ID 테스트용 고정값 — 5시간/7일 파트가 모두 있는 rate_limits
+const SESSION_ID = "a1b2c3d4-e5f6-7890-abcd-ef1234567890";
+
+const withRateLimits = (now: number): RateLimits => ({
+	five_hour: {
+		used_percentage: 56,
+		resets_at: Math.floor((now + 3600000) / 1000),
+	},
+	seven_day: {
+		used_percentage: 37,
+		resets_at: Math.floor((now + 86400000) / 1000),
+	},
 });
 
 describe("renderStatusLine", () => {
@@ -101,8 +122,21 @@ describe("renderStatusLine", () => {
 			expect(lines[1]).toContain("01:00");
 		});
 
-		test("outputs cost on second line", () => {
+		test("hides cost on second line by default", () => {
 			const ctx = createRenderContext({
+				claudeJson: {
+					cost: { total_duration_ms: 0, total_cost_usd: 1.25 },
+				},
+			});
+			const lines = renderStatusLine(ctx);
+
+			expect(lines[1]).not.toContain("💰");
+			expect(lines[1]).not.toContain("$1.25");
+		});
+
+		test("outputs cost on second line when showCost is true", () => {
+			const ctx = createRenderContext({
+				showCost: true,
 				claudeJson: {
 					cost: { total_duration_ms: 0, total_cost_usd: 1.25 },
 				},
@@ -111,6 +145,20 @@ describe("renderStatusLine", () => {
 
 			expect(lines[1]).toContain("💰");
 			expect(lines[1]).toContain("$1.25");
+		});
+
+		test("keeps session time as the first segment when cost is hidden", () => {
+			const ctx = createRenderContext({
+				claudeJson: {
+					cost: { total_duration_ms: 3600000, total_cost_usd: 1.25 },
+				},
+			});
+			const lines = renderStatusLine(ctx);
+
+			// 💰가 빠져도 ⏱️ 뒤에 남은 세그먼트가 정상 구분자로 이어져야 한다
+			expect(lines[1]).toContain("⏱️ 01:00");
+			expect(lines[1]).toContain("🧠");
+			expect(lines[1]).not.toContain("|  |");
 		});
 
 		test("outputs context usage on second line", () => {
@@ -708,6 +756,98 @@ describe("renderStatusLine", () => {
 
 			expect(lines[2]).toContain(C.RED);
 			expect(lines[2]).toContain("85/100");
+		});
+	});
+
+	describe("session id display", () => {
+		test("shows the full session_id with no emoji label", () => {
+			const now = Date.now();
+			setSystemTime(now);
+
+			const ctx = createRenderContext({
+				rateLimits: withRateLimits(now),
+				claudeJson: { session_id: SESSION_ID },
+			});
+			const lines = renderStatusLine(ctx);
+
+			// UUID 전체가 잘리지 않고 그대로 나와야 한다
+			expect(lines[2]).toContain(SESSION_ID);
+		});
+
+		test("places the session id to the right of 📅", () => {
+			const now = Date.now();
+			setSystemTime(now);
+
+			const ctx = createRenderContext({
+				rateLimits: withRateLimits(now),
+				claudeJson: { session_id: SESSION_ID },
+			});
+			const lines = renderStatusLine(ctx);
+
+			const usageLine = lines[2];
+			expect(usageLine.indexOf(SESSION_ID)).toBeGreaterThan(
+				usageLine.indexOf("📅"),
+			);
+			// 마지막 세그먼트 — 뒤에 다른 파트가 붙지 않는다
+			expect(usageLine.endsWith(`${SESSION_ID}${C.RESET}`)).toBe(true);
+		});
+
+		test("omits the session id segment when session_id is absent", () => {
+			const now = Date.now();
+			setSystemTime(now);
+
+			const ctx = createRenderContext({ rateLimits: withRateLimits(now) });
+			const lines = renderStatusLine(ctx);
+
+			// 📅가 마지막 파트로 남고 구분자만 덩그러니 붙지 않아야 한다
+			expect(lines[2].endsWith(`37/100${C.RESET}`)).toBe(true);
+		});
+
+		test("still shows the session id when rateLimits is null", () => {
+			const ctx = createRenderContext({
+				rateLimits: null,
+				claudeJson: { session_id: SESSION_ID },
+			});
+			const lines = renderStatusLine(ctx);
+
+			// rate_limits는 Pro/Max 첫 API 응답 이후에만 오므로 세션 ID를 볼모로 잡지 않는다
+			expect(lines[2]).toContain(SESSION_ID);
+			expect(lines[2]).not.toContain("📊");
+			expect(lines[2]).not.toContain("📅");
+		});
+
+		test("follows five_hour directly when seven_day is absent", () => {
+			const now = Date.now();
+			setSystemTime(now);
+
+			// 새 게이트가 새로 만든 유일하게 흥미로운 조합 — 📅는 없는데 세션 ID는 있다
+			const ctx = createRenderContext({
+				rateLimits: {
+					five_hour: {
+						used_percentage: 56,
+						resets_at: Math.floor((now + 3600000) / 1000),
+					},
+				},
+				claudeJson: { session_id: SESSION_ID },
+			});
+			const lines = renderStatusLine(ctx);
+
+			expect(lines[2]).toContain("📊");
+			expect(lines[2]).not.toContain("📅");
+			expect(lines[2].indexOf(SESSION_ID)).toBeGreaterThan(
+				lines[2].indexOf("📊"),
+			);
+			expect(lines[2].endsWith(`${SESSION_ID}${C.RESET}`)).toBe(true);
+		});
+
+		test("keeps the session id off the usage line when it is an empty string", () => {
+			const ctx = createRenderContext({
+				rateLimits: null,
+				claudeJson: { session_id: "" },
+			});
+			const lines = renderStatusLine(ctx);
+
+			expect(lines.length).toBe(2);
 		});
 	});
 
