@@ -1,5 +1,21 @@
 # Changelog
 
+## [6.0.0](https://github.com/say8425/cc-statusline/compare/v5.0.3...v6.0.0) (2026-08-25)
+
+
+### ⚠ BREAKING CHANGES
+
+* two visible output changes.
+
+### Features
+
+* hide the cost segment by default and show the session id ([#87](https://github.com/say8425/cc-statusline/issues/87)) ([4b8f98f](https://github.com/say8425/cc-statusline/commit/4b8f98f7ff02feaff4e941bcaf081c18ca001b40))
+
+
+### Bug Fixes
+
+* **deps:** bump @say8425/diffdeck from 1.3.1 to 1.4.0 ([#84](https://github.com/say8425/cc-statusline/issues/84)) ([fa46d2f](https://github.com/say8425/cc-statusline/commit/fa46d2f97286b56367aa6078ae70267623ef0a58))
+
 ## [5.0.3](https://github.com/say8425/cc-statusline/compare/v5.0.2...v5.0.3) (2026-08-04)
 
 
