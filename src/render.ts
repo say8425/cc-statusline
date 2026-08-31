@@ -86,11 +86,16 @@ export const renderStatusLine = (ctx: RenderContext): string[] => {
 		if (ctx.ultracode && effortLevel === "xhigh") modelText += " ⚡ultra";
 		line2 += ` | ${C.WHITE}🤖 ${modelText}${C.RESET}`;
 	}
+	// 세션 ID — 2번째 줄 오른쪽 끝. 이모지 라벨 없이 UUID 전체를 그대로 노출한다
+	// (복사해서 --resume·로그 조회 등에 바로 쓰기 위함). rate_limits와 출처가 달라
+	// rate_limits 유무와 무관하게 ⏱️ 세션 시간이 항상 있는 이 줄에 붙는다.
+	const sessionId = ctx.claudeJson.session_id;
+	if (sessionId) {
+		line2 += ` | ${C.WHITE}${sessionId}${C.RESET}`;
+	}
 	lines.push(line2);
 
-	// 3번째 줄: 리셋 타이머 | 5시간 사용량 | 7일 사용량 | 세션 ID
-	// rate_limits와 session_id는 서로 독립적인 출처라 각각 있을 때만 파트를 쌓고,
-	// 하나라도 남으면 줄을 만든다 (rate_limits가 없어도 세션 ID는 보이도록).
+	// 3번째 줄: 리셋 타이머 | 5시간 사용량 | 7일 사용량
 	const usageParts: string[] = [];
 
 	// 5시간 사용량 및 리셋 시각
@@ -119,13 +124,6 @@ export const renderStatusLine = (ctx: RenderContext): string[] => {
 		usageParts.push(
 			`${weekColor}📅 ${Math.round(used_percentage)}/100${C.RESET}`,
 		);
-	}
-
-	// 세션 ID — 📅 오른쪽 끝. 이모지 없이 UUID 전체를 그대로 노출한다
-	// (복사해서 --resume·로그 조회 등에 바로 쓰기 위함).
-	const sessionId = ctx.claudeJson.session_id;
-	if (sessionId) {
-		usageParts.push(`${C.WHITE}${sessionId}${C.RESET}`);
 	}
 
 	if (usageParts.length > 0) {

@@ -64,7 +64,7 @@ Add the following to `~/.claude/settings.json`:
 - **Block Usage**: 5-hour utilization percentage
 - **Weekly Reset Timer**: Weekly limit reset time (MM/DD HH:MM)
 - **Weekly Usage**: 7-day utilization percentage
-- **Session ID**: Full session UUID at the end of the usage line, with no emoji label — ready to copy into `claude --resume <id>` or a log lookup
+- **Session ID**: Full session UUID at the end of the session-time line (to the right of the model segment), with no emoji label — ready to copy into `claude --resume <id>` or a log lookup
 
 ## Emoji Guide
 
@@ -77,11 +77,11 @@ Add the following to `~/.claude/settings.json`:
 | 💰    | Session cost in USD (hidden by default — see [Configuration](#configuration)) |
 | 🧠    | Context window usage     |
 | 🤖    | Current model and effort |
+| _(none)_ | Session ID — the full UUID, shown after 🤖 (or at the end of the session-time line) without an emoji label |
 | ⏳    | Limit reset time         |
 | 📊    | 5-hour utilization %     |
 | ⏰    | Weekly limit reset time  |
 | 📅    | 7-day utilization %      |
-| _(none)_ | Session ID — the full UUID, shown after 📅 without an emoji label |
 | ✏️    | Uncommitted changes (click to open diff viewer) |
 | 📎    | Pull request link — color-coded state in brackets (`[Open]`/`[Draft]`/`[Merged]`/`[Closed]`) immediately followed by a color-coded CI check summary in parens (`(N passed)`/`(N running)`/`(N failed)`) when checks exist |
 
@@ -163,7 +163,7 @@ Claude Code passes `rate_limits` in the stdin JSON input (CLI 2.1.80+):
 
 Usage metrics are **automatically displayed** when `rate_limits` is present in the stdin JSON. No additional flags or configuration needed.
 
-The session ID (`session_id`) is appended to the end of the same line, after the 7-day utilization. It comes from a separate field, so it still shows on its own when `rate_limits` is absent.
+The session ID (`session_id`) lives on the session-time line instead — see [Features](#features) — since it comes from a separate field and doesn't depend on `rate_limits`.
 
 > [!NOTE]
 > `rate_limits` is only available for Claude.ai subscribers (Pro/Max) after the first API response. See the [official statusline docs](https://code.claude.com/docs/en/statusline) for the full JSON schema.

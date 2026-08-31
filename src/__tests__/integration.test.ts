@@ -135,7 +135,7 @@ describe("main function (integration)", () => {
 		}
 	});
 
-	test("main function renders session_id from stdin on the usage line", async () => {
+	test("main function renders session_id from stdin on the session-time line", async () => {
 		const sessionId = "a1b2c3d4-e5f6-7890-abcd-ef1234567890";
 		const testInput = JSON.stringify({
 			session_id: sessionId,
@@ -173,10 +173,10 @@ describe("main function (integration)", () => {
 		try {
 			await main();
 
-			// 사용량 줄 오른쪽 끝 — 📅 뒤에 UUID 전체
-			expect(logs[2]).toContain("📅");
-			expect(logs[2]).toContain(sessionId);
-			expect(logs[2].indexOf(sessionId)).toBeGreaterThan(logs[2].indexOf("📅"));
+			// 세션 시간 줄(2번째 줄) 오른쪽 끝 — UUID 전체가 그대로 붙는다
+			expect(logs[1]).toContain("⏱️");
+			expect(logs[1]).toContain(sessionId);
+			expect(logs[1].indexOf(sessionId)).toBeGreaterThan(logs[1].indexOf("⏱️"));
 		} finally {
 			Bun.stdin.stream = originalStream;
 		}
