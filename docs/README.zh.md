@@ -64,7 +64,7 @@ Claude Code 自定义状态栏。
 - **块使用量**: 5小时使用率
 - **每周重置计时器**: 7天使用量重置时间（MM/DD HH:MM）
 - **周使用量**: 7天使用率
-- **会话 ID**: 在使用量行末尾显示完整的会话 UUID，不带表情符号 — 可直接复制到 `claude --resume <id>` 或日志查询中
+- **会话 ID**: 在会话时间行末尾（模型段右侧）显示完整的会话 UUID，不带表情符号 — 可直接复制到 `claude --resume <id>` 或日志查询中
 
 ## 表情符号指南
 
@@ -77,11 +77,11 @@ Claude Code 自定义状态栏。
 | 💰   | 会话费用（美元）— 默认隐藏（参见[配置](#配置)） |
 | 🧠   | 上下文窗口使用量    |
 | 🤖   | 当前模型和 effort   |
+| _(无)_ | 会话 ID — 在 🤖 之后（或会话时间行末尾）显示完整 UUID，不带表情符号标签 |
 | ⏳   | 重置时间            |
 | 📊   | 5小时使用率 %       |
 | ⏰   | 每周限制重置时间    |
 | 📅   | 7天使用率 %         |
-| _(无)_ | 会话 ID — 在 📅 之后显示完整 UUID，不带表情符号标签 |
 | ✏️   | 未提交的更改（点击打开 diff 查看器）        |
 | 📎   | Pull Request 链接 — 方括号中显示状态（`[Open]`/`[Draft]`/`[Merged]`/`[Closed]`），存在检查时括号中显示 CI 汇总（`(N passed)`/`(N running)`/`(N failed)`） |
 
@@ -153,7 +153,7 @@ Claude Code 通过 stdin JSON 输入传递 `rate_limits`（CLI 2.1.80+）：
 
 当 stdin JSON 中包含 `rate_limits` 时，使用量指标会**自动显示**。无需额外标志或配置。
 
-会话 ID（`session_id`）会追加在同一行的 7 天使用率之后。它来自独立的字段，因此即使没有 `rate_limits` 也照常显示。
+会话 ID（`session_id`）显示在会话时间行，详见[功能](#功能)。它来自独立的字段，因此不依赖 `rate_limits`。
 
 > [!NOTE]
 > `rate_limits` 仅在 Claude.ai 订阅用户（Pro/Max）首次 API 响应后提供。完整 JSON schema 请参阅[官方 statusline 文档](https://code.claude.com/docs/en/statusline)。

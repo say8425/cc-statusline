@@ -83,7 +83,7 @@ cc-statusline/
 | 프로젝트 폴더 | `workspace.project_dir` |
 | 세션 시간 | `cost.total_duration_ms` |
 | 세션 비용 | `cost.total_cost_usd` (기본 미표시 — env `CC_STATUSLINE_SHOW_COST=1`일 때만) |
-| 세션 ID | `session_id` (이모지 없이 UUID 전체, 사용량 줄 오른쪽 끝) |
+| 세션 ID | `session_id` (이모지 없이 UUID 전체, 세션 시간 줄의 🤖 모델 세그먼트 오른쪽 끝) |
 | Context 토큰 | `context_window.current_usage.*` |
 | Context % | `context_window.used_percentage` (없으면 미표시) |
 | 모델명 | `model.display_name` (없으면 미표시) |
@@ -104,6 +104,7 @@ Claude Code 기본 statusbar에 다음 정보를 추가로 표시:
 - 세션 시간, 그리고 **옵트인**인 세션 비용 (`💰`는 기본 숨김 — `CC_STATUSLINE_SHOW_COST=1`로 켬, `src/config.ts`)
 - Context window 토큰 사용량 및 사용률 (%)
 - 현재 사용 중인 모델명·reasoning effort (`🤖 Fable 5 high`, 🧠 컨텍스트 세그먼트 오른쪽) — 설정에서 ultracode가 켜져 있고 세션 effort가 `xhigh`일 때만 `⚡ultra` 배지 추가 (`🤖 Fable 5 xhigh ⚡ultra`)
+- 세션 ID (`session_id`) — 세션 시간 줄(2번째 줄) 오른쪽 끝, `🤖` 모델 세그먼트가 있으면 그 오른쪽에 붙는다. 이모지 라벨 없이 UUID 전체. `rate_limits`와 출처가 달라 **rate_limits 유무와 무관하게 표시된다** — 이 줄은 `⏱️` 세션 시간이 항상 채워 항상 렌더되므로, model·context 유무와도 무관하게 session_id만으로도 줄 끝에 붙는다
 - Git diff 통계 (파일 수, +insertions, -deletions)
 - 클릭 가능한 diff 뷰어: `✏️` 클릭 시 로컬 diff 뷰어를 브라우저로 표시. 뷰어 자체(파일트리, working/vs-base 모드 전환 UI, watch 자동 갱신, 파일 폴딩, 이미지 diff, in-app 검색 등)는 별도 패키지 **[`@say8425/diffdeck`](https://github.com/say8425/diffdeck)**(runtime dependency)가 제공 — cc-statusline은 그 데몬을 spawn-if-not-running으로 띄우고 링크만 구성한다. 뷰어 기능 상세는 diffdeck 저장소 문서 참고
 - 클릭 가능한 폴더 링크: `📁`(및 워크트리 세션의 `🌲`)를 클릭하면 OS 기본 파일 관리자(Finder/Explorer/xdg-open 대상)에서 해당 폴더가 열림 — `file://` OSC 8 하이퍼링크, `src/format/toFileUrl.ts`. GUI 없는 headless 리눅스 세션은 열어줄 파일 관리자가 없어 지원 범위 밖.
@@ -114,7 +115,6 @@ Claude Code 기본 statusbar에 다음 정보를 추가로 표시:
 - 리셋 시각 (5시간 사용량 리셋 시각, HH:MM)
 - 주간 리셋 시간 (7일 사용량 리셋 시각, MM/DD HH:MM)
 - 블록 사용량 (stdin rate_limits 기반 5시간/7일 사용률 %)
-- 세션 ID (`session_id`) — 사용량 줄 `📅` 오른쪽 끝에 이모지 라벨 없이 UUID 전체. `rate_limits`와 출처가 달라 **rate_limits가 없어도 이 줄이 세션 ID만으로 렌더된다** (사용량 줄의 렌더 조건이 `ctx.rateLimits` 유무에서 "파트가 하나라도 있으면"으로 바뀌었다)
 - TrueColor 동적 색상 (임계값 기반 경고)
 
 ## HOW
@@ -141,7 +141,7 @@ Claude Code 기본 statusbar에 다음 정보를 추가로 표시:
 ### 수동 테스트
 
 ```bash
-# 전체 표시 (사용량 줄 + 세션 ID + 🧠 컨텍스트 + 🤖 모델)
+# 전체 표시 (사용량 줄 + 🧠 컨텍스트 + 🤖 모델 + 세션 ID)
 # 🧠는 used_percentage, 🤖는 model.display_name이 있을 때만 렌더된다 (render.ts) —
 # 둘 다 빼면 그 세그먼트가 통째로 사라지므로 스니펫에 넣어 둔다.
 # 💰는 기본 숨김이라 이 스니펫엔 안 나온다 — 보려면 앞에 CC_STATUSLINE_SHOW_COST=1을 붙일 것
@@ -183,7 +183,7 @@ echo '{
   "workspace":{"project_dir":"/Users/penguin/dev/cc-statusline"}
 }' | CC_STATUSLINE_SHOW_COST=1 bun src/index.ts
 
-# rate_limits 없이 session_id만 (3번째 줄이 세션 ID 하나로 렌더되는지 확인)
+# rate_limits 없이 session_id만 (2번째 줄 끝에 세션 ID가 붙고, 3번째 줄은 아예 안 뜨는지 확인)
 echo '{
   "session_id":"a1b2c3d4-e5f6-7890-abcd-ef1234567890",
   "cost":{"total_duration_ms":0,"total_cost_usd":0},
@@ -239,7 +239,7 @@ bun test --coverage
 - `rate_limits`는 stdin JSON에 포함되어 전달됨 (Claude Code CLI 2.1.80+)
 - `rate_limits`는 Claude.ai 구독자(Pro/Max)에게만 첫 API 응답 이후 제공됨
 - `rate_limits.resets_at`는 Unix timestamp (초 단위, number)
-- `rate_limits`가 없어도 `session_id`가 있으면 3번째 줄은 세션 ID만으로 렌더된다 — 이 줄의 조건은 `ctx.rateLimits` 유무가 아니라 "쌓인 파트가 하나라도 있는가"다 (`usageParts.length > 0`, `src/render.ts`). rate_limits는 Pro/Max 첫 API 응답 이후에만 오므로 세션 ID를 거기에 볼모로 잡지 않으려는 의도
+- `session_id`는 2번째 줄(세션 시간 줄) 오른쪽 끝에 붙는다 — `🤖` 모델 세그먼트가 있으면 그 오른쪽, 없으면 그 줄의 마지막 파트(⏱️/💰/🧠 중 채워진 것) 오른쪽이다. 이 줄은 `⏱️` 세션 시간이 항상 채우므로 `rate_limits` 유무와 무관하게 항상 렌더되고, session_id도 그 위에 얹힐 뿐이라 rate_limits를 볼모로 잡지 않는다(`src/render.ts`). 3번째 줄(사용량 줄)은 이제 `rate_limits` 파생 파트만 쌓으므로 `rate_limits`가 없으면 그 줄 자체가 사라진다
 - 💰 비용 세그먼트는 **기본 숨김**이고 env `CC_STATUSLINE_SHOW_COST=1`일 때만 렌더된다 (`src/config.ts`의 `isCostVisible`). 판정은 `CC_STATUSLINE_DIFF_DISABLE`과 같은 `"1"` 리터럴 규칙이라 `true`/`yes`는 안 먹는다. env 읽기는 `src/index.ts`가 하고 `renderStatusLine`은 `showCost: boolean`만 주입받는다(기존 DI 유지) — 따라서 **`main()`을 타는 테스트는 `process.env.CC_STATUSLINE_SHOW_COST`를 직접 지우고 복원해야** 개발자 셸 상태에 흔들리지 않는다 (`integration.test.ts`의 beforeEach/afterEach가 그렇게 한다)
 - ultracode 여부는 stdin JSON·env에 세션 단위로 노출되지 않음 (`effort.level`은 ultracode여도 `xhigh`로만 보고, CLI 2.1.201에서 실측 확인). 따라서 `src/ultracode.ts`가 Claude Code settings 파일(managed-settings.json → `<project>/.claude/settings.local.json` → `<project>/.claude/settings.json` → `~/.claude/settings.json`)의 `ultracode` boolean 키를 직접 읽는다 (5초 TTL 캐시, 읽기는 병렬·판정은 우선순위 순). 설정은 세션 상태가 아니므로 render에서 `effort.level === "xhigh"`와 교차검증해 false positive를 줄인다 (ultracode 세션은 항상 xhigh로 보고; 다만 수동 `/effort xhigh` + 설정 on 조합은 구분 불가라 best-effort). 캐시는 다른 캐시들과 마찬가지로 projectDir 무키(틱마다 새 프로세스라 실질 무해). 우선순위상 프로젝트 settings가 `ultracode: false`를 고정하면 user 설정 토글이 가려지는데 이는 Claude Code 해석 순서 그대로라 의도된 동작. 공식 스키마에 ultracode 필드가 추가되면 stdin 우선으로 전환할 것
 - TypeScript는 7.x(네이티브 Go 구현)를 쓴다. 6.x와 패키징이 다르다: **`tsserver`가 없고**(`bin`은 `tsc` 하나 — 6.x엔 `tsserver.js`·`tsserverlibrary.js`가 있었다), 패키지 `"."` export는 `lib/version.cjs`로 **버전 상수 두 개(`version`·`versionMajorMinor`)뿐**이며 **컴파일러 API는 `typescript/unstable/*`로 옮겨졌다**(`./unstable/sync`·`./unstable/ast` 등). 지금은 소스 어디서도 `typescript`를 import하지 않아 무해하지만, codemod나 AST 스크립트를 붙일 땐 이 경로를 봐야 한다. **번들링은 Bun이 한다**(`build.ts` = `Bun.build`)—`typescript`가 쓰이는 곳은 `typecheck` 게이트(`tsc --noEmit`)뿐이라 배포 산출물은 영향받지 않는다(6.0.3→7.0.2 범프 전후 `dist/index.js` 바이트 동일, sha256 `f9449ba3…`). 저장소엔 에디터 설정 파일이 없어 기본값(에디터 번들 TS)이면 무관하고, 개인 설정에서 "workspace TypeScript"를 쓰고 있다면 가리킬 `tsserver`가 없으니 그때 조정할 것. 린터도 무관하다 — `oxlint-tsgolint`는 `typescript` 패키지에 의존하지 않는 자체 네이티브 바이너리다(`dependencies` 자체가 없고 `@oxlint-tsgolint/<platform>`만 optional)

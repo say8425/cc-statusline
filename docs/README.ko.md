@@ -64,7 +64,7 @@ Claude Code를 위한 커스텀 상태표시줄.
 - **블록 사용량**: 5시간 사용률
 - **주간 리셋 타이머**: 7일 사용량 리셋 시각 (MM/DD HH:MM)
 - **주간 사용량**: 7일 사용률
-- **세션 ID**: 사용량 줄 오른쪽 끝에 세션 UUID 전체를 이모지 없이 표시 — `claude --resume <id>`나 로그 조회에 그대로 복사해 쓸 수 있습니다
+- **세션 ID**: 세션 시간 줄 오른쪽 끝(모델 세그먼트 오른쪽)에 세션 UUID 전체를 이모지 없이 표시 — `claude --resume <id>`나 로그 조회에 그대로 복사해 쓸 수 있습니다
 
 ## Emoji 가이드
 
@@ -77,11 +77,11 @@ Claude Code를 위한 커스텀 상태표시줄.
 | 💰    | 세션 비용 (USD) — 기본은 숨김 ([설정](#설정) 참조) |
 | 🧠    | 컨텍스트 창 사용량     |
 | 🤖    | 현재 모델 및 effort    |
+| _(없음)_ | 세션 ID — 🤖 뒤(또는 세션 시간 줄 오른쪽 끝)에 이모지 라벨 없이 UUID 전체 표시 |
 | ⏳    | 리셋 시각              |
 | 📊    | 5시간 사용률 %         |
 | ⏰    | 주간 제한 리셋 시간    |
 | 📅    | 7일 사용률 %           |
-| _(없음)_ | 세션 ID — 📅 뒤에 이모지 라벨 없이 UUID 전체 표시 |
 | ✏️    | 커밋되지 않은 변경사항 (클릭하면 diff 뷰어 열림) |
 | 📎    | Pull Request 링크, 대괄호로 표시되는 PR 상태(`[Open]`/`[Draft]`/`[Merged]`/`[Closed]`)와 체크가 있을 때 괄호로 표시되는 CI 요약(`(N passed)`/`(N running)`/`(N failed)`) |
 
@@ -153,7 +153,7 @@ Claude Code가 stdin JSON 입력으로 `rate_limits`를 전달합니다 (CLI 2.1
 
 사용량 지표는 stdin JSON에 `rate_limits`가 포함되어 있으면 **자동으로 표시**됩니다. 추가 플래그나 설정이 필요 없습니다.
 
-세션 ID(`session_id`)는 같은 줄의 7일 사용률 뒤에 이어 붙습니다. 별개의 필드에서 오므로 `rate_limits`가 없어도 세션 ID는 그대로 표시됩니다.
+세션 ID(`session_id`)는 [기능](#기능)에 설명된 대로 세션 시간 줄에 표시됩니다 — 별개의 필드에서 오므로 `rate_limits`에 의존하지 않습니다.
 
 > [!NOTE]
 > `rate_limits`는 Claude.ai 구독자(Pro/Max)에게만 첫 API 응답 이후 제공됩니다. 전체 JSON 스키마는 [공식 statusline 문서](https://code.claude.com/docs/en/statusline)를 참조하세요.
