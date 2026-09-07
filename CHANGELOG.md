@@ -1,5 +1,17 @@
 # Changelog
 
+## [6.1.0](https://github.com/say8425/cc-statusline/compare/v6.0.0...v6.1.0) (2026-09-07)
+
+
+### Features
+
+* move the session ID next to the model segment ([#89](https://github.com/say8425/cc-statusline/issues/89)) ([3f40157](https://github.com/say8425/cc-statusline/commit/3f40157615ace02db0e4d1e640789a99e2c4a081))
+
+
+### Bug Fixes
+
+* **deps:** bump @say8425/diffdeck from 1.4.0 to 1.5.0 ([#91](https://github.com/say8425/cc-statusline/issues/91)) ([d76643d](https://github.com/say8425/cc-statusline/commit/d76643d3b860d6d7595200015b6048b008ed6333))
+
 ## [6.0.0](https://github.com/say8425/cc-statusline/compare/v5.0.3...v6.0.0) (2026-08-25)
 
 
