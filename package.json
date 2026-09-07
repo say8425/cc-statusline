@@ -1,6 +1,6 @@
 {
 	"name": "@say8425/cc-statusline",
-	"version": "6.0.0",
+	"version": "6.1.0",
 	"description": "Custom statusline for Claude Code",
 	"repository": {
 		"type": "git",
