@@ -62,7 +62,7 @@ Add the following to `~/.claude/settings.json`:
 - **TrueColor**: Dynamic colors based on thresholds
 - **Limit Reset Time**: Reset time display (HH:MM)
 - **Block Usage**: 5-hour utilization percentage
-- **Weekly Reset Timer**: Weekly limit reset time (MM/DD HH:MM)
+- **Weekly Reset Timer**: Weekly limit reset time (MM/DD(Fri) HH:MM — the weekday name follows your locale)
 - **Weekly Usage**: 7-day utilization percentage
 - **Session ID**: Full session UUID at the end of the session-time line (to the right of the model segment), with no emoji label — ready to copy into `claude --resume <id>` or a log lookup
 
@@ -159,7 +159,7 @@ Claude Code passes `rate_limits` in the stdin JSON input (CLI 2.1.80+):
 1. **5-hour utilization** - Usage percentage for the current billing block (`rate_limits.five_hour.used_percentage`)
 2. **7-day utilization** - Weekly usage percentage (`rate_limits.seven_day.used_percentage`)
 3. **Reset timer** - Exact reset time (`rate_limits.five_hour.resets_at`), shown as `HH:MM`
-4. **Weekly reset timer** - Weekly limit reset time (`rate_limits.seven_day.resets_at`), shown as `MM/DD HH:MM` (e.g., `02/15 17:00`)
+4. **Weekly reset timer** - Weekly limit reset time (`rate_limits.seven_day.resets_at`), shown as `MM/DD(weekday) HH:MM`. The weekday name is localized from `LC_ALL` / `LC_TIME` / `LANG` (e.g., `02/15(Thu) 17:00` under `en_US.UTF-8`, `02/15(목) 17:00` under `ko_KR.UTF-8`)
 
 Usage metrics are **automatically displayed** when `rate_limits` is present in the stdin JSON. No additional flags or configuration needed.
 

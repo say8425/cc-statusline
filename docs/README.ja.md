@@ -62,7 +62,7 @@ Claude Code用カスタムステータスライン。
 - **TrueColor**: しきい値に基づく動的カラー
 - **リセット時刻**: 5時間使用量リセット時刻（HH:MM）
 - **ブロック使用量**: 5時間使用率
-- **週間リセットタイマー**: 7日使用量リセット時刻（MM/DD HH:MM）
+- **週間リセットタイマー**: 7日使用量リセット時刻（MM/DD(金) HH:MM — 曜日名はロケールに従う）
 - **週間使用量**: 7日使用率
 - **セッション ID**: セッション経過時間の行の右端(モデルセグメントの右)にセッション UUID 全体を絵文字なしで表示 — `claude --resume <id>` やログ検索にそのままコピーできます
 
@@ -149,7 +149,7 @@ Claude CodeがJSON入力で`rate_limits`を渡します（CLI 2.1.80+）：
 1. **5時間使用率** - 現在のビリングブロックの使用パーセンテージ（`rate_limits.five_hour.used_percentage`）
 2. **7日使用率** - 週間使用パーセンテージ（`rate_limits.seven_day.used_percentage`）
 3. **リセットタイマー** - 正確なリセット時刻（`rate_limits.five_hour.resets_at`）、`HH:MM`形式
-4. **週間リセットタイマー** - 週間制限リセット時刻（`rate_limits.seven_day.resets_at`）、`MM/DD HH:MM`形式（例：`02/15 17:00`）
+4. **週間リセットタイマー** - 週間制限リセット時刻（`rate_limits.seven_day.resets_at`）、`MM/DD(曜日) HH:MM`形式。曜日名は `LC_ALL` / `LC_TIME` / `LANG` で決まるロケールに従う（例：`ja_JP.UTF-8` なら `02/15(木) 17:00`、`en_US.UTF-8` なら `02/15(Thu) 17:00`）
 
 使用量メトリクスはstdin JSONに`rate_limits`が含まれている場合、**自動的に表示**されます。追加のフラグや設定は不要です。
 

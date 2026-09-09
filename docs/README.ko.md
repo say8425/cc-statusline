@@ -62,7 +62,7 @@ Claude Code를 위한 커스텀 상태표시줄.
 - **TrueColor**: 임계값에 따른 동적 색상
 - **리셋 시각**: 5시간 사용량 리셋 시각 (HH:MM)
 - **블록 사용량**: 5시간 사용률
-- **주간 리셋 타이머**: 7일 사용량 리셋 시각 (MM/DD HH:MM)
+- **주간 리셋 타이머**: 7일 사용량 리셋 시각 (MM/DD(금) HH:MM — 요일 이름은 로케일을 따름)
 - **주간 사용량**: 7일 사용률
 - **세션 ID**: 세션 시간 줄 오른쪽 끝(모델 세그먼트 오른쪽)에 세션 UUID 전체를 이모지 없이 표시 — `claude --resume <id>`나 로그 조회에 그대로 복사해 쓸 수 있습니다
 
@@ -149,7 +149,7 @@ Claude Code가 stdin JSON 입력으로 `rate_limits`를 전달합니다 (CLI 2.1
 1. **5시간 사용률** - 현재 빌링 블록의 사용 백분율 (`rate_limits.five_hour.used_percentage`)
 2. **7일 사용률** - 주간 사용 백분율 (`rate_limits.seven_day.used_percentage`)
 3. **리셋 타이머** - 정확한 리셋 시각 (`rate_limits.five_hour.resets_at`), `HH:MM` 포맷
-4. **주간 리셋 타이머** - 주간 제한 리셋 시각 (`rate_limits.seven_day.resets_at`), `MM/DD HH:MM` 포맷 (예: `02/15 17:00`)
+4. **주간 리셋 타이머** - 주간 제한 리셋 시각 (`rate_limits.seven_day.resets_at`), `MM/DD(요일) HH:MM` 포맷. 요일 이름은 `LC_ALL` / `LC_TIME` / `LANG`로 정해지는 로케일을 따른다 (예: `ko_KR.UTF-8`이면 `02/15(목) 17:00`, `en_US.UTF-8`이면 `02/15(Thu) 17:00`)
 
 사용량 지표는 stdin JSON에 `rate_limits`가 포함되어 있으면 **자동으로 표시**됩니다. 추가 플래그나 설정이 필요 없습니다.
 

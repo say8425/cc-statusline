@@ -58,6 +58,8 @@ const createRenderContext = (
 	ultracode: overrides.ultracode ?? false,
 	// 프로덕션 기본과 동일하게 false — 💰를 보려면 테스트에서 명시적으로 켠다
 	showCost: overrides.showCost ?? false,
+	// 요일 이름이 개발자 호스트 로케일을 타지 않도록 테스트는 en-US로 고정한다
+	locale: overrides.locale ?? "en-US",
 	rateLimits: overrides.rateLimits ?? null,
 	mainProjectName: overrides.mainProjectName ?? null,
 	diffViewerUrl: overrides.diffViewerUrl ?? null,

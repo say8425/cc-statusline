@@ -74,6 +74,9 @@ export interface RenderContext {
 	// 💰 비용 세그먼트 표시 여부 (기본 false, CC_STATUSLINE_SHOW_COST=1로 켬).
 	// env 판정은 src/config.ts가 하고 render는 결과만 받는다 (기존 DI 방식 유지).
 	showCost: boolean;
+	// ⏰ 리셋 시각의 요일 이름에 쓸 BCP-47 로케일 (null이면 Intl 기본값).
+	// env 판정은 src/format/resolveLocale.ts가 하고 render는 결과만 받는다.
+	locale: string | null;
 	rateLimits: RateLimits | null;
 	mainProjectName: string | null;
 	diffViewerUrl: string | null;

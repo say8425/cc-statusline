@@ -71,24 +71,45 @@ describe("formatTime", () => {
 });
 
 describe("formatResetDate", () => {
-	test("formats date as MM/DD HH:MM", () => {
-		const date = new Date(2024, 1, 15, 17, 0);
-		expect(formatResetDate(date)).toBe("02/15 17:00");
+	test("formats date as MM/DD(weekday) HH:MM", () => {
+		const date = new Date(2024, 1, 15, 17, 0); // Thursday
+		expect(formatResetDate(date, "en-US")).toBe("02/15(Thu) 17:00");
 	});
 
 	test("zero-pads month, day, hours, minutes", () => {
 		const date = new Date(2024, 0, 5, 3, 7);
-		expect(formatResetDate(date)).toBe("01/05 03:07");
+		expect(formatResetDate(date, "en-US")).toBe("01/05(Fri) 03:07");
 	});
 
 	test("handles midnight", () => {
 		const date = new Date(2024, 2, 1, 0, 0);
-		expect(formatResetDate(date)).toBe("03/01 00:00");
+		expect(formatResetDate(date, "en-US")).toBe("03/01(Fri) 00:00");
 	});
 
 	test("handles end of day", () => {
 		const date = new Date(2024, 11, 31, 23, 59);
-		expect(formatResetDate(date)).toBe("12/31 23:59");
+		expect(formatResetDate(date, "en-US")).toBe("12/31(Tue) 23:59");
+	});
+
+	test("localizes the weekday name", () => {
+		const date = new Date(2026, 8, 11, 7, 0); // Friday
+		expect(formatResetDate(date, "ko-KR")).toBe("09/11(금) 07:00");
+		expect(formatResetDate(date, "ja-JP")).toBe("09/11(金) 07:00");
+		expect(formatResetDate(date, "es-ES")).toBe("09/11(vie) 07:00");
+	});
+
+	test("falls back to the host locale when none is given", () => {
+		// 로케일을 안 넘기면 Intl 기본값을 쓴다 — 요일 이름은 호스트에 달렸으므로
+		// 요일 자리가 채워진 형태만 검증한다
+		const date = new Date(2026, 8, 11, 7, 0);
+		expect(formatResetDate(date)).toMatch(/^09\/11\(.+\) 07:00$/u);
+		expect(formatResetDate(date, null)).toMatch(/^09\/11\(.+\) 07:00$/u);
+	});
+
+	test("ignores an unsupported locale instead of throwing", () => {
+		// 존재하지 않는 언어 태그라도 Intl이 기본 로케일로 대체해 준다
+		const date = new Date(2026, 8, 11, 7, 0);
+		expect(formatResetDate(date, "zz-ZZ")).toMatch(/^09\/11\(.+\) 07:00$/u);
 	});
 });
 
