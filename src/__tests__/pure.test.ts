@@ -92,17 +92,20 @@ describe("formatResetDate", () => {
 	});
 
 	test("localizes the weekday name", () => {
+		// ko/ja는 CJK 한 글자라 CLDR가 바뀔 여지가 거의 없지만 es는 다르다 —
+		// 같은 계열인 fr는 "ven.", pt는 "sex."처럼 마침표가 붙는다. 스페인어
+		// 축약형이 그렇게 바뀌면 이 줄이 빨개지는데, 그건 회귀가 아니라 CLDR
+		// 갱신이다 (Bun 범프 직후라면 여기부터 의심할 것).
 		const date = new Date(2026, 8, 11, 7, 0); // Friday
 		expect(formatResetDate(date, "ko-KR")).toBe("09/11(금) 07:00");
 		expect(formatResetDate(date, "ja-JP")).toBe("09/11(金) 07:00");
 		expect(formatResetDate(date, "es-ES")).toBe("09/11(vie) 07:00");
 	});
 
-	test("falls back to the host locale when none is given", () => {
-		// 로케일을 안 넘기면 Intl 기본값을 쓴다 — 요일 이름은 호스트에 달렸으므로
-		// 요일 자리가 채워진 형태만 검증한다
+	test("defers to the host locale when the locale is null", () => {
+		// null은 "호스트 Intl 기본값에 맡긴다"는 뜻 — 요일 이름이 호스트에
+		// 달렸으므로 요일 자리가 채워진 형태만 검증한다
 		const date = new Date(2026, 8, 11, 7, 0);
-		expect(formatResetDate(date)).toMatch(/^09\/11\(.+\) 07:00$/u);
 		expect(formatResetDate(date, null)).toMatch(/^09\/11\(.+\) 07:00$/u);
 	});
 

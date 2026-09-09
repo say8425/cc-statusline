@@ -42,6 +42,12 @@ describe("resolveLocale", () => {
 		expect(resolveLocale({ LC_ALL: "", LANG: "ko_KR.UTF-8" })).toBe("ko-KR");
 	});
 
+	test("treats a whitespace-only value the same as an empty one", () => {
+		// 공백만 있는 값도 "미설정"이라 다음 키로 넘어간다 — 빈 문자열과 갈리면
+		// 같은 뜻의 두 값이 다르게 동작한다
+		expect(resolveLocale({ LC_ALL: "   ", LANG: "ko_KR.UTF-8" })).toBe("ko-KR");
+	});
+
 	test("treats C and POSIX as no locale at all", () => {
 		expect(resolveLocale({ LANG: "C" })).toBe(null);
 		expect(resolveLocale({ LANG: "C.UTF-8" })).toBe(null);
