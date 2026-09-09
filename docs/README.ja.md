@@ -149,7 +149,7 @@ Claude CodeがJSON入力で`rate_limits`を渡します（CLI 2.1.80+）：
 1. **5時間使用率** - 現在のビリングブロックの使用パーセンテージ（`rate_limits.five_hour.used_percentage`）
 2. **7日使用率** - 週間使用パーセンテージ（`rate_limits.seven_day.used_percentage`）
 3. **リセットタイマー** - 正確なリセット時刻（`rate_limits.five_hour.resets_at`）、`HH:MM`形式
-4. **週間リセットタイマー** - 週間制限リセット時刻（`rate_limits.seven_day.resets_at`）、`MM/DD(曜日) HH:MM`形式。曜日名は `LC_ALL` / `LC_TIME` / `LANG` で決まるロケールに従う（例：`ja_JP.UTF-8` なら `02/15(木) 17:00`、`en_US.UTF-8` なら `02/15(Thu) 17:00`）
+4. **週間リセットタイマー** - 週間制限リセット時刻（`rate_limits.seven_day.resets_at`）、`MM/DD(曜日) HH:MM`形式。曜日名は `LC_ALL` / `LC_TIME` / `LANG` で決まるロケールに従う（例：`ja_JP.UTF-8` なら `02/15(木) 17:00`、`en_US.UTF-8` なら `02/15(Thu) 17:00`）。3つとも未設定の場合 — macOS のターミナルは「Set locale environment variables on startup」が無効だと `LANG` を空のままにする — ランタイム既定のロケール（現行の Bun では `en-US`）にフォールバックする
 
 使用量メトリクスはstdin JSONに`rate_limits`が含まれている場合、**自動的に表示**されます。追加のフラグや設定は不要です。
 

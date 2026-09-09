@@ -149,7 +149,7 @@ Claude Code가 stdin JSON 입력으로 `rate_limits`를 전달합니다 (CLI 2.1
 1. **5시간 사용률** - 현재 빌링 블록의 사용 백분율 (`rate_limits.five_hour.used_percentage`)
 2. **7일 사용률** - 주간 사용 백분율 (`rate_limits.seven_day.used_percentage`)
 3. **리셋 타이머** - 정확한 리셋 시각 (`rate_limits.five_hour.resets_at`), `HH:MM` 포맷
-4. **주간 리셋 타이머** - 주간 제한 리셋 시각 (`rate_limits.seven_day.resets_at`), `MM/DD(요일) HH:MM` 포맷. 요일 이름은 `LC_ALL` / `LC_TIME` / `LANG`로 정해지는 로케일을 따른다 (예: `ko_KR.UTF-8`이면 `02/15(목) 17:00`, `en_US.UTF-8`이면 `02/15(Thu) 17:00`)
+4. **주간 리셋 타이머** - 주간 제한 리셋 시각 (`rate_limits.seven_day.resets_at`), `MM/DD(요일) HH:MM` 포맷. 요일 이름은 `LC_ALL` / `LC_TIME` / `LANG`로 정해지는 로케일을 따른다 (예: `ko_KR.UTF-8`이면 `02/15(목) 17:00`, `en_US.UTF-8`이면 `02/15(Thu) 17:00`). 셋 다 설정돼 있지 않으면 — macOS 터미널은 "Set locale environment variables on startup"이 꺼져 있으면 `LANG`을 비워 둔다 — 런타임 기본 로케일(현재 Bun에서는 `en-US`)로 폴백한다
 
 사용량 지표는 stdin JSON에 `rate_limits`가 포함되어 있으면 **자동으로 표시**됩니다. 추가 플래그나 설정이 필요 없습니다.
 

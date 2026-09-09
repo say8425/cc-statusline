@@ -149,7 +149,7 @@ Claude Code 通过 stdin JSON 输入传递 `rate_limits`（CLI 2.1.80+）：
 1. **5小时使用率** - 当前计费块的使用百分比（`rate_limits.five_hour.used_percentage`）
 2. **7天使用率** - 周使用百分比（`rate_limits.seven_day.used_percentage`）
 3. **重置计时器** - 精确重置时间（`rate_limits.five_hour.resets_at`），`HH:MM` 格式
-4. **每周重置计时器** - 周限制重置时间（`rate_limits.seven_day.resets_at`），`MM/DD(星期) HH:MM` 格式。星期名称遵循由 `LC_ALL` / `LC_TIME` / `LANG` 决定的区域设置（如 `zh_CN.UTF-8` 为 `02/15(周四) 17:00`，`en_US.UTF-8` 为 `02/15(Thu) 17:00`）
+4. **每周重置计时器** - 周限制重置时间（`rate_limits.seven_day.resets_at`），`MM/DD(星期) HH:MM` 格式。星期名称遵循由 `LC_ALL` / `LC_TIME` / `LANG` 决定的区域设置（如 `zh_CN.UTF-8` 为 `02/15(周四) 17:00`，`en_US.UTF-8` 为 `02/15(Thu) 17:00`）。若三者均未设置 — macOS 终端在未启用“Set locale environment variables on startup”时会将 `LANG` 留空 — 则回退到运行时默认区域设置（当前 Bun 为 `en-US`）
 
 当 stdin JSON 中包含 `rate_limits` 时，使用量指标会**自动显示**。无需额外标志或配置。
 
