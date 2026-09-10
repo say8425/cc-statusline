@@ -1,5 +1,12 @@
 # Changelog
 
+## [6.2.0](https://github.com/say8425/cc-statusline/compare/v6.1.0...v6.2.0) (2026-09-10)
+
+
+### Features
+
+* show a localized weekday in the weekly reset timer ([#92](https://github.com/say8425/cc-statusline/issues/92)) ([4e43030](https://github.com/say8425/cc-statusline/commit/4e43030c457e0cdbf0f585989e76d7040d55a101))
+
 ## [6.1.0](https://github.com/say8425/cc-statusline/compare/v6.0.0...v6.1.0) (2026-09-07)
 
 
