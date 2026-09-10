@@ -22,6 +22,7 @@ cc-statusline/
 │   │   ├── formatTime.ts           # formatTime
 │   │   ├── getTimeUntilReset.ts    # getTimeUntilReset
 │   │   ├── prStatus.ts             # prStateText/prStateColor/ciSummaryText/ciSummaryColor (📎 상태·CI 배지)
+│   │   ├── resolveLocale.ts        # resolveLocale (⏰ 요일 이름에 쓸 로케일을 env에서 해석)
 │   │   └── toFileUrl.ts            # toFileUrl (📁/🌲 클릭용 file:// OSC 8 링크)
 │   ├── git/
 │   │   ├── index.ts                # barrel re-export
@@ -51,6 +52,7 @@ cc-statusline/
 │       ├── base-changes.test.ts    # getBaseChangesCached 테스트
 │       ├── base-ref.test.ts        # resolveBaseRef 테스트
 │       ├── ci-status.test.ts       # aggregateCiStatus 테스트
+│       ├── locale.test.ts          # resolveLocale (POSIX 로케일 → BCP-47) 테스트
 │       ├── diff-config.test.ts     # diff-server/config 테스트
 │       ├── diff-token.test.ts      # diff-server/token 테스트
 │       ├── diff-ensure.test.ts     # diff-server/ensure 테스트
@@ -93,6 +95,7 @@ cc-statusline/
 | 리셋 타이머 | `rate_limits.five_hour.resets_at` |
 | 주간 사용량 | `rate_limits.seven_day.used_percentage` |
 | 주간 리셋 시간 | `rate_limits.seven_day.resets_at` |
+| 리셋 요일 로케일 | env `LC_ALL` → `LC_TIME` → `LANG` (stdin엔 미노출, `src/format/resolveLocale.ts`) |
 | Git 브랜치 | `git branch --show-current` |
 | Git diff | `git diff --shortstat` + `git diff --cached --shortstat` (unstaged·staged 합산, `src/git/changes.ts`) |
 | PR URL/상태/CI | `gh pr view --json url,state,isDraft,statusCheckRollup` |
@@ -113,7 +116,7 @@ Claude Code 기본 statusbar에 다음 정보를 추가로 표시:
 - `✏️` 진입점 유지: working 변경이 없어도 브랜치가 base보다 앞서면 `✏️ vs <base> N files +X -Y`로 표시되고 클릭 시 뷰어가 base 모드로 열림 — 진입점 트리거는 `repo && (hasChanges || baseChanges)`(`src/index.ts`)
 - PR URL (클릭 가능한 OSC 8 하이퍼링크)
 - 리셋 시각 (5시간 사용량 리셋 시각, HH:MM)
-- 주간 리셋 시간 (7일 사용량 리셋 시각, MM/DD HH:MM)
+- 주간 리셋 시간 (7일 사용량 리셋 시각, `MM/DD(요일) HH:MM`) — 요일 이름만 로케일을 타고 나머지 자릿수 표기는 고정이다(`ko_KR.UTF-8`이면 `⏰ 09/11(금) 07:00`, `en_US.UTF-8`이면 `⏰ 09/11(Fri) 07:00`). **폭은 고정이 아니다** — 로케일마다 다를 뿐 아니라(`ko`·`ja` 1자, `zh`·`de`·`ru` 2자, `en`·`es` 3자, `fr`·`pt` 4자) 로케일에 따라선 **요일마다도 달라진다**. 실측(bun 1.3.12, 7요일 전부): `th` 3~7자, `he` 3~6자, `ar` 3~6자, `hi` 3~5자, `vi` 2~5자 — 이 로케일에선 리셋 요일이 바뀔 때마다 ⏰ 뒤의 `📅` 위치가 주마다 흔들린다. `en`·`ko`·`ja`·`zh`·`es`·`fr`·`de`·`ru`·`pt`는 요일별로 일정하다
 - 블록 사용량 (stdin rate_limits 기반 5시간/7일 사용률 %)
 - TrueColor 동적 색상 (임계값 기반 경고)
 
@@ -217,6 +220,7 @@ bun test --coverage
 - `shortstat.test.ts`: parseShortstat
 - `base-changes.test.ts` / `base-ref.test.ts`: vs-base 진입점 유지·base 결정
 - `ci-status.test.ts`: aggregateCiStatus (PR 체크 집계)
+- `locale.test.ts`: resolveLocale (POSIX 로케일 우선순위·BCP-47 변환)
 - `diff-config/token/ensure/link.test.ts`: diff-server 모듈별 테스트
 - `diff-contract.test.ts`: 실제 설치된 diffdeck 데몬과의 계약(핑 헤더·토큰 경로) + 버전 검증 3층(데몬=설치본 / 설치본∈range / 설치본=lockfile)
 
@@ -240,6 +244,8 @@ bun test --coverage
 - `rate_limits`는 Claude.ai 구독자(Pro/Max)에게만 첫 API 응답 이후 제공됨
 - `rate_limits.resets_at`는 Unix timestamp (초 단위, number)
 - `session_id`는 2번째 줄(세션 시간 줄) 오른쪽 끝에 붙는다 — `🤖` 모델 세그먼트가 있으면 그 오른쪽, 없으면 그 줄의 마지막 파트(⏱️/💰/🧠 중 채워진 것) 오른쪽이다. 이 줄은 `⏱️` 세션 시간이 항상 채우므로 `rate_limits` 유무와 무관하게 항상 렌더되고, session_id도 그 위에 얹힐 뿐이라 rate_limits를 볼모로 잡지 않는다(`src/render.ts`). 3번째 줄(사용량 줄)은 이제 `rate_limits` 파생 파트만 쌓으므로 `rate_limits`가 없으면 그 줄 자체가 사라진다
+- **⏰ 요일 이름의 로케일은 env에서 직접 읽는다** — `new Intl.DateTimeFormat()`의 기본 로케일에 맡기면 안 된다. Bun(JSC)의 Intl 기본값은 `LANG`·`LC_ALL`·`LC_TIME`을 보지 않아서, macOS `AppleLocale=ko_KR` + `LANG=ko_KR.UTF-8`인 셸에서도 `resolvedOptions().locale`이 `en-US`로 나온다(bun 1.3.12 실측). 그래서 `src/format/resolveLocale.ts`가 POSIX 우선순위(`LC_ALL` → `LC_TIME` → `LANG`)로 직접 읽어 `ko_KR.UTF-8` → `ko-KR`로 정규화한다(인코딩·`@modifier` 제거, `C`/`POSIX`는 미지정 취급). 셋 다 없거나 못 쓰는 값이면 `null`을 돌려 **런타임 Intl 기본값**에 맡기는데, 그 값은 위 실측대로 (bun 1.3.12/macOS 기준) `en-US`다 — macOS Terminal.app에서 "Set locale environment variables on startup"이 꺼져 있으면 `LANG`이 비어 한국어 사용자에게도 `(Mon)`이 나오므로, 요일이 영어로 보인다는 제보는 버그가 아니라 이 경로부터 의심할 것. 판정은 `src/index.ts`가 하고 `renderStatusLine`은 `locale: string | null`만 주입받는다(💰 `showCost`와 같은 DI) — `main()`을 타는 테스트가 이 세 env를 지워야 하는 이유도 같고, `integration.test.ts`의 `MAIN_ENV_KEYS`가 `LOCALE_ENV_KEYS`를 그대로 펼쳐 쓴다
+- **statusline이 통째로 죽었는데 스택 트레이스가 없다면 `LANG` 값을 볼 것** — bun 1.3.12는 어떤 `LANG` 값에서 ICU 초기화 중 세그폴트한다(`panic(main thread): Segmentation fault at address 0x8`, exit 133). 우리 코드와 무관하다: 프로젝트 코드가 전혀 없는 `LANG=... bun -e "new Intl.DateTimeFormat()"`도, `resolveLocale`이 없던 시절의 main도 똑같이 죽는다(main은 `formatNumber`의 `toLocaleString`이 ICU를 깨운다). **JS에서 막을 수 없다** — try/catch가 실행되기 전에 프로세스가 죽으므로 `resolveLocale`의 태그 검증이 덮어주지 못하는 유일한 구멍이다(그 검증은 `1234` 같이 JS까지 도달하는 값을 위한 것이고, 실제로 `1234`·`xx`·`zz_ZZ`는 전부 정상 degrade한다). 트리거는 값에 따라 갈리고 폭이 아주 좁다 — 실측에서 `not a locale`은 8/8 죽는데 구조가 같은 `a b`·`ko KR`·`en US x`·`xx y zzzzz`는 멀쩡했다. 상류 버그라 여기서 할 수 있는 건 오진하지 않는 것뿐이다
 - 💰 비용 세그먼트는 **기본 숨김**이고 env `CC_STATUSLINE_SHOW_COST=1`일 때만 렌더된다 (`src/config.ts`의 `isCostVisible`). 판정은 `CC_STATUSLINE_DIFF_DISABLE`과 같은 `"1"` 리터럴 규칙이라 `true`/`yes`는 안 먹는다. env 읽기는 `src/index.ts`가 하고 `renderStatusLine`은 `showCost: boolean`만 주입받는다(기존 DI 유지) — 따라서 **`main()`을 타는 테스트는 `process.env.CC_STATUSLINE_SHOW_COST`를 직접 지우고 복원해야** 개발자 셸 상태에 흔들리지 않는다 (`integration.test.ts`의 beforeEach/afterEach가 그렇게 한다)
 - ultracode 여부는 stdin JSON·env에 세션 단위로 노출되지 않음 (`effort.level`은 ultracode여도 `xhigh`로만 보고, CLI 2.1.201에서 실측 확인). 따라서 `src/ultracode.ts`가 Claude Code settings 파일(managed-settings.json → `<project>/.claude/settings.local.json` → `<project>/.claude/settings.json` → `~/.claude/settings.json`)의 `ultracode` boolean 키를 직접 읽는다 (5초 TTL 캐시, 읽기는 병렬·판정은 우선순위 순). 설정은 세션 상태가 아니므로 render에서 `effort.level === "xhigh"`와 교차검증해 false positive를 줄인다 (ultracode 세션은 항상 xhigh로 보고; 다만 수동 `/effort xhigh` + 설정 on 조합은 구분 불가라 best-effort). 캐시는 다른 캐시들과 마찬가지로 projectDir 무키(틱마다 새 프로세스라 실질 무해). 우선순위상 프로젝트 settings가 `ultracode: false`를 고정하면 user 설정 토글이 가려지는데 이는 Claude Code 해석 순서 그대로라 의도된 동작. 공식 스키마에 ultracode 필드가 추가되면 stdin 우선으로 전환할 것
 - TypeScript는 7.x(네이티브 Go 구현)를 쓴다. 6.x와 패키징이 다르다: **`tsserver`가 없고**(`bin`은 `tsc` 하나 — 6.x엔 `tsserver.js`·`tsserverlibrary.js`가 있었다), 패키지 `"."` export는 `lib/version.cjs`로 **버전 상수 두 개(`version`·`versionMajorMinor`)뿐**이며 **컴파일러 API는 `typescript/unstable/*`로 옮겨졌다**(`./unstable/sync`·`./unstable/ast` 등). 지금은 소스 어디서도 `typescript`를 import하지 않아 무해하지만, codemod나 AST 스크립트를 붙일 땐 이 경로를 봐야 한다. **번들링은 Bun이 한다**(`build.ts` = `Bun.build`)—`typescript`가 쓰이는 곳은 `typecheck` 게이트(`tsc --noEmit`)뿐이라 배포 산출물은 영향받지 않는다(6.0.3→7.0.2 범프 전후 `dist/index.js` 바이트 동일, sha256 `f9449ba3…`). 저장소엔 에디터 설정 파일이 없어 기본값(에디터 번들 TS)이면 무관하고, 개인 설정에서 "workspace TypeScript"를 쓰고 있다면 가리킬 `tsserver`가 없으니 그때 조정할 것. 린터도 무관하다 — `oxlint-tsgolint`는 `typescript` 패키지에 의존하지 않는 자체 네이티브 바이너리다(`dependencies` 자체가 없고 `@oxlint-tsgolint/<platform>`만 optional)

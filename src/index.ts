@@ -3,7 +3,7 @@
 import { isCostVisible } from "./config.ts";
 import { ensureDiffServer } from "./diff-server/ensure.ts";
 import { buildDiffViewerUrl } from "./diff-server/link.ts";
-import { toFileUrl } from "./format/index.ts";
+import { resolveLocale, toFileUrl } from "./format/index.ts";
 import {
 	getBaseChangesCached,
 	getBranchCached,
@@ -80,6 +80,7 @@ export const main = async (): Promise<void> => {
 		prInfo,
 		ultracode,
 		showCost: isCostVisible(),
+		locale: resolveLocale(),
 		rateLimits: claudeJson.rate_limits ?? null,
 		mainProjectName,
 		diffViewerUrl,

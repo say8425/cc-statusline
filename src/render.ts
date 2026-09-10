@@ -118,7 +118,9 @@ export const renderStatusLine = (ctx: RenderContext): string[] => {
 		const { resets_at, used_percentage } = ctx.rateLimits.seven_day;
 		if (resets_at) {
 			const resetTime = new Date(resets_at * 1000);
-			usageParts.push(`${C.WHITE}⏰ ${formatResetDate(resetTime)}${C.RESET}`);
+			usageParts.push(
+				`${C.WHITE}⏰ ${formatResetDate(resetTime, ctx.locale)}${C.RESET}`,
+			);
 		}
 		const weekColor = getUsageColor(used_percentage);
 		usageParts.push(

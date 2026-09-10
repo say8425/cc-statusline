@@ -8,4 +8,5 @@ export {
 	prStateColor,
 	prStateText,
 } from "./prStatus.ts";
+export { LOCALE_ENV_KEYS, resolveLocale } from "./resolveLocale.ts";
 export { toFileUrl } from "./toFileUrl.ts";

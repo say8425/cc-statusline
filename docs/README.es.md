@@ -62,7 +62,7 @@ Agrega lo siguiente a `~/.claude/settings.json`:
 - **TrueColor**: Colores dinámicos basados en umbrales
 - **Hora de reinicio**: Hora de reinicio del límite de 5 horas (HH:MM)
 - **Uso del bloque**: Porcentaje de utilización de 5 horas
-- **Temporizador de reinicio semanal**: Tiempo de reinicio del límite semanal (MM/DD HH:MM)
+- **Temporizador de reinicio semanal**: Tiempo de reinicio del límite semanal (MM/DD(vie) HH:MM — el nombre del día sigue tu configuración regional)
 - **Uso semanal**: Porcentaje de utilización de 7 días
 - **ID de sesión**: UUID completo de la sesión al final de la línea de tiempo de sesión (a la derecha del segmento del modelo), sin etiqueta de emoji — listo para copiar en `claude --resume <id>` o en una búsqueda de logs
 
@@ -149,7 +149,7 @@ Claude Code pasa `rate_limits` en la entrada JSON stdin (CLI 2.1.80+):
 1. **Utilización de 5 horas** - Porcentaje de uso del bloque de facturación actual (`rate_limits.five_hour.used_percentage`)
 2. **Utilización de 7 días** - Porcentaje de uso semanal (`rate_limits.seven_day.used_percentage`)
 3. **Temporizador de reinicio** - Tiempo exacto de reinicio (`rate_limits.five_hour.resets_at`), formato `HH:MM`
-4. **Temporizador de reinicio semanal** - Tiempo de reinicio del límite semanal (`rate_limits.seven_day.resets_at`), formato `MM/DD HH:MM` (ej., `02/15 17:00`)
+4. **Temporizador de reinicio semanal** - Tiempo de reinicio del límite semanal (`rate_limits.seven_day.resets_at`), formato `MM/DD(día) HH:MM`. El nombre del día sigue la configuración regional que definen `LC_ALL` / `LC_TIME` / `LANG` (ej., `02/15(jue) 17:00` con `es_ES.UTF-8`, `02/15(Thu) 17:00` con `en_US.UTF-8`). Si ninguna de las tres tiene un valor utilizable (sin definir, vacío, o `C`/`POSIX`, que significan «no localizar»), se recurre a la configuración regional predeterminada del runtime (`en-US` con el Bun actual). La Terminal de macOS deja `LANG` vacío salvo que se active «Set locale environment variables on startup»
 
 Las métricas de uso se **muestran automáticamente** cuando `rate_limits` está presente en el JSON stdin. No se necesitan flags ni configuración adicional.
 

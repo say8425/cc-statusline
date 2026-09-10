@@ -62,7 +62,7 @@ Claude Code 自定义状态栏。
 - **TrueColor**: 基于阈值的动态颜色
 - **重置时间**: 5小时使用量重置时间（HH:MM）
 - **块使用量**: 5小时使用率
-- **每周重置计时器**: 7天使用量重置时间（MM/DD HH:MM）
+- **每周重置计时器**: 7天使用量重置时间（MM/DD(周五) HH:MM — 星期名称遵循当前区域设置）
 - **周使用量**: 7天使用率
 - **会话 ID**: 在会话时间行末尾（模型段右侧）显示完整的会话 UUID，不带表情符号 — 可直接复制到 `claude --resume <id>` 或日志查询中
 
@@ -149,7 +149,7 @@ Claude Code 通过 stdin JSON 输入传递 `rate_limits`（CLI 2.1.80+）：
 1. **5小时使用率** - 当前计费块的使用百分比（`rate_limits.five_hour.used_percentage`）
 2. **7天使用率** - 周使用百分比（`rate_limits.seven_day.used_percentage`）
 3. **重置计时器** - 精确重置时间（`rate_limits.five_hour.resets_at`），`HH:MM` 格式
-4. **每周重置计时器** - 周限制重置时间（`rate_limits.seven_day.resets_at`），`MM/DD HH:MM` 格式（如 `02/15 17:00`）
+4. **每周重置计时器** - 周限制重置时间（`rate_limits.seven_day.resets_at`），`MM/DD(星期) HH:MM` 格式。星期名称遵循由 `LC_ALL` / `LC_TIME` / `LANG` 决定的区域设置（如 `zh_CN.UTF-8` 为 `02/15(周四) 17:00`，`en_US.UTF-8` 为 `02/15(Thu) 17:00`）。若三者均无可用值（未设置、为空，或表示“不做本地化”的 `C`/`POSIX`），则回退到运行时默认区域设置（当前 Bun 为 `en-US`）。macOS 终端在未启用“Set locale environment variables on startup”时会将 `LANG` 留空
 
 当 stdin JSON 中包含 `rate_limits` 时，使用量指标会**自动显示**。无需额外标志或配置。
 

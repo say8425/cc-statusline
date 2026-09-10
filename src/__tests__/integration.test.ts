@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, spyOn, test } from "bun:test";
 import { resetCache } from "../cache.ts";
+import { LOCALE_ENV_KEYS } from "../format/index.ts";
 import { main } from "../index.ts";
 
 // main()이 실제 process.env에서 읽는 키 전부 — 테스트가 개발자 셸에 흔들리지 않도록
@@ -8,6 +9,8 @@ const MAIN_ENV_KEYS = [
 	"CC_STATUSLINE_SHOW_COST",
 	"CC_STATUSLINE_DIFF_DISABLE",
 	"CC_STATUSLINE_DIFF_PORT",
+	// ⏰ 요일 이름이 개발자 셸의 로케일을 타지 않도록 함께 지운다
+	...LOCALE_ENV_KEYS,
 ] as const;
 
 describe("main function (integration)", () => {
