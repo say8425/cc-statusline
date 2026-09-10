@@ -159,7 +159,7 @@ Claude Code passes `rate_limits` in the stdin JSON input (CLI 2.1.80+):
 1. **5-hour utilization** - Usage percentage for the current billing block (`rate_limits.five_hour.used_percentage`)
 2. **7-day utilization** - Weekly usage percentage (`rate_limits.seven_day.used_percentage`)
 3. **Reset timer** - Exact reset time (`rate_limits.five_hour.resets_at`), shown as `HH:MM`
-4. **Weekly reset timer** - Weekly limit reset time (`rate_limits.seven_day.resets_at`), shown as `MM/DD(weekday) HH:MM`. The weekday name is localized from `LC_ALL` / `LC_TIME` / `LANG` (e.g., `02/15(Thu) 17:00` under `en_US.UTF-8`, `02/15(목) 17:00` under `ko_KR.UTF-8`). If none of the three is set — macOS Terminal leaves `LANG` empty unless "Set locale environment variables on startup" is enabled — the weekday falls back to the runtime default locale (`en-US` with current Bun)
+4. **Weekly reset timer** - Weekly limit reset time (`rate_limits.seven_day.resets_at`), shown as `MM/DD(weekday) HH:MM`. The weekday name is localized from `LC_ALL` / `LC_TIME` / `LANG` (e.g., `02/15(Thu) 17:00` under `en_US.UTF-8`, `02/15(목) 17:00` under `ko_KR.UTF-8`). If none of the three holds a usable value — unset, empty, or `C`/`POSIX`, which mean "do not localize" — the weekday falls back to the runtime default locale (`en-US` with current Bun). macOS Terminal leaves `LANG` empty unless "Set locale environment variables on startup" is enabled
 
 Usage metrics are **automatically displayed** when `rate_limits` is present in the stdin JSON. No additional flags or configuration needed.
 

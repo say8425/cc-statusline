@@ -149,7 +149,7 @@ Claude Code pasa `rate_limits` en la entrada JSON stdin (CLI 2.1.80+):
 1. **Utilización de 5 horas** - Porcentaje de uso del bloque de facturación actual (`rate_limits.five_hour.used_percentage`)
 2. **Utilización de 7 días** - Porcentaje de uso semanal (`rate_limits.seven_day.used_percentage`)
 3. **Temporizador de reinicio** - Tiempo exacto de reinicio (`rate_limits.five_hour.resets_at`), formato `HH:MM`
-4. **Temporizador de reinicio semanal** - Tiempo de reinicio del límite semanal (`rate_limits.seven_day.resets_at`), formato `MM/DD(día) HH:MM`. El nombre del día sigue la configuración regional que definen `LC_ALL` / `LC_TIME` / `LANG` (ej., `02/15(jue) 17:00` con `es_ES.UTF-8`, `02/15(Thu) 17:00` con `en_US.UTF-8`). Si ninguna de las tres está definida —la Terminal de macOS deja `LANG` vacío salvo que se active «Set locale environment variables on startup»— se recurre a la configuración regional predeterminada del runtime (`en-US` con el Bun actual)
+4. **Temporizador de reinicio semanal** - Tiempo de reinicio del límite semanal (`rate_limits.seven_day.resets_at`), formato `MM/DD(día) HH:MM`. El nombre del día sigue la configuración regional que definen `LC_ALL` / `LC_TIME` / `LANG` (ej., `02/15(jue) 17:00` con `es_ES.UTF-8`, `02/15(Thu) 17:00` con `en_US.UTF-8`). Si ninguna de las tres tiene un valor utilizable (sin definir, vacío, o `C`/`POSIX`, que significan «no localizar»), se recurre a la configuración regional predeterminada del runtime (`en-US` con el Bun actual). La Terminal de macOS deja `LANG` vacío salvo que se active «Set locale environment variables on startup»
 
 Las métricas de uso se **muestran automáticamente** cuando `rate_limits` está presente en el JSON stdin. No se necesitan flags ni configuración adicional.
 
