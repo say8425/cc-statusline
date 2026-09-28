@@ -5,7 +5,7 @@
     "": {
       "name": "cc-statusline",
       "dependencies": {
-        "@say8425/diffdeck": "1.5.1",
+        "@say8425/diffdeck": "1.6.0",
       },
       "devDependencies": {
         "@types/bun": "^1.4.2",
@@ -105,7 +105,7 @@
 
     "@oxlint/binding-win32-x64-msvc": ["@oxlint/binding-win32-x64-msvc@1.85.0", "", { "os": "win32", "cpu": "x64" }, "sha512-pBebIPUpKKhWrhSMWhy8TdAZBewiXnfxmaAGxhzxM1068GagqFaTwgKlU6e+UyJ2sPR+VoHouhXuGJkQjsrDvA=="],
 
-    "@say8425/diffdeck": ["@say8425/diffdeck@1.5.1", "", { "bin": { "diffdeck": "dist/cli.js" } }, "sha512-+Sc7rGn83d7yf1cLdM4LEv9Z0kX5Qgm23ax0aOOl1vSMU/2NhPMRMU27Od4uDmQpS20+pptz0Rc676bmkcpiWw=="],
+    "@say8425/diffdeck": ["@say8425/diffdeck@1.6.0", "", { "bin": { "diffdeck": "dist/cli.js" } }, "sha512-zz95cjxABs+24Y38kM4W0QwNJQH+NqSO3F8ZNuHsK7AaKC6BHz0166C3JJwNYXkRGMBYidWBO62bR4hLlZTBHw=="],
 
     "@types/bun": ["@types/bun@1.4.2", "", { "dependencies": { "bun-types": "1.4.2" } }, "sha512-GimotNn7+ZV0uVArItBbriZsR1oNf0+WTzPkdcFrzShI7k2norL0uzEaJT8T33dWr7O/c9ZDuAFQrctKCi72oQ=="],
 
