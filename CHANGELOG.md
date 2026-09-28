@@ -1,5 +1,12 @@
 # Changelog
 
+## [6.2.2](https://github.com/say8425/cc-statusline/compare/v6.2.1...v6.2.2) (2026-09-28)
+
+
+### Bug Fixes
+
+* **deps:** bump @say8425/diffdeck from 1.5.1 to 1.6.0 ([#96](https://github.com/say8425/cc-statusline/issues/96)) ([4b353e0](https://github.com/say8425/cc-statusline/commit/4b353e0720b9db51c02213d505dd6fa03874dba9))
+
 ## [6.2.1](https://github.com/say8425/cc-statusline/compare/v6.2.0...v6.2.1) (2026-09-27)
 
 
