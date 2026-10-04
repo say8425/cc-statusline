@@ -27,12 +27,12 @@
 		"typecheck": "tsc --noEmit"
 	},
 	"dependencies": {
-		"@say8425/diffdeck": "1.6.0"
+		"@say8425/diffdeck": "1.7.0"
 	},
 	"devDependencies": {
 		"@types/bun": "^1.4.2",
-		"oxfmt": "^0.70.0",
-		"oxlint": "^1.85.0",
+		"oxfmt": "^0.71.0",
+		"oxlint": "^1.86.0",
 		"oxlint-tsgolint": "^7.0.2003",
 		"typescript": "^7.0.2"
 	}
