@@ -1,5 +1,12 @@
 # Changelog
 
+## [6.3.0](https://github.com/say8425/cc-statusline/compare/v6.2.4...v6.3.0) (2026-10-06)
+
+
+### Features
+
+* show the session's [@mention](https://github.com/mention) name instead of the session UUID ([#102](https://github.com/say8425/cc-statusline/issues/102)) ([603a935](https://github.com/say8425/cc-statusline/commit/603a935796479da727b5066dc6344ac5d32525bf))
+
 ## [6.2.4](https://github.com/say8425/cc-statusline/compare/v6.2.3...v6.2.4) (2026-10-06)
 
 
