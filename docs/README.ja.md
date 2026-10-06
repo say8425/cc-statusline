@@ -54,9 +54,9 @@ Claude Code用カスタムステータスライン。
 - **セッション時間**: 現在のセッション経過時間
 - **コスト**: セッションコスト（USD） — デフォルトでは非表示、`CC_STATUSLINE_SHOW_COST=1` で表示（[設定](#設定)を参照）
 - **コンテキスト**: トークン使用量とパーセンテージ（色分け表示）
-- **モデル**: 現在使用中のモデル名と reasoning effort（例: `Fable 5 high`、effort は対応モデルのみ表示）、Claude Code 設定で ultracode が有効かつセッションの effort が `xhigh` の場合は `⚡ultra` バッジを表示
+- **モデル**: 現在使用中のモデル名と reasoning effort（例: `Fable 5 high`）、ultracode セッションでは `⚡ultra` バッジを表示
 - **Git Diff**: ファイル数、追加、削除
-- **クリック可能な Diff ビューア**: `✏️` をクリックすると、ローカルの diff ビューア（[diffdeck](https://github.com/say8425/diffdeck)、依存関係として自動インストール）がブラウザで開きます — ファイルツリー、working-tree / vs-base モード、watch モード（自動更新）、ファイルの折りたたみ、diff 全体を対象としたアプリ内検索（`Cmd/Ctrl+F`、削除された行も含む）
+- **クリック可能な Diff ビューア**: `✏️` をクリックすると、ローカルの diff ビューアがブラウザで開きます（[Diff ビューア](#diff-ビューア)を参照）
 - **PR URL**: クリック可能なOSC 8ハイパーリンク
 - **ワークツリーサポート**: `cc --worktree`セッションで実際のプロジェクト名を表示
 - **TrueColor**: しきい値に基づく動的カラー
@@ -64,7 +64,7 @@ Claude Code用カスタムステータスライン。
 - **ブロック使用量**: 5時間使用率
 - **週間リセットタイマー**: 7日使用量リセット時刻（MM/DD(金) HH:MM — 曜日名はロケールに従う）
 - **週間使用量**: 7日使用率
-- **セッション ID**: セッション経過時間の行の右端(モデルセグメントの右)にセッション UUID 全体を絵文字なしで表示 — `claude --resume <id>` やログ検索にそのままコピーできます
+- **セッション名**: このセッションのメンションアドレスを `@"名前"` の形で表示 — 他の Claude セッションに貼り付けて、このセッションにメッセージを送れます
 
 ## 絵文字ガイド
 
@@ -77,7 +77,7 @@ Claude Code用カスタムステータスライン。
 | 💰     | セッションコスト（USD） — デフォルトでは非表示（[設定](#設定)を参照） |
 | 🧠     | コンテキストウィンドウ使用量 |
 | 🤖     | 現在のモデルと effort        |
-| _(なし)_ | セッション ID — 🤖 の後（またはセッション経過時間の行の右端）に絵文字ラベルなしで UUID 全体を表示 |
+| `@`   | セッション名 — メンションアドレス |
 | ⏳     | リセット時刻                 |
 | 📊     | 5時間使用率 %                |
 | ⏰     | 週間制限リセット時間         |
@@ -129,7 +129,31 @@ statusline の `✏️` をクリックすると、ローカル diff ビュー�
 - **diff-grab**: diff でコードを選択し（テキストのドラッグは文字単位、ガターの `+` ボタンは行単位）、プロンプトを入力して Enter — ファイルパス・行範囲・コードスニペットとプロンプトがクリップボードにコピーされ、Claude Code のようなエージェントにそのまま貼り付けられます
 - **未追跡ファイルを含める** トグル
 
-### 動作方法（Diff ビューア）
+## 動作方法
+
+statusline に表示される情報の大半は、Claude Code が stdin で渡す JSON から来ます — 完全なスキーマは[公式 statusline ドキュメント](https://code.claude.com/docs/en/statusline)を参照してください。stdin にないいくつかの値は、以下のようにローカルから直接読み取ります。
+
+### 使用量メトリクス
+
+Claude Code が stdin JSON で `rate_limits` を渡します（CLI 2.1.80+）。この値があれば使用量の行が自動的に表示され、追加のフラグや設定は不要です：
+
+1. **5時間使用率** - 現在のビリングブロックの使用パーセンテージ（`rate_limits.five_hour.used_percentage`）
+2. **7日使用率** - 週間使用パーセンテージ（`rate_limits.seven_day.used_percentage`）
+3. **リセットタイマー** - 正確なリセット時刻（`rate_limits.five_hour.resets_at`）、`HH:MM`形式
+4. **週間リセットタイマー** - 週間制限リセット時刻（`rate_limits.seven_day.resets_at`）、`MM/DD(曜日) HH:MM`形式。曜日名は `LC_ALL` / `LC_TIME` / `LANG` で決まるロケール準拠（例：`ja_JP.UTF-8` → `02/15(木) 17:00`、`en_US.UTF-8` → `02/15(Thu) 17:00`）。3つとも使える値でなければ（未設定・空、または「ローカライズしない」を意味する `C`/`POSIX`）ランタイム既定のロケール（現行の Bun では `en-US`）にフォールバック — macOS のターミナルは「Set locale environment variables on startup」が無効だと `LANG` が空のまま
+
+> [!NOTE]
+> `rate_limits`はClaude.aiサブスクライバー（Pro/Max）のみ、最初のAPIレスポンス後に提供されます。
+
+### モデルと ultracode
+
+モデル名と effort は `model.display_name` と `effort.level` から取得します（effort は対応モデルのみ送られます）。ultracode は stdin に含まれないため、Claude Code 設定ファイル（managed → プロジェクト local → プロジェクト → ユーザーの順）の `ultracode` キーを読み、セッションの effort が `xhigh` の場合のみ `⚡ultra` を表示します。
+
+### セッション名
+
+セッション名は、他の Claude セッションがこのセッションにメッセージを送るときに使うアドレスです — `/rename`・`claude -n` で付けた名前、なければ `my-app-3f` のようなデフォルト表示名。stdin の `session_name` では代用できません：名前のないセッションでは AI 生成のタイトル（メンションアドレスではない）を持ち、デフォルト表示名はまったく含まないためです。そのため Claude Code のローカルセッションレジストリ（`<CLAUDE_CONFIG_DIR または ~/.claude>/sessions`）から `session_id` が一致するエントリを読み取ります。スペースや非 ASCII 文字を含む名前もそのままメンションに貼り付けられるよう常に引用符で囲み、レジストリに該当セッションがなければ非表示にします。`rate_limits` とは無関係に表示されます。
+
+### Diff ビューア
 
 リポジトリに表示すべき変更があると、statusline が diffdeck を `127.0.0.1:49573` にバックグラウンドデーモンとして必要に応じて起動します。リクエストはトークンで保護され、localhost のみにバインドされます。
 
@@ -137,26 +161,6 @@ statusline の `✏️` をクリックすると、ローカル diff ビュー�
 
 > [!TIP]
 > ブックマークではなく `✏️` リンクからビューアを開いてください — リンクには常に最新のトークンが含まれ、サーバーの起動も保証されます。
-
-## 使用量メトリクス
-
-Claude Codeのstdin JSON入力から使用量情報を表示します。
-
-### 動作方法
-
-Claude CodeがJSON入力で`rate_limits`を渡します（CLI 2.1.80+）：
-
-1. **5時間使用率** - 現在のビリングブロックの使用パーセンテージ（`rate_limits.five_hour.used_percentage`）
-2. **7日使用率** - 週間使用パーセンテージ（`rate_limits.seven_day.used_percentage`）
-3. **リセットタイマー** - 正確なリセット時刻（`rate_limits.five_hour.resets_at`）、`HH:MM`形式
-4. **週間リセットタイマー** - 週間制限リセット時刻（`rate_limits.seven_day.resets_at`）、`MM/DD(曜日) HH:MM`形式。曜日名は `LC_ALL` / `LC_TIME` / `LANG` で決まるロケール準拠（例：`ja_JP.UTF-8` → `02/15(木) 17:00`、`en_US.UTF-8` → `02/15(Thu) 17:00`）。3つとも使える値でなければ（未設定・空、または「ローカライズしない」を意味する `C`/`POSIX`）ランタイム既定のロケール（現行の Bun では `en-US`）にフォールバック — macOS のターミナルは「Set locale environment variables on startup」が無効だと `LANG` が空のまま
-
-使用量メトリクスはstdin JSONに`rate_limits`が含まれている場合、**自動的に表示**されます。追加のフラグや設定は不要です。
-
-セッション ID（`session_id`）は[機能](#機能)で説明した通り、セッション経過時間の行に表示されます — 別のフィールド由来のため、`rate_limits` に依存しません。
-
-> [!NOTE]
-> `rate_limits`はClaude.aiサブスクライバー（Pro/Max）のみ、最初のAPIレスポンス後に提供されます。完全なJSONスキーマは[公式statuslineドキュメント](https://code.claude.com/docs/en/statusline)を参照してください。
 
 ## 依存関係
 

@@ -54,9 +54,9 @@ Claude Code 自定义状态栏。
 - **会话时间**: 当前会话经过时间
 - **费用**: 会话费用（美元）— 默认隐藏，设置 `CC_STATUSLINE_SHOW_COST=1` 后显示（参见[配置](#配置)）
 - **上下文**: 令牌使用量及百分比（颜色标识）
-- **模型**: 当前使用的模型名称和 reasoning effort（例如 `Fable 5 high`，effort 仅在支持的模型上显示），当 Claude Code 设置中启用 ultracode 且会话 effort 为 `xhigh` 时显示 `⚡ultra` 徽章
+- **模型**: 当前使用的模型名称和 reasoning effort（例如 `Fable 5 high`），在 ultracode 会话中显示 `⚡ultra` 徽章
 - **Git Diff**: 文件数、新增、删除
-- **可点击的 Diff 查看器**：点击 `✏️` 即可在浏览器中打开本地 diff 查看器（由 [diffdeck](https://github.com/say8425/diffdeck) 提供，作为依赖自动安装）——文件树、working-tree / vs-base 模式、watch 模式（自动刷新）、文件折叠，以及对整个 diff 的应用内搜索（`Cmd/Ctrl+F`，包括已删除的行）
+- **可点击的 Diff 查看器**：点击 `✏️` 即可在浏览器中打开本地 diff 查看器（参见 [Diff 查看器](#diff-查看器)）
 - **PR URL**: 可点击的 OSC 8 超链接
 - **工作树支持**: 在 `cc --worktree` 会话中显示真实项目名称
 - **TrueColor**: 基于阈值的动态颜色
@@ -64,7 +64,7 @@ Claude Code 自定义状态栏。
 - **块使用量**: 5小时使用率
 - **每周重置计时器**: 7天使用量重置时间（MM/DD(周五) HH:MM — 星期名称遵循当前区域设置）
 - **周使用量**: 7天使用率
-- **会话 ID**: 在会话时间行末尾（模型段右侧）显示完整的会话 UUID，不带表情符号 — 可直接复制到 `claude --resume <id>` 或日志查询中
+- **会话名称**: 以 `@"名称"` 形式显示本会话的提及地址 — 粘贴到其他 Claude 会话中即可向本会话发送消息
 
 ## 表情符号指南
 
@@ -77,7 +77,7 @@ Claude Code 自定义状态栏。
 | 💰   | 会话费用（美元）— 默认隐藏（参见[配置](#配置)） |
 | 🧠   | 上下文窗口使用量    |
 | 🤖   | 当前模型和 effort   |
-| _(无)_ | 会话 ID — 在 🤖 之后（或会话时间行末尾）显示完整 UUID，不带表情符号标签 |
+| `@`   | 会话名称 — 提及地址 |
 | ⏳   | 重置时间            |
 | 📊   | 5小时使用率 %       |
 | ⏰   | 每周限制重置时间    |
@@ -129,7 +129,31 @@ Claude Code 自定义状态栏。
 - **diff-grab**：在 diff 中选择代码（拖动文本为字符级选择，行号槽的 `+` 按钮为整行），输入提示词后按 Enter — 文件路径、行范围、代码片段与提示词一并复制到剪贴板，可直接粘贴给 Claude Code 这类智能体
 - **包含未跟踪文件** 开关
 
-### 工作原理（Diff 查看器）
+## 工作原理
+
+statusline 显示的大部分信息来自 Claude Code 通过 stdin 传入的 JSON — 完整 schema 请参阅[官方 statusline 文档](https://code.claude.com/docs/en/statusline)。stdin 中没有的少数值会按下文所述从本地直接读取。
+
+### 使用量指标
+
+Claude Code 通过 stdin JSON 传递 `rate_limits`（CLI 2.1.80+）。只要存在该值，使用量行就会自动显示，无需额外标志或配置：
+
+1. **5小时使用率** - 当前计费块的使用百分比（`rate_limits.five_hour.used_percentage`）
+2. **7天使用率** - 周使用百分比（`rate_limits.seven_day.used_percentage`）
+3. **重置计时器** - 精确重置时间（`rate_limits.five_hour.resets_at`），`HH:MM` 格式
+4. **每周重置计时器** - 周限制重置时间（`rate_limits.seven_day.resets_at`），`MM/DD(星期) HH:MM` 格式。星期名称遵循由 `LC_ALL` / `LC_TIME` / `LANG` 决定的区域设置（如 `zh_CN.UTF-8` 为 `02/15(周四) 17:00`，`en_US.UTF-8` 为 `02/15(Thu) 17:00`）。若三者均无可用值（未设置、为空，或表示“不做本地化”的 `C`/`POSIX`），则回退到运行时默认区域设置（当前 Bun 为 `en-US`）。macOS 终端在未启用“Set locale environment variables on startup”时会将 `LANG` 留空
+
+> [!NOTE]
+> `rate_limits` 仅在 Claude.ai 订阅用户（Pro/Max）首次 API 响应后提供。
+
+### 模型与 ultracode
+
+模型名称和 effort 来自 `model.display_name` 和 `effort.level`（effort 仅对支持的模型发送）。ultracode 不在 stdin 中，因此 statusline 会读取 Claude Code 设置文件（managed → 项目 local → 项目 → 用户）中的 `ultracode` 键，并且仅当会话 effort 为 `xhigh` 时显示 `⚡ultra`。
+
+### 会话名称
+
+会话名称是其他 Claude 会话向本会话发送消息时使用的地址 — 通过 `/rename` 或 `claude -n` 设置的名称，否则为 `my-app-3f` 这样的默认显示名称。stdin 的 `session_name` 无法替代它：对未命名会话它保存的是 AI 生成的标题（不是提及地址），而且从不包含默认显示名称。因此 statusline 从 Claude Code 的本地会话注册表（`<CLAUDE_CONFIG_DIR 或 ~/.claude>/sessions`）读取与 `session_id` 匹配的条目。名称始终加引号，含空格或非 ASCII 字符的名称也可直接粘贴到提及中；注册表中没有该会话时隐藏。它不依赖 `rate_limits`。
+
+### Diff 查看器
 
 当仓库有可展示的变更时，statusline 会按需将 diffdeck 作为后台守护进程在 `127.0.0.1:49573` 启动。请求受令牌保护，且仅绑定到 localhost。
 
@@ -137,26 +161,6 @@ Claude Code 自定义状态栏。
 
 > [!TIP]
 > 请通过 `✏️` 链接打开查看器，而不是使用书签 — 链接始终携带最新令牌，并确保服务已启动。
-
-## 使用量指标
-
-显示来自 Claude Code stdin JSON 输入的使用量信息。
-
-### 工作原理
-
-Claude Code 通过 stdin JSON 输入传递 `rate_limits`（CLI 2.1.80+）：
-
-1. **5小时使用率** - 当前计费块的使用百分比（`rate_limits.five_hour.used_percentage`）
-2. **7天使用率** - 周使用百分比（`rate_limits.seven_day.used_percentage`）
-3. **重置计时器** - 精确重置时间（`rate_limits.five_hour.resets_at`），`HH:MM` 格式
-4. **每周重置计时器** - 周限制重置时间（`rate_limits.seven_day.resets_at`），`MM/DD(星期) HH:MM` 格式。星期名称遵循由 `LC_ALL` / `LC_TIME` / `LANG` 决定的区域设置（如 `zh_CN.UTF-8` 为 `02/15(周四) 17:00`，`en_US.UTF-8` 为 `02/15(Thu) 17:00`）。若三者均无可用值（未设置、为空，或表示“不做本地化”的 `C`/`POSIX`），则回退到运行时默认区域设置（当前 Bun 为 `en-US`）。macOS 终端在未启用“Set locale environment variables on startup”时会将 `LANG` 留空
-
-当 stdin JSON 中包含 `rate_limits` 时，使用量指标会**自动显示**。无需额外标志或配置。
-
-会话 ID（`session_id`）显示在会话时间行，详见[功能](#功能)。它来自独立的字段，因此不依赖 `rate_limits`。
-
-> [!NOTE]
-> `rate_limits` 仅在 Claude.ai 订阅用户（Pro/Max）首次 API 响应后提供。完整 JSON schema 请参阅[官方 statusline 文档](https://code.claude.com/docs/en/statusline)。
 
 ## 依赖项
 

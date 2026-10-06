@@ -54,9 +54,9 @@ Claude Code를 위한 커스텀 상태표시줄.
 - **세션 시간**: 현재 세션 경과 시간
 - **비용**: 세션 비용 (USD) — 기본은 숨김, `CC_STATUSLINE_SHOW_COST=1`로 표시 ([설정](#설정) 참조)
 - **컨텍스트**: 토큰 사용량 및 백분율 (색상 표시)
-- **모델**: 현재 사용 중인 모델명과 reasoning effort (예: `Fable 5 high`, effort는 지원 모델에서만 표시), Claude Code 설정에서 ultracode가 켜져 있고 세션 effort가 `xhigh`일 때 `⚡ultra` 배지 표시
+- **모델**: 현재 사용 중인 모델명과 reasoning effort (예: `Fable 5 high`), ultracode 세션에서는 `⚡ultra` 배지 표시
 - **Git Diff**: 파일 수, 추가, 삭제
-- **클릭 가능한 Diff 뷰어**: `✏️`를 클릭하면 로컬 diff 뷰어([diffdeck](https://github.com/say8425/diffdeck), 의존성으로 자동 설치)가 브라우저에 열립니다 — 파일 트리, working-tree / vs-base 모드, watch 모드(자동 새로고침), 파일 폴딩, 전체 diff 대상 인앱 검색(`Cmd/Ctrl+F`, 삭제된 줄 포함)
+- **클릭 가능한 Diff 뷰어**: `✏️`를 클릭하면 로컬 diff 뷰어가 브라우저에 열립니다 ([Diff 뷰어](#diff-뷰어) 참조)
 - **PR URL**: 클릭 가능한 OSC 8 하이퍼링크
 - **워크트리 지원**: `cc --worktree` 세션에서 실제 프로젝트 이름 표시
 - **TrueColor**: 임계값에 따른 동적 색상
@@ -64,7 +64,7 @@ Claude Code를 위한 커스텀 상태표시줄.
 - **블록 사용량**: 5시간 사용률
 - **주간 리셋 타이머**: 7일 사용량 리셋 시각 (MM/DD(금) HH:MM — 요일 이름은 로케일을 따름)
 - **주간 사용량**: 7일 사용률
-- **세션 ID**: 세션 시간 줄 오른쪽 끝(모델 세그먼트 오른쪽)에 세션 UUID 전체를 이모지 없이 표시 — `claude --resume <id>`나 로그 조회에 그대로 복사해 쓸 수 있습니다
+- **세션 이름**: 이 세션의 멘션 주소를 `@"이름"` 형태로 표시 — 다른 Claude 세션에 붙여 넣어 이 세션에 메시지를 보낼 수 있습니다
 
 ## Emoji 가이드
 
@@ -77,7 +77,7 @@ Claude Code를 위한 커스텀 상태표시줄.
 | 💰    | 세션 비용 (USD) — 기본은 숨김 ([설정](#설정) 참조) |
 | 🧠    | 컨텍스트 창 사용량     |
 | 🤖    | 현재 모델 및 effort    |
-| _(없음)_ | 세션 ID — 🤖 뒤(또는 세션 시간 줄 오른쪽 끝)에 이모지 라벨 없이 UUID 전체 표시 |
+| `@`   | 세션 이름 — 멘션 주소 |
 | ⏳    | 리셋 시각              |
 | 📊    | 5시간 사용률 %         |
 | ⏰    | 주간 제한 리셋 시간    |
@@ -129,7 +129,31 @@ statusline의 `✏️`를 클릭하면 로컬 diff 뷰어가 브라우저에 열
 - **diff-grab**: diff에서 코드를 선택하고(텍스트 드래그는 문자 단위, 거터의 `+` 버튼은 줄 단위) 프롬프트를 입력한 뒤 Enter — 파일 경로·라인 범위·코드 스니펫과 프롬프트가 클립보드에 복사되어, Claude Code 같은 에이전트에 바로 붙여넣을 수 있습니다
 - **Untracked 파일 포함** 토글
 
-### 동작 방식 (Diff 뷰어)
+## 동작 방식
+
+상태표시줄에 나오는 정보는 대부분 Claude Code가 stdin으로 넘겨주는 JSON에서 옵니다 — 전체 스키마는 [공식 statusline 문서](https://code.claude.com/docs/en/statusline)를 참조하세요. stdin에 없는 몇 가지 값은 아래처럼 로컬에서 직접 읽습니다.
+
+### 사용량 지표
+
+Claude Code가 stdin JSON으로 `rate_limits`를 전달합니다 (CLI 2.1.80+). 이 값이 있으면 사용량 줄이 자동으로 표시되며, 추가 플래그나 설정이 필요 없습니다:
+
+1. **5시간 사용률** - 현재 빌링 블록의 사용 백분율 (`rate_limits.five_hour.used_percentage`)
+2. **7일 사용률** - 주간 사용 백분율 (`rate_limits.seven_day.used_percentage`)
+3. **리셋 타이머** - 정확한 리셋 시각 (`rate_limits.five_hour.resets_at`), `HH:MM` 포맷
+4. **주간 리셋 타이머** - 주간 제한 리셋 시각 (`rate_limits.seven_day.resets_at`), `MM/DD(요일) HH:MM` 포맷. 요일 이름은 `LC_ALL` / `LC_TIME` / `LANG`가 정하는 로케일 기준 (예: `ko_KR.UTF-8` → `02/15(목) 17:00`, `en_US.UTF-8` → `02/15(Thu) 17:00`). 셋 다 쓸 수 있는 값이 아니면(미설정·빈 값, 또는 "지역화하지 말라"는 뜻의 `C`/`POSIX`) 런타임 기본 로케일(현재 Bun에서는 `en-US`)로 폴백 — macOS 터미널은 "Set locale environment variables on startup"이 꺼져 있으면 `LANG`이 빈 채로 남음
+
+> [!NOTE]
+> `rate_limits`는 Claude.ai 구독자(Pro/Max)에게만 첫 API 응답 이후 제공됩니다.
+
+### 모델과 ultracode
+
+모델명과 effort는 `model.display_name`과 `effort.level`에서 옵니다 (effort는 지원 모델에서만 전달). ultracode 여부는 stdin에 없어서 Claude Code 설정 파일(managed → 프로젝트 local → 프로젝트 → 사용자 순)의 `ultracode` 키를 읽고, 세션 effort가 `xhigh`일 때만 `⚡ultra`를 표시합니다.
+
+### 세션 이름
+
+세션 이름은 다른 Claude 세션이 이 세션에 메시지를 보낼 때 쓰는 주소입니다 — `/rename`·`claude -n`으로 지은 이름, 없으면 `my-app-3f` 같은 기본 표시 이름. stdin의 `session_name`으로는 대신할 수 없습니다: 이름 없는 세션에선 AI가 만든 제목(멘션 주소가 아님)을 담고, 기본 표시 이름은 아예 담지 않기 때문입니다. 그래서 Claude Code의 로컬 세션 레지스트리(`<CLAUDE_CONFIG_DIR 또는 ~/.claude>/sessions`)에서 `session_id`가 일치하는 항목을 읽습니다. 공백·한글이 섞인 이름도 그대로 멘션에 붙여 넣을 수 있도록 항상 따옴표로 감싸고, 레지스트리에 해당 세션이 없으면 숨깁니다. `rate_limits`와는 무관하게 표시됩니다.
+
+### Diff 뷰어
 
 레포에 보여줄 변경이 있으면 statusline이 diffdeck을 `127.0.0.1:49573`에 백그라운드 데몬으로 필요 시 띄웁니다. 요청은 토큰으로 보호되며 localhost에만 바인딩됩니다.
 
@@ -137,26 +161,6 @@ statusline의 `✏️`를 클릭하면 로컬 diff 뷰어가 브라우저에 열
 
 > [!TIP]
 > 북마크 대신 `✏️` 링크로 뷰어를 여세요 — 링크에는 항상 최신 토큰이 포함되며 서버 실행도 보장됩니다.
-
-## 사용량 지표
-
-Claude Code의 stdin JSON 입력에서 사용량 정보를 표시합니다.
-
-### 동작 방식
-
-Claude Code가 stdin JSON 입력으로 `rate_limits`를 전달합니다 (CLI 2.1.80+):
-
-1. **5시간 사용률** - 현재 빌링 블록의 사용 백분율 (`rate_limits.five_hour.used_percentage`)
-2. **7일 사용률** - 주간 사용 백분율 (`rate_limits.seven_day.used_percentage`)
-3. **리셋 타이머** - 정확한 리셋 시각 (`rate_limits.five_hour.resets_at`), `HH:MM` 포맷
-4. **주간 리셋 타이머** - 주간 제한 리셋 시각 (`rate_limits.seven_day.resets_at`), `MM/DD(요일) HH:MM` 포맷. 요일 이름은 `LC_ALL` / `LC_TIME` / `LANG`가 정하는 로케일 기준 (예: `ko_KR.UTF-8` → `02/15(목) 17:00`, `en_US.UTF-8` → `02/15(Thu) 17:00`). 셋 다 쓸 수 있는 값이 아니면(미설정·빈 값, 또는 "지역화하지 말라"는 뜻의 `C`/`POSIX`) 런타임 기본 로케일(현재 Bun에서는 `en-US`)로 폴백 — macOS 터미널은 "Set locale environment variables on startup"이 꺼져 있으면 `LANG`이 빈 채로 남음
-
-사용량 지표는 stdin JSON에 `rate_limits`가 포함되어 있으면 **자동으로 표시**됩니다. 추가 플래그나 설정이 필요 없습니다.
-
-세션 ID(`session_id`)는 [기능](#기능)에 설명된 대로 세션 시간 줄에 표시됩니다 — 별개의 필드에서 오므로 `rate_limits`에 의존하지 않습니다.
-
-> [!NOTE]
-> `rate_limits`는 Claude.ai 구독자(Pro/Max)에게만 첫 API 응답 이후 제공됩니다. 전체 JSON 스키마는 [공식 statusline 문서](https://code.claude.com/docs/en/statusline)를 참조하세요.
 
 ## 의존성
 
