@@ -64,7 +64,7 @@ Add the following to `~/.claude/settings.json`:
 - **Block Usage**: 5-hour utilization percentage
 - **Weekly Reset Timer**: Weekly limit reset time (MM/DD(Fri) HH:MM — the weekday name follows your locale)
 - **Weekly Usage**: 7-day utilization percentage
-- **Session name**: The session's mention address at the end of the session-time line (to the right of the model segment), shown as `@"name"` (always quoted, so names with spaces or non-ASCII characters can be pasted straight into a mention) — the name other Claude sessions use to message this one (set with `/rename` or `claude -n`, otherwise the default display name such as `my-app-3f`). Read from Claude Code's local session registry (`<CLAUDE_CONFIG_DIR or ~/.claude>/sessions`), since stdin's `session_name` holds an AI-generated title for unnamed sessions, which isn't an address; hidden when the registry has no entry for the session
+- **Session name**: The session's mention address, shown as `@"name"` (always quoted, so names with spaces or non-ASCII characters can be pasted straight into a mention) — the name other Claude sessions use to message this one (set with `/rename` or `claude -n`, otherwise the default display name such as `my-app-3f`). Read from Claude Code's local session registry (`<CLAUDE_CONFIG_DIR or ~/.claude>/sessions`), since stdin's `session_name` holds an AI-generated title for unnamed sessions, which isn't an address; hidden when the registry has no entry for the session
 
 ## Emoji Guide
 
