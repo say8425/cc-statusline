@@ -54,9 +54,9 @@ Agrega lo siguiente a `~/.claude/settings.json`:
 - **Tiempo de sesión**: Tiempo transcurrido de la sesión actual
 - **Costo**: Costo de la sesión en USD — oculto por defecto, usa `CC_STATUSLINE_SHOW_COST=1` para mostrarlo (ver [Configuración](#configuración))
 - **Contexto**: Uso de tokens con porcentaje (codificado por colores)
-- **Modelo**: Nombre del modelo en uso y reasoning effort (p. ej., `Fable 5 high`; el effort solo se muestra en modelos compatibles), con una insignia `⚡ultra` cuando ultracode está habilitado en la configuración de Claude Code y la sesión reporta effort `xhigh`
+- **Modelo**: Nombre del modelo en uso y reasoning effort (p. ej., `Fable 5 high`), con una insignia `⚡ultra` en sesiones ultracode
 - **Git Diff**: Cantidad de archivos, inserciones, eliminaciones
-- **Visor de Diff clicable**: Haz clic en `✏️` para abrir un visor de diff local en tu navegador, proporcionado por [diffdeck](https://github.com/say8425/diffdeck) (instalado automáticamente como dependencia) — árbol de archivos, modos working-tree / vs-base, modo watch (actualización automática), plegado de archivos y búsqueda integrada (`Cmd/Ctrl+F`) en todo el diff, incluidas las líneas eliminadas
+- **Visor de Diff clicable**: Haz clic en `✏️` para abrir un visor de diff local en tu navegador (ver [Visor de Diff](#visor-de-diff))
 - **PR URL**: Hipervínculo OSC 8 clickeable
 - **Soporte de Worktree**: Muestra el nombre real del proyecto en sesiones `cc --worktree`
 - **TrueColor**: Colores dinámicos basados en umbrales
@@ -64,7 +64,7 @@ Agrega lo siguiente a `~/.claude/settings.json`:
 - **Uso del bloque**: Porcentaje de utilización de 5 horas
 - **Temporizador de reinicio semanal**: Tiempo de reinicio del límite semanal (MM/DD(vie) HH:MM — el nombre del día sigue tu configuración regional)
 - **Uso semanal**: Porcentaje de utilización de 7 días
-- **Nombre de sesión**: La dirección de mención de la sesión, mostrada como `@"nombre"` (siempre entre comillas, para que los nombres con espacios o caracteres no ASCII se puedan pegar tal cual en una mención) — el nombre que usan otras sesiones de Claude para enviarle mensajes (definido con `/rename` o `claude -n`; si no, el nombre visible por defecto como `my-app-3f`). Se lee del registro local de sesiones de Claude Code (`<CLAUDE_CONFIG_DIR o ~/.claude>/sessions`), porque el `session_name` de stdin contiene un título generado por IA en sesiones sin nombre, que no es una dirección; se oculta si el registro no tiene la sesión
+- **Nombre de sesión**: La dirección de mención de esta sesión, mostrada como `@"nombre"` — pégala en otra sesión de Claude para enviarle mensajes a esta
 
 ## Guía de Emojis
 
@@ -129,7 +129,31 @@ Haz clic en `✏️` en el statusline para abrir un visor de diff local en tu na
 - **diff-grab**: selecciona código en el diff (arrastrando el texto para una selección precisa a nivel de carácter, o con el botón `+` del margen para líneas completas), escribe un prompt y pulsa Enter — la ruta del archivo, el rango de líneas, el fragmento de código y tu prompt se copian al portapapeles, listos para pegar en un agente como Claude Code
 - Alternancia para **incluir archivos sin seguimiento**
 
-### Cómo Funciona (Visor de Diff)
+## Cómo Funciona
+
+Casi todo lo que muestra el statusline proviene del JSON que Claude Code pasa por stdin — consulta la [documentación oficial de statusline](https://code.claude.com/docs/en/statusline) para el esquema completo. Los pocos valores que stdin no incluye se leen localmente, como se describe a continuación.
+
+### Métricas de Uso
+
+Claude Code pasa `rate_limits` en el JSON de stdin (CLI 2.1.80+). La línea de uso aparece automáticamente siempre que está presente, sin flags ni configuración adicional:
+
+1. **Utilización de 5 horas** - Porcentaje de uso del bloque de facturación actual (`rate_limits.five_hour.used_percentage`)
+2. **Utilización de 7 días** - Porcentaje de uso semanal (`rate_limits.seven_day.used_percentage`)
+3. **Temporizador de reinicio** - Tiempo exacto de reinicio (`rate_limits.five_hour.resets_at`), formato `HH:MM`
+4. **Temporizador de reinicio semanal** - Tiempo de reinicio del límite semanal (`rate_limits.seven_day.resets_at`), formato `MM/DD(día) HH:MM`. El nombre del día sigue la configuración regional que definen `LC_ALL` / `LC_TIME` / `LANG` (ej., `02/15(jue) 17:00` con `es_ES.UTF-8`, `02/15(Thu) 17:00` con `en_US.UTF-8`). Si ninguna de las tres tiene un valor utilizable (sin definir, vacío, o `C`/`POSIX`, que significan «no localizar»), se recurre a la configuración regional predeterminada del runtime (`en-US` con el Bun actual). La Terminal de macOS deja `LANG` vacío salvo que se active «Set locale environment variables on startup»
+
+> [!NOTE]
+> `rate_limits` solo está disponible para suscriptores de Claude.ai (Pro/Max) después de la primera respuesta de la API.
+
+### Modelo y Ultracode
+
+El nombre del modelo y el effort provienen de `model.display_name` y `effort.level` (el effort solo se envía en modelos compatibles). Ultracode no se expone en stdin, así que el statusline lee la clave `ultracode` de los archivos de configuración de Claude Code (managed → local del proyecto → proyecto → usuario) y muestra `⚡ultra` solo cuando la sesión también reporta effort `xhigh`.
+
+### Nombre de Sesión
+
+El nombre de sesión es la dirección que usan otras sesiones de Claude para enviarle mensajes a esta: el nombre definido con `/rename` o `claude -n`; si no, el nombre visible por defecto como `my-app-3f`. El `session_name` de stdin no puede sustituirlo: en sesiones sin nombre contiene un título generado por IA, que no es una dirección, y nunca contiene el nombre visible por defecto. Por eso el statusline lee el registro local de sesiones de Claude Code (`<CLAUDE_CONFIG_DIR o ~/.claude>/sessions`) y toma la entrada que coincide con `session_id`. El nombre siempre va entre comillas, para que los nombres con espacios o caracteres no ASCII se puedan pegar tal cual en una mención, y el segmento se oculta si el registro no tiene la sesión. No depende de `rate_limits`.
+
+### Visor de Diff
 
 El statusline inicia diffdeck como un daemon en segundo plano bajo demanda en `127.0.0.1:49573` cuando el repositorio tiene algo que mostrar. Las solicitudes están protegidas por token y vinculadas a localhost.
 
@@ -137,26 +161,6 @@ Las dos variables `CC_STATUSLINE_DIFF_*` que lo controlan están en la tabla de 
 
 > [!TIP]
 > Abre el visor a través del enlace `✏️` en lugar de un marcador — el enlace siempre lleva un token actualizado y garantiza que el servidor esté en ejecución.
-
-## Métricas de Uso
-
-Muestra información de uso desde la entrada JSON stdin de Claude Code.
-
-### Cómo Funciona
-
-Claude Code pasa `rate_limits` en la entrada JSON stdin (CLI 2.1.80+):
-
-1. **Utilización de 5 horas** - Porcentaje de uso del bloque de facturación actual (`rate_limits.five_hour.used_percentage`)
-2. **Utilización de 7 días** - Porcentaje de uso semanal (`rate_limits.seven_day.used_percentage`)
-3. **Temporizador de reinicio** - Tiempo exacto de reinicio (`rate_limits.five_hour.resets_at`), formato `HH:MM`
-4. **Temporizador de reinicio semanal** - Tiempo de reinicio del límite semanal (`rate_limits.seven_day.resets_at`), formato `MM/DD(día) HH:MM`. El nombre del día sigue la configuración regional que definen `LC_ALL` / `LC_TIME` / `LANG` (ej., `02/15(jue) 17:00` con `es_ES.UTF-8`, `02/15(Thu) 17:00` con `en_US.UTF-8`). Si ninguna de las tres tiene un valor utilizable (sin definir, vacío, o `C`/`POSIX`, que significan «no localizar»), se recurre a la configuración regional predeterminada del runtime (`en-US` con el Bun actual). La Terminal de macOS deja `LANG` vacío salvo que se active «Set locale environment variables on startup»
-
-Las métricas de uso se **muestran automáticamente** cuando `rate_limits` está presente en el JSON stdin. No se necesitan flags ni configuración adicional.
-
-El nombre de sesión se muestra en la línea de tiempo de sesión — ver [Características](#características). Proviene de una fuente independiente, así que no depende de `rate_limits`.
-
-> [!NOTE]
-> `rate_limits` solo está disponible para suscriptores de Claude.ai (Pro/Max) después de la primera respuesta de la API. Consulte la [documentación oficial de statusline](https://code.claude.com/docs/en/statusline) para el esquema JSON completo.
 
 ## Dependencias
 
