@@ -77,7 +77,7 @@ Add the following to `~/.claude/settings.json`:
 | 💰    | Session cost in USD (hidden by default — see [Configuration](#configuration)) |
 | 🧠    | Context window usage     |
 | 🤖    | Current model and effort |
-| `@`   | Session name — the mention address, shown after 🤖 (or at the end of the session-time line) |
+| `@`   | Session name — the mention address |
 | ⏳    | Limit reset time         |
 | 📊    | 5-hour utilization %     |
 | ⏰    | Weekly limit reset time  |

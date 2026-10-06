@@ -77,7 +77,7 @@ Agrega lo siguiente a `~/.claude/settings.json`:
 | 💰    | Costo de sesión en USD — oculto por defecto (ver [Configuración](#configuración)) |
 | 🧠    | Uso de ventana de contexto           |
 | 🤖    | Modelo actual y effort               |
-| `@`   | Nombre de sesión — la dirección de mención, mostrada después de 🤖 (o al final de la línea de tiempo de sesión) |
+| `@`   | Nombre de sesión — la dirección de mención |
 | ⏳    | Hora de reinicio                     |
 | 📊    | Utilización de 5 horas %             |
 | ⏰    | Tiempo de reinicio semanal           |
