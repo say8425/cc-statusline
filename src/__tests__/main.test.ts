@@ -67,10 +67,12 @@ const createRenderContext = (
 	baseDiffViewerUrl: overrides.baseDiffViewerUrl ?? null,
 	projectDirUrl: overrides.projectDirUrl ?? null,
 	mainProjectUrl: overrides.mainProjectUrl ?? null,
+	sessionName: overrides.sessionName ?? null,
 });
 
-// 세션 ID 테스트용 고정값 — 5시간/7일 파트가 모두 있는 rate_limits
+// 세션 이름 테스트용 고정값 — 5시간/7일 파트가 모두 있는 rate_limits
 const SESSION_ID = "a1b2c3d4-e5f6-7890-abcd-ef1234567890";
+const SESSION_NAME = "cc업글";
 
 const withRateLimits = (now: number): RateLimits => ({
 	five_hour: {
@@ -761,22 +763,31 @@ describe("renderStatusLine", () => {
 		});
 	});
 
-	describe("session id display", () => {
-		test("shows the full session_id with no emoji label", () => {
+	describe("session name display", () => {
+		test("shows the session name as an @mention", () => {
 			const now = Date.now();
 			setSystemTime(now);
 
 			const ctx = createRenderContext({
 				rateLimits: withRateLimits(now),
-				claudeJson: { session_id: SESSION_ID },
+				sessionName: SESSION_NAME,
 			});
 			const lines = renderStatusLine(ctx);
 
-			// UUID 전체가 잘리지 않고 그대로 나와야 한다
-			expect(lines[1]).toContain(SESSION_ID);
+			expect(lines[1]).toContain(`@${SESSION_NAME}`);
 		});
 
-		test("places the session id to the right of the model segment", () => {
+		test("does not show the raw session_id UUID", () => {
+			const ctx = createRenderContext({
+				claudeJson: { session_id: SESSION_ID },
+				sessionName: SESSION_NAME,
+			});
+			const lines = renderStatusLine(ctx);
+
+			expect(lines[1]).not.toContain(SESSION_ID);
+		});
+
+		test("places the session name to the right of the model segment", () => {
 			const now = Date.now();
 			setSystemTime(now);
 
@@ -784,64 +795,56 @@ describe("renderStatusLine", () => {
 				rateLimits: withRateLimits(now),
 				fullClaudeJson: {
 					...createClaudeInput(),
-					session_id: SESSION_ID,
 					model: { id: "claude-fable-5", display_name: "Fable 5" },
 					effort: { level: "high" },
 				},
+				sessionName: SESSION_NAME,
 			});
 			const lines = renderStatusLine(ctx);
 
 			const line2 = lines[1];
-			expect(line2.indexOf(SESSION_ID)).toBeGreaterThan(line2.indexOf("🤖"));
+			expect(line2.indexOf(`@${SESSION_NAME}`)).toBeGreaterThan(
+				line2.indexOf("🤖"),
+			);
 			// 마지막 세그먼트 — 뒤에 다른 파트가 붙지 않는다
-			expect(line2.endsWith(`${SESSION_ID}${C.RESET}`)).toBe(true);
+			expect(line2.endsWith(`@${SESSION_NAME}${C.RESET}`)).toBe(true);
 		});
 
-		test("still appends the session id when model is absent", () => {
-			const ctx = createRenderContext({
-				claudeJson: { session_id: SESSION_ID },
-			});
+		test("still appends the session name when model is absent", () => {
+			const ctx = createRenderContext({ sessionName: SESSION_NAME });
 			const lines = renderStatusLine(ctx);
 
 			expect(lines[1]).not.toContain("🤖");
-			expect(lines[1].endsWith(`${SESSION_ID}${C.RESET}`)).toBe(true);
+			expect(lines[1].endsWith(`@${SESSION_NAME}${C.RESET}`)).toBe(true);
 		});
 
-		test("omits the session id segment when session_id is absent", () => {
+		test("omits the segment when the session name is unknown", () => {
 			const ctx = createRenderContext({
 				fullClaudeJson: {
 					...createClaudeInput(),
+					session_id: SESSION_ID,
 					model: { id: "claude-fable-5", display_name: "Fable 5" },
 				},
+				sessionName: null,
 			});
 			const lines = renderStatusLine(ctx);
 
 			// 🤖 세그먼트가 마지막으로 남고 구분자만 덩그러니 붙지 않아야 한다
 			expect(lines[1].endsWith(`Fable 5${C.RESET}`)).toBe(true);
+			expect(lines[1]).not.toContain("@");
 		});
 
-		test("still shows the session id when rateLimits is null", () => {
+		test("still shows the session name when rateLimits is null", () => {
 			const ctx = createRenderContext({
 				rateLimits: null,
-				claudeJson: { session_id: SESSION_ID },
+				sessionName: SESSION_NAME,
 			});
 			const lines = renderStatusLine(ctx);
 
-			// rate_limits는 Pro/Max 첫 API 응답 이후에만 오므로 세션 ID를 볼모로 잡지 않는다
-			expect(lines[1]).toContain(SESSION_ID);
+			// rate_limits는 Pro/Max 첫 API 응답 이후에만 오므로 세션 이름을 볼모로 잡지 않는다
+			expect(lines[1]).toContain(`@${SESSION_NAME}`);
 			// rate_limits가 없으므로 사용량 줄(3번째 줄) 자체가 생기지 않는다
 			expect(lines.length).toBe(2);
-		});
-
-		test("keeps the session id segment off line2 when it is an empty string", () => {
-			const ctx = createRenderContext({
-				rateLimits: null,
-				claudeJson: { session_id: "" },
-			});
-			const lines = renderStatusLine(ctx);
-
-			expect(lines.length).toBe(2);
-			expect(lines[1]).not.toContain("a1b2c3d4");
 		});
 	});
 

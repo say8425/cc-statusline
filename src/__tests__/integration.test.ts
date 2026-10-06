@@ -1,4 +1,7 @@
 import { afterEach, beforeEach, describe, expect, spyOn, test } from "bun:test";
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { resetCache } from "../cache.ts";
 import { LOCALE_ENV_KEYS } from "../format/index.ts";
 import { main } from "../index.ts";
@@ -9,6 +12,9 @@ const MAIN_ENV_KEYS = [
 	"CC_STATUSLINE_SHOW_COST",
 	"CC_STATUSLINE_DIFF_DISABLE",
 	"CC_STATUSLINE_DIFF_PORT",
+	// 세션 이름은 <CLAUDE_CONFIG_DIR|~/.claude>/sessions에서 읽는다 — 실제 세션 레지스트리가
+	// 새어 들어오지 않도록 지우고, 필요한 테스트만 임시 디렉터리로 지정한다
+	"CLAUDE_CONFIG_DIR",
 	// ⏰ 요일 이름이 개발자 셸의 로케일을 타지 않도록 함께 지운다
 	...LOCALE_ENV_KEYS,
 ] as const;
@@ -138,8 +144,15 @@ describe("main function (integration)", () => {
 		}
 	});
 
-	test("main function renders session_id from stdin on the session-time line", async () => {
+	test("main function renders the session name matching stdin session_id as an @mention", async () => {
 		const sessionId = "a1b2c3d4-e5f6-7890-abcd-ef1234567890";
+		const configDir = mkdtempSync(join(tmpdir(), "cc-statusline-config-"));
+		mkdirSync(join(configDir, "sessions"));
+		writeFileSync(
+			join(configDir, "sessions", "12345.json"),
+			JSON.stringify({ sessionId, name: "cc업글" }),
+		);
+		process.env.CLAUDE_CONFIG_DIR = configDir;
 		const testInput = JSON.stringify({
 			session_id: sessionId,
 			cost: { total_duration_ms: 0, total_cost_usd: 0 },
@@ -176,12 +189,14 @@ describe("main function (integration)", () => {
 		try {
 			await main();
 
-			// 세션 시간 줄(2번째 줄) 오른쪽 끝 — UUID 전체가 그대로 붙는다
+			// 세션 시간 줄(2번째 줄) 오른쪽 끝 — UUID 대신 멘션 가능한 이름이 붙는다
 			expect(logs[1]).toContain("⏱️");
-			expect(logs[1]).toContain(sessionId);
-			expect(logs[1].indexOf(sessionId)).toBeGreaterThan(logs[1].indexOf("⏱️"));
+			expect(logs[1]).toContain("@cc업글");
+			expect(logs[1]).not.toContain(sessionId);
+			expect(logs[1].indexOf("@cc업글")).toBeGreaterThan(logs[1].indexOf("⏱️"));
 		} finally {
 			Bun.stdin.stream = originalStream;
+			rmSync(configDir, { recursive: true, force: true });
 		}
 	});
 

@@ -15,6 +15,7 @@ cc-statusline/
 │   ├── render.ts                   # renderStatusLine
 │   ├── stdin.ts                    # readStdin
 │   ├── ultracode.ts                # Claude Code settings의 ultracode 플래그 감지
+│   ├── sessionName.ts              # readSessionName (세션 레지스트리에서 @멘션 주소 읽기)
 │   ├── format/
 │   │   ├── index.ts                # barrel re-export
 │   │   ├── formatNumber.ts         # formatNumber
@@ -47,6 +48,7 @@ cc-statusline/
 │       ├── integration.test.ts     # main 함수 통합 테스트
 │       ├── stdin.test.ts           # readStdin 테스트
 │       ├── ultracode.test.ts       # ultracode settings 경로·우선순위·캐시 테스트
+│       ├── session-name.test.ts    # sessionsDir·readSessionName (레지스트리 매칭·degrade) 테스트
 │       ├── config.test.ts          # isCostVisible env 판정 테스트
 │       ├── shortstat.test.ts       # parseShortstat 테스트
 │       ├── base-changes.test.ts    # getBaseChangesCached 테스트
@@ -85,7 +87,7 @@ cc-statusline/
 | 프로젝트 폴더 | `workspace.project_dir` |
 | 세션 시간 | `cost.total_duration_ms` |
 | 세션 비용 | `cost.total_cost_usd` (기본 미표시 — env `CC_STATUSLINE_SHOW_COST=1`일 때만) |
-| 세션 ID | `session_id` (이모지 없이 UUID 전체, 세션 시간 줄의 🤖 모델 세그먼트 오른쪽 끝) |
+| 세션 이름(`@멘션`) | `<CLAUDE_CONFIG_DIR\|~/.claude>/sessions/*.json` 중 `sessionId`가 stdin `session_id`와 같은 항목의 `name` (세션 시간 줄의 🤖 모델 세그먼트 오른쪽 끝, `src/sessionName.ts`) |
 | Context 토큰 | `context_window.current_usage.*` |
 | Context % | `context_window.used_percentage` (없으면 미표시) |
 | 모델명 | `model.display_name` (없으면 미표시) |
@@ -107,7 +109,7 @@ Claude Code 기본 statusbar에 다음 정보를 추가로 표시:
 - 세션 시간, 그리고 **옵트인**인 세션 비용 (`💰`는 기본 숨김 — `CC_STATUSLINE_SHOW_COST=1`로 켬, `src/config.ts`)
 - Context window 토큰 사용량 및 사용률 (%)
 - 현재 사용 중인 모델명·reasoning effort (`🤖 Fable 5 high`, 🧠 컨텍스트 세그먼트 오른쪽) — 설정에서 ultracode가 켜져 있고 세션 effort가 `xhigh`일 때만 `⚡ultra` 배지 추가 (`🤖 Fable 5 xhigh ⚡ultra`)
-- 세션 ID (`session_id`) — 세션 시간 줄(2번째 줄) 오른쪽 끝, `🤖` 모델 세그먼트가 있으면 그 오른쪽에 붙는다. 이모지 라벨 없이 UUID 전체. `rate_limits`와 출처가 달라 **rate_limits 유무와 무관하게 표시된다** — 이 줄은 `⏱️` 세션 시간이 항상 채워 항상 렌더되므로, model·context 유무와도 무관하게 session_id만으로도 줄 끝에 붙는다
+- 세션 이름 (`@cc업글` 꼴) — 다른 Claude 세션이 SendMessage·@멘션에 쓰는 이 세션의 주소. 세션 시간 줄(2번째 줄) 오른쪽 끝, `🤖` 모델 세그먼트가 있으면 그 오른쪽에 붙는다. UUID(`session_id`)는 더 이상 표시하지 않고 레지스트리 조회 키로만 쓴다. `rate_limits`와 출처가 달라 **rate_limits 유무와 무관하게 표시된다** — 이 줄은 `⏱️` 세션 시간이 항상 채워 항상 렌더되므로, model·context 유무와도 무관하게 이름만으로도 줄 끝에 붙는다
 - Git diff 통계 (파일 수, +insertions, -deletions)
 - 클릭 가능한 diff 뷰어: `✏️` 클릭 시 로컬 diff 뷰어를 브라우저로 표시. 뷰어 자체(파일트리, working/vs-base 모드 전환 UI, watch 자동 갱신, 파일 폴딩, 이미지 diff, in-app 검색 등)는 별도 패키지 **[`@say8425/diffdeck`](https://github.com/say8425/diffdeck)**(runtime dependency)가 제공 — cc-statusline은 그 데몬을 spawn-if-not-running으로 띄우고 링크만 구성한다. 뷰어 기능 상세는 diffdeck 저장소 문서 참고
 - 클릭 가능한 폴더 링크: `📁`(및 워크트리 세션의 `🌲`)를 클릭하면 OS 기본 파일 관리자(Finder/Explorer/xdg-open 대상)에서 해당 폴더가 열림 — `file://` OSC 8 하이퍼링크, `src/format/toFileUrl.ts`. GUI 없는 headless 리눅스 세션은 열어줄 파일 관리자가 없어 지원 범위 밖.
@@ -144,7 +146,9 @@ Claude Code 기본 statusbar에 다음 정보를 추가로 표시:
 ### 수동 테스트
 
 ```bash
-# 전체 표시 (사용량 줄 + 🧠 컨텍스트 + 🤖 모델 + 세션 ID)
+# 전체 표시 (사용량 줄 + 🧠 컨텍스트 + 🤖 모델 + @세션 이름)
+# @세션 이름은 session_id가 실제 세션 레지스트리(~/.claude/sessions)에 있을 때만 뜬다 —
+# 아래 더미 UUID로는 안 나오니, 보려면 `claude agents --json`의 sessionId로 바꿔 넣을 것
 # 🧠는 used_percentage, 🤖는 model.display_name이 있을 때만 렌더된다 (render.ts) —
 # 둘 다 빼면 그 세그먼트가 통째로 사라지므로 스니펫에 넣어 둔다.
 # 💰는 기본 숨김이라 이 스니펫엔 안 나온다 — 보려면 앞에 CC_STATUSLINE_SHOW_COST=1을 붙일 것
@@ -186,7 +190,7 @@ echo '{
   "workspace":{"project_dir":"/Users/penguin/dev/cc-statusline"}
 }' | CC_STATUSLINE_SHOW_COST=1 bun src/index.ts
 
-# rate_limits 없이 session_id만 (2번째 줄 끝에 세션 ID가 붙고, 3번째 줄은 아예 안 뜨는지 확인)
+# rate_limits 없이 session_id만 (3번째 줄은 아예 안 뜨는지 확인 — 실제 sessionId를 넣으면 2번째 줄 끝에 @세션 이름이 붙는다)
 echo '{
   "session_id":"a1b2c3d4-e5f6-7890-abcd-ef1234567890",
   "cost":{"total_duration_ms":0,"total_cost_usd":0},
@@ -216,6 +220,7 @@ bun test --coverage
 - `integration.test.ts`: main 함수 E2E 테스트
 - `stdin.test.ts`: stdin 읽기 테스트
 - `ultracode.test.ts`: ultracode settings 경로·우선순위·캐시
+- `session-name.test.ts`: sessionsDir(`CLAUDE_CONFIG_DIR` 존중)·readSessionName(sessionId 매칭, 최신 항목 우선, 깨진 파일 degrade)
 - `config.test.ts`: isCostVisible (`CC_STATUSLINE_SHOW_COST` 판정)
 - `shortstat.test.ts`: parseShortstat
 - `base-changes.test.ts` / `base-ref.test.ts`: vs-base 진입점 유지·base 결정
@@ -243,7 +248,8 @@ bun test --coverage
 - `rate_limits`는 stdin JSON에 포함되어 전달됨 (Claude Code CLI 2.1.80+)
 - `rate_limits`는 Claude.ai 구독자(Pro/Max)에게만 첫 API 응답 이후 제공됨
 - `rate_limits.resets_at`는 Unix timestamp (초 단위, number)
-- `session_id`는 2번째 줄(세션 시간 줄) 오른쪽 끝에 붙는다 — `🤖` 모델 세그먼트가 있으면 그 오른쪽, 없으면 그 줄의 마지막 파트(⏱️/💰/🧠 중 채워진 것) 오른쪽이다. 이 줄은 `⏱️` 세션 시간이 항상 채우므로 `rate_limits` 유무와 무관하게 항상 렌더되고, session_id도 그 위에 얹힐 뿐이라 rate_limits를 볼모로 잡지 않는다(`src/render.ts`). 3번째 줄(사용량 줄)은 이제 `rate_limits` 파생 파트만 쌓으므로 `rate_limits`가 없으면 그 줄 자체가 사라진다
+- `@세션 이름`은 2번째 줄(세션 시간 줄) 오른쪽 끝에 붙는다 — `🤖` 모델 세그먼트가 있으면 그 오른쪽, 없으면 그 줄의 마지막 파트(⏱️/💰/🧠 중 채워진 것) 오른쪽이다. 이 줄은 `⏱️` 세션 시간이 항상 채우므로 `rate_limits` 유무와 무관하게 항상 렌더되고, 세션 이름도 그 위에 얹힐 뿐이라 rate_limits를 볼모로 잡지 않는다(`src/render.ts`). 3번째 줄(사용량 줄)은 이제 `rate_limits` 파생 파트만 쌓으므로 `rate_limits`가 없으면 그 줄 자체가 사라진다
+- **세션 이름은 문서화되지 않은 내부 레지스트리에서 읽는다** — 멘션 주소는 공식 stdin으로 오지 않기 때문이다. stdin의 `session_name`은 `/rename`·`-n`으로 지은 이름이면 주소와 같지만, 이름 없는 세션에선 **AI가 만든 첫 프롬프트 제목**을 담는데 그건 주소가 아니고, 주소로 쓰이는 **기본 표시 이름**(`penguin-01`·`diffdeck-5a` 같은 `<디렉터리>-<2자>`)은 아예 담지 않는다(공식 sessions 문서: "The default display name ... doesn't populate this field"). 기본 이름의 접미사는 session_id에서 유도되지도 않는다(실측: `penguin-01`의 sessionId는 `5d97a8b2-…`). 그래서 `src/sessionName.ts`가 Claude Code가 실행 중인 세션마다 쓰는 `<CLAUDE_CONFIG_DIR|~/.claude>/sessions/<pid>.json`(CLI 2.1.289 실측: `sessionId`·`name`·`nameSource`(`user`/`derived`)·`updatedAt` 등)을 전부 읽어 `sessionId`가 일치하는 항목의 `name`을 쓰고, 여럿이면 `updatedAt`이 큰 쪽을 고른다. **Claude Code가 이 형식을 바꾸면 세그먼트가 조용히 사라진다**(디렉터리·파싱 실패는 전부 null → 숨김, throw 없음) — `@이름`이 안 보인다는 제보는 이 파일 형식부터 볼 것. 공식 stdin에 멘션 주소 필드가 생기면 stdin 우선으로 전환할 것. `main()`을 타는 테스트가 `CLAUDE_CONFIG_DIR`을 지우고 임시 디렉터리로 지정하는 이유도 실제 레지스트리가 새어 들어오지 않게 하기 위해서다(`integration.test.ts`의 `MAIN_ENV_KEYS`)
 - **⏰ 요일 이름의 로케일은 env에서 직접 읽는다** — `new Intl.DateTimeFormat()`의 기본 로케일에 맡기면 안 된다. Bun(JSC)의 Intl 기본값은 `LANG`·`LC_ALL`·`LC_TIME`을 보지 않아서, macOS `AppleLocale=ko_KR` + `LANG=ko_KR.UTF-8`인 셸에서도 `resolvedOptions().locale`이 `en-US`로 나온다(bun 1.3.12 실측). 그래서 `src/format/resolveLocale.ts`가 POSIX 우선순위(`LC_ALL` → `LC_TIME` → `LANG`)로 직접 읽어 `ko_KR.UTF-8` → `ko-KR`로 정규화한다(인코딩·`@modifier` 제거, `C`/`POSIX`는 미지정 취급). 셋 다 없거나 못 쓰는 값이면 `null`을 돌려 **런타임 Intl 기본값**에 맡기는데, 그 값은 위 실측대로 (bun 1.3.12/macOS 기준) `en-US`다 — macOS Terminal.app에서 "Set locale environment variables on startup"이 꺼져 있으면 `LANG`이 비어 한국어 사용자에게도 `(Mon)`이 나오므로, 요일이 영어로 보인다는 제보는 버그가 아니라 이 경로부터 의심할 것. 판정은 `src/index.ts`가 하고 `renderStatusLine`은 `locale: string | null`만 주입받는다(💰 `showCost`와 같은 DI) — `main()`을 타는 테스트가 이 세 env를 지워야 하는 이유도 같고, `integration.test.ts`의 `MAIN_ENV_KEYS`가 `LOCALE_ENV_KEYS`를 그대로 펼쳐 쓴다
 - **statusline이 통째로 죽었는데 스택 트레이스가 없다면 `LANG` 값을 볼 것** — bun 1.3.12는 어떤 `LANG` 값에서 ICU 초기화 중 세그폴트한다(`panic(main thread): Segmentation fault at address 0x8`, exit 133). 우리 코드와 무관하다: 프로젝트 코드가 전혀 없는 `LANG=... bun -e "new Intl.DateTimeFormat()"`도, `resolveLocale`이 없던 시절의 main도 똑같이 죽는다(main은 `formatNumber`의 `toLocaleString`이 ICU를 깨운다). **JS에서 막을 수 없다** — try/catch가 실행되기 전에 프로세스가 죽으므로 `resolveLocale`의 태그 검증이 덮어주지 못하는 유일한 구멍이다(그 검증은 `1234` 같이 JS까지 도달하는 값을 위한 것이고, 실제로 `1234`·`xx`·`zz_ZZ`는 전부 정상 degrade한다). 트리거는 값에 따라 갈리고 폭이 아주 좁다 — 실측에서 `not a locale`은 8/8 죽는데 구조가 같은 `a b`·`ko KR`·`en US x`·`xx y zzzzz`는 멀쩡했다. 상류 버그라 여기서 할 수 있는 건 오진하지 않는 것뿐이다
 - 💰 비용 세그먼트는 **기본 숨김**이고 env `CC_STATUSLINE_SHOW_COST=1`일 때만 렌더된다 (`src/config.ts`의 `isCostVisible`). 판정은 `CC_STATUSLINE_DIFF_DISABLE`과 같은 `"1"` 리터럴 규칙이라 `true`/`yes`는 안 먹는다. env 읽기는 `src/index.ts`가 하고 `renderStatusLine`은 `showCost: boolean`만 주입받는다(기존 DI 유지) — 따라서 **`main()`을 타는 테스트는 `process.env.CC_STATUSLINE_SHOW_COST`를 직접 지우고 복원해야** 개발자 셸 상태에 흔들리지 않는다 (`integration.test.ts`의 beforeEach/afterEach가 그렇게 한다)

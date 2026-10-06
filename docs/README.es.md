@@ -64,7 +64,7 @@ Agrega lo siguiente a `~/.claude/settings.json`:
 - **Uso del bloque**: Porcentaje de utilización de 5 horas
 - **Temporizador de reinicio semanal**: Tiempo de reinicio del límite semanal (MM/DD(vie) HH:MM — el nombre del día sigue tu configuración regional)
 - **Uso semanal**: Porcentaje de utilización de 7 días
-- **ID de sesión**: UUID completo de la sesión al final de la línea de tiempo de sesión (a la derecha del segmento del modelo), sin etiqueta de emoji — listo para copiar en `claude --resume <id>` o en una búsqueda de logs
+- **Nombre de sesión**: La dirección de mención de la sesión al final de la línea de tiempo de sesión (a la derecha del segmento del modelo), mostrada como `@nombre` — el nombre que usan otras sesiones de Claude para enviarle mensajes (definido con `/rename` o `claude -n`; si no, el nombre visible por defecto como `my-app-3f`). Se lee del registro local de sesiones de Claude Code (`<CLAUDE_CONFIG_DIR o ~/.claude>/sessions`), porque el `session_name` de stdin contiene un título generado por IA en sesiones sin nombre, que no es una dirección; se oculta si el registro no tiene la sesión
 
 ## Guía de Emojis
 
@@ -77,7 +77,7 @@ Agrega lo siguiente a `~/.claude/settings.json`:
 | 💰    | Costo de sesión en USD — oculto por defecto (ver [Configuración](#configuración)) |
 | 🧠    | Uso de ventana de contexto           |
 | 🤖    | Modelo actual y effort               |
-| _(ninguno)_ | ID de sesión — el UUID completo, mostrado después de 🤖 (o al final de la línea de tiempo de sesión) sin etiqueta de emoji |
+| `@`   | Nombre de sesión — la dirección de mención, mostrada después de 🤖 (o al final de la línea de tiempo de sesión) |
 | ⏳    | Hora de reinicio                     |
 | 📊    | Utilización de 5 horas %             |
 | ⏰    | Tiempo de reinicio semanal           |
@@ -153,7 +153,7 @@ Claude Code pasa `rate_limits` en la entrada JSON stdin (CLI 2.1.80+):
 
 Las métricas de uso se **muestran automáticamente** cuando `rate_limits` está presente en el JSON stdin. No se necesitan flags ni configuración adicional.
 
-El ID de sesión (`session_id`) se muestra en la línea de tiempo de sesión — ver [Características](#características). Proviene de un campo independiente, así que no depende de `rate_limits`.
+El nombre de sesión se muestra en la línea de tiempo de sesión — ver [Características](#características). Proviene de una fuente independiente, así que no depende de `rate_limits`.
 
 > [!NOTE]
 > `rate_limits` solo está disponible para suscriptores de Claude.ai (Pro/Max) después de la primera respuesta de la API. Consulte la [documentación oficial de statusline](https://code.claude.com/docs/en/statusline) para el esquema JSON completo.

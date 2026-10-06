@@ -12,6 +12,7 @@ import {
 	getPrInfoCached,
 } from "./git/index.ts";
 import { renderStatusLine } from "./render.ts";
+import { readSessionName } from "./sessionName.ts";
 import { readStdin } from "./stdin.ts";
 import type { ClaudeStatusInput } from "./types.ts";
 import { getUltracodeCached } from "./ultracode.ts";
@@ -27,13 +28,14 @@ export const main = async (): Promise<void> => {
 		"";
 
 	// 2. Git 정보 및 설정 (캐싱, 병렬 실행)
-	const [branch, gitChanges, prInfo, mainProject, ultracode] =
+	const [branch, gitChanges, prInfo, mainProject, ultracode, sessionName] =
 		await Promise.all([
 			getBranchCached(),
 			getGitChangesCached(),
 			getPrInfoCached(),
 			getMainProjectCached(),
 			getUltracodeCached(repo),
+			readSessionName(claudeJson.session_id),
 		]);
 	const mainProjectName = mainProject?.name ?? null;
 	const projectDirUrl = repo ? toFileUrl(repo) : null;
@@ -88,6 +90,7 @@ export const main = async (): Promise<void> => {
 		baseDiffViewerUrl,
 		projectDirUrl,
 		mainProjectUrl,
+		sessionName,
 	});
 
 	for (const line of lines) {

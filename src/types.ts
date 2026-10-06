@@ -12,8 +12,8 @@ export interface RateLimits {
 
 // 공식 Claude Code JSON input 타입 정의
 export interface ClaudeStatusInput {
-	// 세션 고유 식별자. 3번째 줄 오른쪽 끝에 UUID 전체를 그대로 표시한다.
-	// 구버전 CLI에는 없을 수 있어 optional — 없으면 세그먼트 자체를 생략.
+	// 세션 고유 식별자. 직접 표시하지 않고, 세션 레지스트리에서 멘션 가능한
+	// 이름을 찾는 키로만 쓴다 (src/sessionName.ts). 구버전 CLI에는 없을 수 있어 optional.
 	session_id?: string;
 	cost: {
 		total_duration_ms: number;
@@ -89,4 +89,7 @@ export interface RenderContext {
 	baseDiffViewerUrl: string | null;
 	projectDirUrl: string | null;
 	mainProjectUrl: string | null;
+	// 다른 세션이 @멘션·SendMessage에 쓰는 이 세션의 이름 (null이면 세그먼트 생략).
+	// 레지스트리 읽기는 src/sessionName.ts가 하고 render는 결과만 받는다.
+	sessionName: string | null;
 }

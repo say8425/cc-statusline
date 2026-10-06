@@ -86,12 +86,11 @@ export const renderStatusLine = (ctx: RenderContext): string[] => {
 		if (ctx.ultracode && effortLevel === "xhigh") modelText += " ⚡ultra";
 		line2 += ` | ${C.WHITE}🤖 ${modelText}${C.RESET}`;
 	}
-	// 세션 ID — 2번째 줄 오른쪽 끝. 이모지 라벨 없이 UUID 전체를 그대로 노출한다
-	// (복사해서 --resume·로그 조회 등에 바로 쓰기 위함). rate_limits와 출처가 달라
+	// 세션 이름 — 2번째 줄 오른쪽 끝. 다른 세션이 SendMessage·@멘션에 쓰는 주소를
+	// `@이름` 꼴로 보여준다 (src/sessionName.ts). rate_limits와 출처가 달라
 	// rate_limits 유무와 무관하게 ⏱️ 세션 시간이 항상 있는 이 줄에 붙는다.
-	const sessionId = ctx.claudeJson.session_id;
-	if (sessionId) {
-		line2 += ` | ${C.WHITE}${sessionId}${C.RESET}`;
+	if (ctx.sessionName) {
+		line2 += ` | ${C.WHITE}@${ctx.sessionName}${C.RESET}`;
 	}
 	lines.push(line2);
 
