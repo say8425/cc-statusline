@@ -87,10 +87,13 @@ export const renderStatusLine = (ctx: RenderContext): string[] => {
 		line2 += ` | ${C.WHITE}🤖 ${modelText}${C.RESET}`;
 	}
 	// 세션 이름 — 2번째 줄 오른쪽 끝. 다른 세션이 SendMessage·@멘션에 쓰는 주소를
-	// `@이름` 꼴로 보여준다 (src/sessionName.ts). rate_limits와 출처가 달라
-	// rate_limits 유무와 무관하게 ⏱️ 세션 시간이 항상 있는 이 줄에 붙는다.
+	// 멘션 문법 그대로 `@"이름"` 꼴로 보여준다 (src/sessionName.ts). 공백·한글이
+	// 섞인 이름도 그대로 복사해 쓸 수 있도록 항상 따옴표로 감싸고, 이름 속 `"`는
+	// `\"`로 이스케이프한다. rate_limits와 출처가 달라 rate_limits 유무와 무관하게
+	// ⏱️ 세션 시간이 항상 있는 이 줄에 붙는다.
 	if (ctx.sessionName) {
-		line2 += ` | ${C.WHITE}@${ctx.sessionName}${C.RESET}`;
+		const quoted = ctx.sessionName.replaceAll('"', '\\"');
+		line2 += ` | ${C.WHITE}@"${quoted}"${C.RESET}`;
 	}
 	lines.push(line2);
 

@@ -191,9 +191,11 @@ describe("main function (integration)", () => {
 
 			// 세션 시간 줄(2번째 줄) 오른쪽 끝 — UUID 대신 멘션 가능한 이름이 붙는다
 			expect(logs[1]).toContain("⏱️");
-			expect(logs[1]).toContain("@cc업글");
+			expect(logs[1]).toContain('@"cc업글"');
 			expect(logs[1]).not.toContain(sessionId);
-			expect(logs[1].indexOf("@cc업글")).toBeGreaterThan(logs[1].indexOf("⏱️"));
+			expect(logs[1].indexOf('@"cc업글"')).toBeGreaterThan(
+				logs[1].indexOf("⏱️"),
+			);
 		} finally {
 			Bun.stdin.stream = originalStream;
 			rmSync(configDir, { recursive: true, force: true });

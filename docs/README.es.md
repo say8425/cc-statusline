@@ -64,7 +64,7 @@ Agrega lo siguiente a `~/.claude/settings.json`:
 - **Uso del bloque**: Porcentaje de utilización de 5 horas
 - **Temporizador de reinicio semanal**: Tiempo de reinicio del límite semanal (MM/DD(vie) HH:MM — el nombre del día sigue tu configuración regional)
 - **Uso semanal**: Porcentaje de utilización de 7 días
-- **Nombre de sesión**: La dirección de mención de la sesión al final de la línea de tiempo de sesión (a la derecha del segmento del modelo), mostrada como `@nombre` — el nombre que usan otras sesiones de Claude para enviarle mensajes (definido con `/rename` o `claude -n`; si no, el nombre visible por defecto como `my-app-3f`). Se lee del registro local de sesiones de Claude Code (`<CLAUDE_CONFIG_DIR o ~/.claude>/sessions`), porque el `session_name` de stdin contiene un título generado por IA en sesiones sin nombre, que no es una dirección; se oculta si el registro no tiene la sesión
+- **Nombre de sesión**: La dirección de mención de la sesión al final de la línea de tiempo de sesión (a la derecha del segmento del modelo), mostrada como `@"nombre"` (siempre entre comillas, para que los nombres con espacios o caracteres no ASCII se puedan pegar tal cual en una mención) — el nombre que usan otras sesiones de Claude para enviarle mensajes (definido con `/rename` o `claude -n`; si no, el nombre visible por defecto como `my-app-3f`). Se lee del registro local de sesiones de Claude Code (`<CLAUDE_CONFIG_DIR o ~/.claude>/sessions`), porque el `session_name` de stdin contiene un título generado por IA en sesiones sin nombre, que no es una dirección; se oculta si el registro no tiene la sesión
 
 ## Guía de Emojis
 

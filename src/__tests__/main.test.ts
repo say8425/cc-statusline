@@ -764,7 +764,7 @@ describe("renderStatusLine", () => {
 	});
 
 	describe("session name display", () => {
-		test("shows the session name as an @mention", () => {
+		test("shows the session name as a quoted @mention", () => {
 			const now = Date.now();
 			setSystemTime(now);
 
@@ -774,7 +774,7 @@ describe("renderStatusLine", () => {
 			});
 			const lines = renderStatusLine(ctx);
 
-			expect(lines[1]).toContain(`@${SESSION_NAME}`);
+			expect(lines[1]).toContain(`@"${SESSION_NAME}"`);
 		});
 
 		test("does not show the raw session_id UUID", () => {
@@ -803,11 +803,11 @@ describe("renderStatusLine", () => {
 			const lines = renderStatusLine(ctx);
 
 			const line2 = lines[1];
-			expect(line2.indexOf(`@${SESSION_NAME}`)).toBeGreaterThan(
+			expect(line2.indexOf(`@"${SESSION_NAME}"`)).toBeGreaterThan(
 				line2.indexOf("🤖"),
 			);
 			// 마지막 세그먼트 — 뒤에 다른 파트가 붙지 않는다
-			expect(line2.endsWith(`@${SESSION_NAME}${C.RESET}`)).toBe(true);
+			expect(line2.endsWith(`@"${SESSION_NAME}"${C.RESET}`)).toBe(true);
 		});
 
 		test("still appends the session name when model is absent", () => {
@@ -815,7 +815,21 @@ describe("renderStatusLine", () => {
 			const lines = renderStatusLine(ctx);
 
 			expect(lines[1]).not.toContain("🤖");
-			expect(lines[1].endsWith(`@${SESSION_NAME}${C.RESET}`)).toBe(true);
+			expect(lines[1].endsWith(`@"${SESSION_NAME}"${C.RESET}`)).toBe(true);
+		});
+
+		test("escapes double quotes inside the session name", () => {
+			const ctx = createRenderContext({ sessionName: 'say "hi"' });
+			const lines = renderStatusLine(ctx);
+
+			expect(lines[1].endsWith(`@"say \\"hi\\""${C.RESET}`)).toBe(true);
+		});
+
+		test("quotes names that contain spaces", () => {
+			const ctx = createRenderContext({ sessionName: "optimal 스냅" });
+			const lines = renderStatusLine(ctx);
+
+			expect(lines[1]).toContain('@"optimal 스냅"');
 		});
 
 		test("omits the segment when the session name is unknown", () => {
@@ -842,7 +856,7 @@ describe("renderStatusLine", () => {
 			const lines = renderStatusLine(ctx);
 
 			// rate_limits는 Pro/Max 첫 API 응답 이후에만 오므로 세션 이름을 볼모로 잡지 않는다
-			expect(lines[1]).toContain(`@${SESSION_NAME}`);
+			expect(lines[1]).toContain(`@"${SESSION_NAME}"`);
 			// rate_limits가 없으므로 사용량 줄(3번째 줄) 자체가 생기지 않는다
 			expect(lines.length).toBe(2);
 		});
