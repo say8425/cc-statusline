@@ -1,8 +1,16 @@
 import { afterEach, beforeEach, describe, expect, spyOn, test } from "bun:test";
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import {
+	mkdirSync,
+	mkdtempSync,
+	realpathSync,
+	rmSync,
+	writeFileSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { $ } from "bun";
 import { resetCache } from "../cache.ts";
+import * as ensureModule from "../diff-server/ensure.ts";
 import { LOCALE_ENV_KEYS } from "../format/index.ts";
 import { main } from "../index.ts";
 
@@ -374,5 +382,112 @@ describe("main function (integration)", () => {
 		} finally {
 			Bun.stdin.stream = originalStream;
 		}
+	});
+
+	// 세션을 ~에서 열고 레포지토리 하위 디렉터리로 이동한 상황: project_dir은 git 레포가
+	// 아니고 current_dir은 레포 안이다. 수치와 링크가 같은 레포 최상위를 가리켜야 한다.
+	// 프로세스 cwd는 project_dir(레포 아님)로 둔다 — 수치 쪽이 cwd가 아니라 current_dir에서
+	// git을 돌리는지까지 확인하기 위해서다.
+	const runInMovedSession = async (
+		setup: (repoDir: string, sub: string) => void | Promise<void>,
+	): Promise<{
+		output: string;
+		repoDir: string;
+		home: string;
+		ensureArgs: unknown[];
+	}> => {
+		const root = realpathSync(mkdtempSync(join(tmpdir(), "cc-cwd-")));
+		const home = join(root, "home");
+		const repoDir = join(root, "repo");
+		const sub = join(repoDir, "sub");
+		mkdirSync(home);
+		mkdirSync(sub, { recursive: true });
+		await $`git -C ${repoDir} init -q`;
+		await $`git -C ${repoDir} config user.email t@t.co`;
+		await $`git -C ${repoDir} config user.name test`;
+		writeFileSync(join(sub, "a.txt"), "one\n");
+		await $`git -C ${repoDir} add -A`;
+		await $`git -C ${repoDir} commit -qm init`;
+		await $`git -C ${repoDir} branch -M main`;
+		await setup(repoDir, sub);
+
+		const ensureSpy = spyOn(ensureModule, "ensureDiffServer").mockReturnValue({
+			port: 49573,
+			token: "tok",
+		});
+		const origCwd = process.cwd();
+		process.chdir(home);
+
+		const testInput = JSON.stringify({
+			cost: { total_duration_ms: 0, total_cost_usd: 0 },
+			context_window: {
+				context_window_size: 200000,
+				current_usage: {
+					input_tokens: 0,
+					output_tokens: 0,
+					cache_creation_input_tokens: 0,
+					cache_read_input_tokens: 0,
+				},
+			},
+			workspace: { project_dir: home, current_dir: sub },
+		});
+		const encoder = new TextEncoder();
+		const stream = new ReadableStream({
+			start(controller) {
+				controller.enqueue(encoder.encode(testInput));
+				controller.close();
+			},
+		});
+		const originalStream = Bun.stdin.stream;
+		Bun.stdin.stream = () => stream;
+
+		try {
+			await main();
+			return {
+				output: logs.join("\n"),
+				repoDir,
+				home,
+				ensureArgs: ensureSpy.mock.calls.map((c) => c[0]),
+			};
+		} finally {
+			Bun.stdin.stream = originalStream;
+			process.chdir(origCwd);
+			ensureSpy.mockRestore();
+			rmSync(root, { recursive: true, force: true });
+		}
+	};
+
+	test("working-tree stats and the viewer link both follow current_dir, not project_dir", async () => {
+		const { output, repoDir, home, ensureArgs } = await runInMovedSession(
+			(_repoDir, sub) => {
+				writeFileSync(join(sub, "a.txt"), "one\ntwo\n");
+			},
+		);
+
+		expect(output).toContain("✏️");
+		expect(output).toContain("+1");
+		expect(ensureArgs).toEqual([repoDir]);
+		expect(output).toContain(
+			`repo=${encodeURIComponent(repoDir)}&token=tok&mode=working`,
+		);
+		expect(output).not.toContain(`repo=${encodeURIComponent(home)}&`);
+	});
+
+	test("vs-base stats and the viewer link both follow current_dir, not project_dir", async () => {
+		// 신고된 증상(`✏️ vs main N files`)은 working tree가 깨끗한 base 모드였다
+		const { output, repoDir, home, ensureArgs } = await runInMovedSession(
+			async (dir, sub) => {
+				await $`git -C ${dir} checkout -qb feature`;
+				writeFileSync(join(sub, "a.txt"), "one\ntwo\n");
+				await $`git -C ${dir} commit -qam work`;
+			},
+		);
+
+		expect(output).toContain("vs main");
+		expect(ensureArgs).toEqual([repoDir]);
+		expect(output).toContain(
+			`repo=${encodeURIComponent(repoDir)}&token=tok&mode=base`,
+		);
+		expect(output).not.toContain(`repo=${encodeURIComponent(home)}&`);
 	});
 });

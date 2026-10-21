@@ -10,6 +10,7 @@ import {
 	getGitChangesCached,
 	getMainProjectCached,
 	getPrInfoCached,
+	resolveRepoRoot,
 } from "./git/index.ts";
 import { renderStatusLine } from "./render.ts";
 import { readSessionName } from "./sessionName.ts";
@@ -26,17 +27,31 @@ export const main = async (): Promise<void> => {
 		claudeJson.workspace?.project_dir ||
 		claudeJson.workspace?.current_dir ||
 		"";
+	// diff 수치와 diff 뷰어 링크는 세션이 지금 있는 디렉터리(current_dir)의 레포를 따른다.
+	// project_dir은 세션을 시작한 곳이라 cd 이후엔 레포가 아닐 수 있다(예: ~에서 시작).
+	const workDir =
+		claudeJson.workspace?.current_dir ||
+		claudeJson.workspace?.project_dir ||
+		".";
 
 	// 2. Git 정보 및 설정 (캐싱, 병렬 실행)
-	const [branch, gitChanges, prInfo, mainProject, ultracode, sessionName] =
-		await Promise.all([
-			getBranchCached(),
-			getGitChangesCached(),
-			getPrInfoCached(),
-			getMainProjectCached(),
-			getUltracodeCached(repo),
-			readSessionName(claudeJson.session_id),
-		]);
+	const [
+		branch,
+		gitChanges,
+		diffRepo,
+		prInfo,
+		mainProject,
+		ultracode,
+		sessionName,
+	] = await Promise.all([
+		getBranchCached(),
+		getGitChangesCached(workDir),
+		resolveRepoRoot(workDir),
+		getPrInfoCached(),
+		getMainProjectCached(),
+		getUltracodeCached(repo),
+		readSessionName(claudeJson.session_id),
+	]);
 	const mainProjectName = mainProject?.name ?? null;
 	const projectDirUrl = repo ? toFileUrl(repo) : null;
 	const mainProjectUrl = mainProject ? toFileUrl(mainProject.path) : null;
@@ -50,23 +65,23 @@ export const main = async (): Promise<void> => {
 	let diffViewerUrl: string | null = null;
 	let baseDiffViewerUrl: string | null = null;
 	let baseChanges: Awaited<ReturnType<typeof getBaseChangesCached>> = null;
-	if (!hasChanges && repo) {
-		baseChanges = await getBaseChangesCached();
+	if (!hasChanges && diffRepo) {
+		baseChanges = await getBaseChangesCached(diffRepo);
 	}
-	if (repo && (hasChanges || baseChanges)) {
-		const ensured = ensureDiffServer(repo);
+	if (diffRepo && (hasChanges || baseChanges)) {
+		const ensured = ensureDiffServer(diffRepo);
 		if (ensured) {
 			if (hasChanges) {
 				diffViewerUrl = buildDiffViewerUrl({
 					port: ensured.port,
-					repo,
+					repo: diffRepo,
 					token: ensured.token,
 					mode: "working",
 				});
 			} else if (baseChanges) {
 				baseDiffViewerUrl = buildDiffViewerUrl({
 					port: ensured.port,
-					repo,
+					repo: diffRepo,
 					token: ensured.token,
 					mode: "base",
 				});

@@ -5,7 +5,10 @@ import { parseShortstat } from "./shortstat.ts";
 
 // 현재 브랜치가 base(PR 타겟/기본 브랜치)보다 앞선 변경 통계 (working이 clean일 때
 // diff 진입점을 유지하기 위한 용도). base 해결(gh)은 캐시, shortstat은 매번 계산.
-export const getBaseChangesCached = async (): Promise<{
+// dir은 git을 실행할 디렉터리.
+export const getBaseChangesCached = async (
+	dir = ".",
+): Promise<{
 	base: string;
 	files: number;
 	insertions: number;
@@ -17,17 +20,19 @@ export const getBaseChangesCached = async (): Promise<{
 			resolved === null ||
 			Date.now() - cache.baseRef.timestamp >= CACHE_TTL.baseRef
 		) {
-			resolved = await resolveBaseRef(".");
+			resolved = await resolveBaseRef(dir);
 			cache.baseRef = { value: resolved, timestamp: Date.now() };
 		}
 		if (!resolved.ref || !resolved.base) return null;
 
 		const mb = (
-			await $`git merge-base ${resolved.ref} HEAD 2>/dev/null`.nothrow().text()
+			await $`git -C ${dir} merge-base ${resolved.ref} HEAD 2>/dev/null`
+				.nothrow()
+				.text()
 		).trim();
 		if (!mb) return null;
 
-		const out = await $`git diff ${mb} --shortstat 2>/dev/null`
+		const out = await $`git -C ${dir} diff ${mb} --shortstat 2>/dev/null`
 			.nothrow()
 			.text();
 		const { files, insertions, deletions } = parseShortstat(out);
