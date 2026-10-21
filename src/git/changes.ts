@@ -2,8 +2,10 @@ import { $ } from "bun";
 import { CACHE_TTL, cache } from "../cache.ts";
 import { parseShortstat } from "./shortstat.ts";
 
-// Git 변경사항 가져오기 (캐싱)
-export const getGitChangesCached = async (): Promise<{
+// Git 변경사항 가져오기 (캐싱). dir은 git을 실행할 디렉터리
+export const getGitChangesCached = async (
+	dir = ".",
+): Promise<{
 	files: number;
 	insertions: number;
 	deletions: number;
@@ -13,8 +15,8 @@ export const getGitChangesCached = async (): Promise<{
 	}
 	try {
 		const [diff, staged] = await Promise.all([
-			$`git diff --shortstat 2>/dev/null`.text(),
-			$`git diff --cached --shortstat 2>/dev/null`.text(),
+			$`git -C ${dir} diff --shortstat 2>/dev/null`.text(),
+			$`git -C ${dir} diff --cached --shortstat 2>/dev/null`.text(),
 		]);
 		const { files, insertions, deletions } = parseShortstat(
 			`${diff}\n${staged}`,
