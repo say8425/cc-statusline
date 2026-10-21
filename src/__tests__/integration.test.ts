@@ -384,10 +384,18 @@ describe("main function (integration)", () => {
 		}
 	});
 
-	test("diff stats and the viewer link both follow current_dir, not project_dir", async () => {
-		// 세션을 ~에서 열고 레포지토리 하위 디렉터리로 이동한 상황: project_dir은 git 레포가
-		// 아니고, current_dir(=프로세스 cwd)은 변경이 있는 레포 안이다. 수치와 링크가
-		// 같은 레포 최상위를 가리켜야 한다.
+	// 세션을 ~에서 열고 레포지토리 하위 디렉터리로 이동한 상황: project_dir은 git 레포가
+	// 아니고 current_dir은 레포 안이다. 수치와 링크가 같은 레포 최상위를 가리켜야 한다.
+	// 프로세스 cwd는 project_dir(레포 아님)로 둔다 — 수치 쪽이 cwd가 아니라 current_dir에서
+	// git을 돌리는지까지 확인하기 위해서다.
+	const runInMovedSession = async (
+		setup: (repoDir: string, sub: string) => Promise<void>,
+	): Promise<{
+		output: string;
+		repoDir: string;
+		home: string;
+		ensureArgs: unknown[];
+	}> => {
 		const root = realpathSync(mkdtempSync(join(tmpdir(), "cc-cwd-")));
 		const home = join(root, "home");
 		const repoDir = join(root, "repo");
@@ -400,14 +408,15 @@ describe("main function (integration)", () => {
 		writeFileSync(join(sub, "a.txt"), "one\n");
 		await $`git -C ${repoDir} add -A`;
 		await $`git -C ${repoDir} commit -qm init`;
-		writeFileSync(join(sub, "a.txt"), "one\ntwo\n");
+		await $`git -C ${repoDir} branch -M main`;
+		await setup(repoDir, sub);
 
 		const ensureSpy = spyOn(ensureModule, "ensureDiffServer").mockReturnValue({
 			port: 49573,
 			token: "tok",
 		});
 		const origCwd = process.cwd();
-		process.chdir(sub);
+		process.chdir(home);
 
 		const testInput = JSON.stringify({
 			cost: { total_duration_ms: 0, total_cost_usd: 0 },
@@ -434,20 +443,51 @@ describe("main function (integration)", () => {
 
 		try {
 			await main();
-
-			const allOutput = logs.join("\n");
-			expect(allOutput).toContain("✏️");
-			expect(allOutput).toContain("+1");
-			expect(ensureSpy).toHaveBeenCalledWith(repoDir);
-			expect(allOutput).toContain(
-				`repo=${encodeURIComponent(repoDir)}&token=tok&mode=working`,
-			);
-			expect(allOutput).not.toContain(`repo=${encodeURIComponent(home)}&`);
+			return {
+				output: logs.join("\n"),
+				repoDir,
+				home,
+				ensureArgs: ensureSpy.mock.calls.map((c) => c[0]),
+			};
 		} finally {
 			Bun.stdin.stream = originalStream;
 			process.chdir(origCwd);
 			ensureSpy.mockRestore();
 			rmSync(root, { recursive: true, force: true });
 		}
+	};
+
+	test("working-tree stats and the viewer link both follow current_dir, not project_dir", async () => {
+		const { output, repoDir, home, ensureArgs } = await runInMovedSession(
+			async (_repoDir, sub) => {
+				writeFileSync(join(sub, "a.txt"), "one\ntwo\n");
+			},
+		);
+
+		expect(output).toContain("✏️");
+		expect(output).toContain("+1");
+		expect(ensureArgs).toEqual([repoDir]);
+		expect(output).toContain(
+			`repo=${encodeURIComponent(repoDir)}&token=tok&mode=working`,
+		);
+		expect(output).not.toContain(`repo=${encodeURIComponent(home)}&`);
+	});
+
+	test("vs-base stats and the viewer link both follow current_dir, not project_dir", async () => {
+		// 신고된 증상(`✏️ vs main N files`)은 working tree가 깨끗한 base 모드였다
+		const { output, repoDir, home, ensureArgs } = await runInMovedSession(
+			async (repoDir, sub) => {
+				await $`git -C ${repoDir} checkout -qb feature`;
+				writeFileSync(join(sub, "a.txt"), "one\ntwo\n");
+				await $`git -C ${repoDir} commit -qam work`;
+			},
+		);
+
+		expect(output).toContain("vs main");
+		expect(ensureArgs).toEqual([repoDir]);
+		expect(output).toContain(
+			`repo=${encodeURIComponent(repoDir)}&token=tok&mode=base`,
+		);
+		expect(output).not.toContain(`repo=${encodeURIComponent(home)}&`);
 	});
 });
