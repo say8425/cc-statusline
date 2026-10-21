@@ -389,7 +389,7 @@ describe("main function (integration)", () => {
 	// 프로세스 cwd는 project_dir(레포 아님)로 둔다 — 수치 쪽이 cwd가 아니라 current_dir에서
 	// git을 돌리는지까지 확인하기 위해서다.
 	const runInMovedSession = async (
-		setup: (repoDir: string, sub: string) => Promise<void>,
+		setup: (repoDir: string, sub: string) => void | Promise<void>,
 	): Promise<{
 		output: string;
 		repoDir: string;
@@ -459,7 +459,7 @@ describe("main function (integration)", () => {
 
 	test("working-tree stats and the viewer link both follow current_dir, not project_dir", async () => {
 		const { output, repoDir, home, ensureArgs } = await runInMovedSession(
-			async (_repoDir, sub) => {
+			(_repoDir, sub) => {
 				writeFileSync(join(sub, "a.txt"), "one\ntwo\n");
 			},
 		);
@@ -476,10 +476,10 @@ describe("main function (integration)", () => {
 	test("vs-base stats and the viewer link both follow current_dir, not project_dir", async () => {
 		// 신고된 증상(`✏️ vs main N files`)은 working tree가 깨끗한 base 모드였다
 		const { output, repoDir, home, ensureArgs } = await runInMovedSession(
-			async (repoDir, sub) => {
-				await $`git -C ${repoDir} checkout -qb feature`;
+			async (dir, sub) => {
+				await $`git -C ${dir} checkout -qb feature`;
 				writeFileSync(join(sub, "a.txt"), "one\ntwo\n");
-				await $`git -C ${repoDir} commit -qam work`;
+				await $`git -C ${dir} commit -qam work`;
 			},
 		);
 
