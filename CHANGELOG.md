@@ -1,5 +1,12 @@
 # Changelog
 
+## [6.3.1](https://github.com/say8425/cc-statusline/compare/v6.3.0...v6.3.1) (2026-10-21)
+
+
+### Bug Fixes
+
+* point the diff viewer link at the same repo as the diff stats ([#104](https://github.com/say8425/cc-statusline/issues/104)) ([319084e](https://github.com/say8425/cc-statusline/commit/319084e2030696e24b9af64551028bf96929cc08))
+
 ## [6.3.0](https://github.com/say8425/cc-statusline/compare/v6.2.4...v6.3.0) (2026-10-06)
 
 
