@@ -15,8 +15,10 @@ export const MANAGED_SETTINGS_PATH: string =
 				)
 			: "/etc/claude-code/managed-settings.json";
 
-// ultracode 여부는 stdin JSON·env로 전달되지 않아 (effort.level은 xhigh로만 보고,
-// CLI 2.1.201에서 확인) Claude Code 설정 파일의 `ultracode` 키를 직접 읽는다.
+// ultracode 여부는 stdin JSON·env로 전달되지 않는다. settings의 `ultracode` 키는
+// 세션의 *시작값*일 뿐이다: CLI 2.1.284+의 `/effort ultracode`는 이 세션에만 적용되고
+// settings에 쓰지 않는다. 세션 중 토글은 src/transcriptUltracode.ts가 transcript에서
+// 읽고, 이 값은 transcript에 표시가 아직 없을 때의 폴백으로만 쓴다 (src/index.ts).
 // 우선순위는 Claude Code 설정 해석 순서와 동일: managed > local > project > user.
 export const ultracodeSettingsPaths = (
 	projectDir: string,

@@ -542,7 +542,8 @@ describe("renderStatusLine", () => {
 			expect(lines[1]).not.toContain("⚡");
 		});
 
-		test("no ultra marker when effort is not xhigh (session not in ultracode)", () => {
+		// CLI 2.1.284+: ultracode는 effort와 독립이라 xhigh가 아니어도 배지를 붙인다
+		test("appends ⚡ultra at a non-xhigh effort", () => {
 			const ctx = createRenderContext({
 				ultracode: true,
 				fullClaudeJson: {
@@ -553,11 +554,10 @@ describe("renderStatusLine", () => {
 			});
 			const lines = renderStatusLine(ctx);
 
-			expect(lines[1]).toContain("🤖 Fable 5 high");
-			expect(lines[1]).not.toContain("⚡");
+			expect(lines[1]).toContain("🤖 Fable 5 high ⚡ultra");
 		});
 
-		test("no ultra marker when effort is absent even if settings enable ultracode", () => {
+		test("appends ⚡ultra when effort is absent", () => {
 			const ctx = createRenderContext({
 				ultracode: true,
 				fullClaudeJson: {
@@ -567,8 +567,7 @@ describe("renderStatusLine", () => {
 			});
 			const lines = renderStatusLine(ctx);
 
-			expect(lines[1]).toContain("🤖 Fable 5");
-			expect(lines[1]).not.toContain("⚡");
+			expect(lines[1]).toContain("🤖 Fable 5 ⚡ultra");
 		});
 
 		test("no ultra marker when model is absent", () => {

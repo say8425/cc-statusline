@@ -16,6 +16,7 @@ import { renderStatusLine } from "./render.ts";
 import { readSessionName } from "./sessionName.ts";
 import { readStdin } from "./stdin.ts";
 import type { ClaudeStatusInput } from "./types.ts";
+import { readTranscriptUltracode } from "./transcriptUltracode.ts";
 import { getUltracodeCached } from "./ultracode.ts";
 
 // 메인 함수
@@ -41,7 +42,8 @@ export const main = async (): Promise<void> => {
 		diffRepo,
 		prInfo,
 		mainProject,
-		ultracode,
+		ultracodeSetting,
+		ultracodeSession,
 		sessionName,
 	] = await Promise.all([
 		getBranchCached(),
@@ -50,8 +52,12 @@ export const main = async (): Promise<void> => {
 		getPrInfoCached(),
 		getMainProjectCached(),
 		getUltracodeCached(repo),
+		readTranscriptUltracode(claudeJson.transcript_path),
 		readSessionName(claudeJson.session_id),
 	]);
+	// 세션의 실제 토글(/effort ultracode, transcript 표시)이 우선이고, 표시가 아직
+	// 없으면(첫 프롬프트 전 등) 세션 시작값인 settings `ultracode`로 폴백한다
+	const ultracode = ultracodeSession ?? ultracodeSetting;
 	const mainProjectName = mainProject?.name ?? null;
 	const projectDirUrl = repo ? toFileUrl(repo) : null;
 	const mainProjectUrl = mainProject ? toFileUrl(mainProject.path) : null;
