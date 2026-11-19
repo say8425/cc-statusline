@@ -265,6 +265,68 @@ describe("main function (integration)", () => {
 		}
 	});
 
+	// 세션에서 끈 ultracode(exit)는 settings의 `ultracode: true`(세션 시작값)를 이긴다.
+	// 표시가 없을 때만 settings로 폴백한다 (`??` 우선순위)
+	const runUltracodeCase = async (
+		transcriptLine: string | null,
+	): Promise<string | undefined> => {
+		const workDir = mkdtempSync(join(tmpdir(), "cc-statusline-ultra-"));
+		process.env.XDG_CACHE_HOME = join(workDir, "cache");
+		mkdirSync(join(workDir, ".claude"));
+		writeFileSync(
+			join(workDir, ".claude", "settings.json"),
+			JSON.stringify({ ultracode: true }),
+		);
+		const transcript = join(workDir, "session.jsonl");
+		writeFileSync(transcript, transcriptLine ?? "");
+		const testInput = JSON.stringify({
+			transcript_path: transcript,
+			cost: { total_duration_ms: 0, total_cost_usd: 0 },
+			context_window: {
+				context_window_size: 200000,
+				current_usage: {
+					input_tokens: 0,
+					output_tokens: 0,
+					cache_creation_input_tokens: 0,
+					cache_read_input_tokens: 0,
+				},
+			},
+			model: { id: "claude-opus-5-5", display_name: "Opus 5.5" },
+			effort: { level: "high" },
+			workspace: { project_dir: workDir, current_dir: workDir },
+		});
+		const encoder = new TextEncoder();
+		const stream = new ReadableStream({
+			start(controller) {
+				controller.enqueue(encoder.encode(testInput));
+				controller.close();
+			},
+		});
+		const originalStream = Bun.stdin.stream;
+		Bun.stdin.stream = () => stream;
+		try {
+			await main();
+			return logs[1];
+		} finally {
+			Bun.stdin.stream = originalStream;
+			rmSync(workDir, { recursive: true, force: true });
+		}
+	};
+
+	test("a transcript exit hides ⚡ultra even when settings enable it", async () => {
+		const exit = `${JSON.stringify({
+			attachment: { type: "ultra_effort_exit" },
+			type: "attachment",
+		})}\n`;
+		const line = await runUltracodeCase(exit);
+		expect(line).toContain("🤖 Opus 5.5 high");
+		expect(line).not.toContain("⚡");
+	});
+
+	test("falls back to settings when the transcript has no marker", async () => {
+		expect(await runUltracodeCase(null)).toContain("🤖 Opus 5.5 high ⚡ultra");
+	});
+
 	test("main function does not crash on unknown workspace fields like git_worktree", async () => {
 		// workspace.git_worktree is a forward-compat field (Claude Code 2.1.98+)
 		// currently declared in the type schema but not consumed by any logic

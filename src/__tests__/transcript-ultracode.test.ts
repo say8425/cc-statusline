@@ -9,9 +9,9 @@ import {
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import {
-	INITIAL_SCAN_BYTES,
 	lastUltracodeMarker,
 	readTranscriptUltracode,
+	type ScanLimits,
 } from "../transcriptUltracode.ts";
 
 // Claude Code(2.1.308~2.1.327)가 실제로 쓰는 줄 모양
@@ -33,6 +33,8 @@ const exitLine = (): string =>
 	})}\n`;
 const userLine = (text: string): string =>
 	`${JSON.stringify({ type: "user", message: { role: "user", content: text } })}\n`;
+
+const filler = (bytes: number): string => userLine("x".repeat(bytes));
 
 describe("lastUltracodeMarker", () => {
 	test("returns null without any marker", () => {
@@ -145,11 +147,70 @@ describe("readTranscriptUltracode", () => {
 		expect(await readTranscriptUltracode(transcript, stateDir)).toBe(true);
 	});
 
-	test("first scan reads only the tail window", async () => {
-		// 창보다 앞에 있는 enter는 첫 스캔에서 보이지 않는다
-		const filler = userLine("x".repeat(INITIAL_SCAN_BYTES));
-		writeFileSync(transcript, enterLine() + filler);
-		expect(await readTranscriptUltracode(transcript, stateDir)).toBeNull();
+	describe("with small scan limits", () => {
+		const limits: ScanLimits = { chunkBytes: 64, maxBackscanBytes: 2048 };
+
+		test("finds a marker many chunks back on the first scan", async () => {
+			writeFileSync(transcript, enterLine() + filler(1500));
+			expect(await readTranscriptUltracode(transcript, stateDir, limits)).toBe(
+				true,
+			);
+		});
+
+		test("finds a marker that straddles a chunk boundary", async () => {
+			// 바늘이 어느 위치에서 잘리든 찾아야 한다
+			for (let pad = 0; pad < 64; pad++) {
+				rmSync(stateDir, { recursive: true, force: true });
+				writeFileSync(
+					transcript,
+					`${"y".repeat(pad)}\n${enterLine()}${filler(100)}`,
+				);
+				expect(
+					await readTranscriptUltracode(transcript, stateDir, limits),
+				).toBe(true);
+			}
+		});
+
+		test("gives up beyond the backscan limit", async () => {
+			writeFileSync(transcript, enterLine() + filler(3000));
+			expect(
+				await readTranscriptUltracode(transcript, stateDir, limits),
+			).toBeNull();
+		});
+
+		test("a stale offset reads only the bounded tail and finds a new exit", async () => {
+			writeFileSync(transcript, enterLine());
+			expect(await readTranscriptUltracode(transcript, stateDir, limits)).toBe(
+				true,
+			);
+			// statusline이 돌지 않는 동안 transcript가 한도보다 크게 자란 경우
+			appendFileSync(transcript, filler(5000) + exitLine() + userLine("x"));
+			expect(await readTranscriptUltracode(transcript, stateDir, limits)).toBe(
+				false,
+			);
+		});
+
+		test("a stale offset without new markers keeps the previous state", async () => {
+			writeFileSync(transcript, enterLine());
+			expect(await readTranscriptUltracode(transcript, stateDir, limits)).toBe(
+				true,
+			);
+			appendFileSync(transcript, filler(5000));
+			expect(await readTranscriptUltracode(transcript, stateDir, limits)).toBe(
+				true,
+			);
+		});
+	});
+
+	test("rejects a state file with an invalid offset", async () => {
+		writeFileSync(transcript, enterLine());
+		await readTranscriptUltracode(transcript, stateDir);
+		const [file] = readdirSync(stateDir);
+		writeFileSync(
+			join(stateDir, file ?? "x"),
+			JSON.stringify({ path: transcript, offset: -5, marker: false }),
+		);
+		expect(await readTranscriptUltracode(transcript, stateDir)).toBe(true);
 	});
 
 	test("still works when the state directory cannot be created", async () => {
