@@ -78,12 +78,9 @@ export const renderStatusLine = (ctx: RenderContext): string[] => {
 	if (modelName) {
 		const effortLevel = ctx.claudeJson.effort?.level;
 		let modelText = effortLevel ? `${modelName} ${effortLevel}` : modelName;
-		// ultracode는 설정 파일 기반 신호라 세션 effort와 교차검증한다:
-		// ultracode 세션은 effort.level을 항상 xhigh로 보고하므로, xhigh가
-		// 아니면 이번 세션은 ultracode가 아님 → 배지 억제. 수동 /effort xhigh
-		// + 설정 on 조합은 구분 불가라 false positive를 줄일 뿐 완전히 막지는
-		// 못함 (ultracode가 stdin에 노출되지 않는 한계, best-effort)
-		if (ctx.ultracode && effortLevel === "xhigh") modelText += " ⚡ultra";
+		// ultracode는 effort와 독립이다 (CLI 2.1.284+: 어떤 effort에서도 켜진다).
+		// 판정은 src/index.ts가 transcript 표시 → settings 순으로 한다
+		if (ctx.ultracode) modelText += " ultra";
 		line2 += ` | ${C.WHITE}🤖 ${modelText}${C.RESET}`;
 	}
 	// 세션 이름 — 2번째 줄 오른쪽 끝. 다른 세션이 SendMessage·@멘션에 쓰는 주소를

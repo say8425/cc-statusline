@@ -15,6 +15,9 @@ export interface ClaudeStatusInput {
 	// 세션 고유 식별자. 직접 표시하지 않고, 세션 레지스트리에서 멘션 가능한
 	// 이름을 찾는 키로만 쓴다 (src/sessionName.ts). 구버전 CLI에는 없을 수 있어 optional.
 	session_id?: string;
+	// 대화 transcript JSONL 경로. ultracode 토글 표시(ultra_effort_enter/exit)를
+	// 읽는 데만 쓴다 (src/transcriptUltracode.ts)
+	transcript_path?: string;
 	cost: {
 		total_duration_ms: number;
 		total_cost_usd: number;

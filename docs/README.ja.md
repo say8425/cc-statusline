@@ -54,7 +54,7 @@ Claude Code用カスタムステータスライン。
 - **セッション時間**: 現在のセッション経過時間
 - **コスト**: セッションコスト（USD） — デフォルトでは非表示、`CC_STATUSLINE_SHOW_COST=1` で表示（[設定](#設定)を参照）
 - **コンテキスト**: トークン使用量とパーセンテージ（色分け表示）
-- **モデル**: 現在使用中のモデル名と reasoning effort（例: `Fable 5 high`）、ultracode セッションでは `⚡ultra` バッジを表示
+- **モデル**: 現在使用中のモデル名と reasoning effort（例: `Fable 5 high`）、ultracode セッションでは後ろに `ultra` を表示
 - **Git Diff**: ファイル数、追加、削除
 - **クリック可能な Diff ビューア**: `✏️` をクリックすると、ローカルの diff ビューアがブラウザで開きます（[Diff ビューア](#diff-ビューア)を参照）
 - **PR URL**: クリック可能なOSC 8ハイパーリンク
@@ -147,7 +147,7 @@ Claude Code が stdin JSON で `rate_limits` を渡します（CLI 2.1.80+）。
 
 ### モデルと ultracode
 
-モデル名と effort は `model.display_name` と `effort.level` から取得します（effort は対応モデルのみ送られます）。ultracode は stdin に含まれないため、Claude Code 設定ファイル（managed → プロジェクト local → プロジェクト → ユーザーの順）の `ultracode` キーを読み、セッションの effort が `xhigh` の場合のみ `⚡ultra` を表示します。
+モデル名と effort は `model.display_name` と `effort.level` から取得します（effort は対応モデルのみ送られます）。ultracode は stdin に含まれないため、Claude Code がセッションの transcript（`transcript_path`）に書き込む最後の ultracode オン/オフの記録を読み、effort に関係なく `ultra` を表示します。この記録は次のリクエスト時に書き込まれるため、`/effort ultracode` の後はプロンプトを一度送ると表示されます。記録がまだない場合は、Claude Code 設定ファイル（managed → プロジェクト local → プロジェクト → ユーザーの順）の `ultracode` キーをセッションの初期値として使います。
 
 ### セッション名
 

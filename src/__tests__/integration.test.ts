@@ -23,6 +23,9 @@ const MAIN_ENV_KEYS = [
 	// 세션 이름은 <CLAUDE_CONFIG_DIR|~/.claude>/sessions에서 읽는다 — 실제 세션 레지스트리가
 	// 새어 들어오지 않도록 지우고, 필요한 테스트만 임시 디렉터리로 지정한다
 	"CLAUDE_CONFIG_DIR",
+	// ultracode transcript 스캔 상태를 <XDG_CACHE_HOME|~/.cache>/cc-statusline에 쓴다 —
+	// 개발자 캐시를 건드리지 않도록 필요한 테스트만 임시 디렉터리로 지정한다
+	"XDG_CACHE_HOME",
 	// ⏰ 요일 이름이 개발자 셸의 로케일을 타지 않도록 함께 지운다
 	...LOCALE_ENV_KEYS,
 ] as const;
@@ -208,6 +211,120 @@ describe("main function (integration)", () => {
 			Bun.stdin.stream = originalStream;
 			rmSync(configDir, { recursive: true, force: true });
 		}
+	});
+
+	// /effort ultracode는 settings에 쓰지 않고(CLI 2.1.284+ "this session only")
+	// effort도 바꾸지 않는다 — transcript의 attachment 표시만이 세션 상태를 알려준다
+	test("main function shows ultra from the transcript marker at a non-xhigh effort", async () => {
+		const workDir = mkdtempSync(join(tmpdir(), "cc-statusline-ultra-"));
+		process.env.XDG_CACHE_HOME = join(workDir, "cache");
+		const transcript = join(workDir, "session.jsonl");
+		writeFileSync(
+			transcript,
+			`${JSON.stringify({
+				isSidechain: false,
+				attachment: { type: "ultra_effort_enter", reminderType: "full" },
+				type: "attachment",
+			})}\n`,
+		);
+		const testInput = JSON.stringify({
+			transcript_path: transcript,
+			cost: { total_duration_ms: 0, total_cost_usd: 0 },
+			context_window: {
+				context_window_size: 200000,
+				current_usage: {
+					input_tokens: 0,
+					output_tokens: 0,
+					cache_creation_input_tokens: 0,
+					cache_read_input_tokens: 0,
+				},
+			},
+			model: { id: "claude-opus-5-5", display_name: "Opus 5.5" },
+			effort: { level: "medium" },
+			// settings 폴백이 섞이지 않게 .claude가 없는 디렉터리를 쓴다
+			workspace: { project_dir: workDir, current_dir: workDir },
+		});
+
+		const encoder = new TextEncoder();
+		const stream = new ReadableStream({
+			start(controller) {
+				controller.enqueue(encoder.encode(testInput));
+				controller.close();
+			},
+		});
+
+		const originalStream = Bun.stdin.stream;
+		Bun.stdin.stream = () => stream;
+
+		try {
+			await main();
+			expect(logs[1]).toContain("🤖 Opus 5.5 medium ultra");
+		} finally {
+			Bun.stdin.stream = originalStream;
+			rmSync(workDir, { recursive: true, force: true });
+		}
+	});
+
+	// 세션에서 끈 ultracode(exit)는 settings의 `ultracode: true`(세션 시작값)를 이긴다.
+	// 표시가 없을 때만 settings로 폴백한다 (`??` 우선순위)
+	const runUltracodeCase = async (
+		transcriptLine: string | null,
+	): Promise<string | undefined> => {
+		const workDir = mkdtempSync(join(tmpdir(), "cc-statusline-ultra-"));
+		process.env.XDG_CACHE_HOME = join(workDir, "cache");
+		mkdirSync(join(workDir, ".claude"));
+		writeFileSync(
+			join(workDir, ".claude", "settings.json"),
+			JSON.stringify({ ultracode: true }),
+		);
+		const transcript = join(workDir, "session.jsonl");
+		writeFileSync(transcript, transcriptLine ?? "");
+		const testInput = JSON.stringify({
+			transcript_path: transcript,
+			cost: { total_duration_ms: 0, total_cost_usd: 0 },
+			context_window: {
+				context_window_size: 200000,
+				current_usage: {
+					input_tokens: 0,
+					output_tokens: 0,
+					cache_creation_input_tokens: 0,
+					cache_read_input_tokens: 0,
+				},
+			},
+			model: { id: "claude-opus-5-5", display_name: "Opus 5.5" },
+			effort: { level: "high" },
+			workspace: { project_dir: workDir, current_dir: workDir },
+		});
+		const encoder = new TextEncoder();
+		const stream = new ReadableStream({
+			start(controller) {
+				controller.enqueue(encoder.encode(testInput));
+				controller.close();
+			},
+		});
+		const originalStream = Bun.stdin.stream;
+		Bun.stdin.stream = () => stream;
+		try {
+			await main();
+			return logs[1];
+		} finally {
+			Bun.stdin.stream = originalStream;
+			rmSync(workDir, { recursive: true, force: true });
+		}
+	};
+
+	test("a transcript exit hides ultra even when settings enable it", async () => {
+		const exit = `${JSON.stringify({
+			attachment: { type: "ultra_effort_exit" },
+			type: "attachment",
+		})}\n`;
+		const line = await runUltracodeCase(exit);
+		expect(line).toContain("🤖 Opus 5.5 high");
+		expect(line).not.toContain("ultra");
+	});
+
+	test("falls back to settings when the transcript has no marker", async () => {
+		expect(await runUltracodeCase(null)).toContain("🤖 Opus 5.5 high ultra");
 	});
 
 	test("main function does not crash on unknown workspace fields like git_worktree", async () => {
