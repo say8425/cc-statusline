@@ -112,7 +112,7 @@ cc-statusline/
 Claude Code 기본 statusbar에 다음 정보를 추가로 표시:
 - 세션 시간, 그리고 **옵트인**인 세션 비용 (`💰`는 기본 숨김 — `CC_STATUSLINE_SHOW_COST=1`로 켬, `src/config.ts`)
 - Context window 토큰 사용량 및 사용률 (%)
-- 현재 사용 중인 모델명·reasoning effort (`🤖 Fable 5 high`, 🧠 컨텍스트 세그먼트 오른쪽) — 세션에서 ultracode가 켜져 있으면 effort와 무관하게 `⚡ultra` 배지 추가 (`🤖 Fable 5 high ⚡ultra`)
+- 현재 사용 중인 모델명·reasoning effort (`🤖 Fable 5 high`, 🧠 컨텍스트 세그먼트 오른쪽) — 세션에서 ultracode가 켜져 있으면 effort와 무관하게 `ultra` 표시 추가 (`🤖 Fable 5 high ultra`)
 - 세션 이름 (`@"cc업글"` 꼴 — 멘션 문법이 따옴표를 요구해 항상 감싸고, 이름 속 `"`는 `\"`로 이스케이프) — 다른 Claude 세션이 SendMessage·@멘션에 쓰는 이 세션의 주소. 세션 시간 줄(2번째 줄) 오른쪽 끝, `🤖` 모델 세그먼트가 있으면 그 오른쪽에 붙는다. UUID(`session_id`)는 더 이상 표시하지 않고 레지스트리 조회 키로만 쓴다. `rate_limits`와 출처가 달라 **rate_limits 유무와 무관하게 표시된다** — 이 줄은 `⏱️` 세션 시간이 항상 채워 항상 렌더되므로, model·context 유무와도 무관하게 이름만으로도 줄 끝에 붙는다
 - Git diff 통계 (파일 수, +insertions, -deletions)
 - 클릭 가능한 diff 뷰어: `✏️` 클릭 시 로컬 diff 뷰어를 브라우저로 표시. 뷰어 자체(파일트리, working/vs-base 모드 전환 UI, watch 자동 갱신, 파일 폴딩, 이미지 diff, in-app 검색 등)는 별도 패키지 **[`@say8425/diffdeck`](https://github.com/say8425/diffdeck)**(runtime dependency)가 제공 — cc-statusline은 그 데몬을 spawn-if-not-running으로 띄우고 링크만 구성한다. 뷰어 기능 상세는 diffdeck 저장소 문서 참고

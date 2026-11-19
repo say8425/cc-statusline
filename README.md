@@ -54,7 +54,7 @@ Add the following to `~/.claude/settings.json`:
 - **Session Time**: Current session elapsed time
 - **Cost**: Session cost in USD — hidden by default, set `CC_STATUSLINE_SHOW_COST=1` to show (see [Configuration](#configuration))
 - **Context**: Token usage with percentage (color-coded)
-- **Model**: Current model name and reasoning effort (e.g., `Fable 5 high`), with an `⚡ultra` badge in ultracode sessions
+- **Model**: Current model name and reasoning effort (e.g., `Fable 5 high`), followed by `ultra` in ultracode sessions
 - **Git Diff**: File count, insertions, deletions
 - **Clickable Diff Viewer**: Click `✏️` to open a local diff viewer in your browser (see [Diff Viewer](#diff-viewer))
 - **PR URL**: Clickable OSC 8 hyperlink
@@ -157,7 +157,7 @@ Claude Code passes `rate_limits` in the stdin JSON (CLI 2.1.80+). The usage line
 
 ### Model and Ultracode
 
-The model name and effort come from `model.display_name` and `effort.level` (effort is sent only for models that support it). Ultracode isn't exposed on stdin, so the statusline reads the `ultracode` key from your Claude Code settings files (managed → project local → project → user) and shows `⚡ultra` only when the session also reports `xhigh` effort.
+The model name and effort come from `model.display_name` and `effort.level` (effort is sent only for models that support it). Ultracode isn't exposed on stdin, so the statusline reads the last ultracode on/off marker that Claude Code writes to the session transcript (`transcript_path`) and shows `ultra` at any effort level. The marker is written with the next request, so after `/effort ultracode` the label appears once you send a prompt. Until a marker exists, the `ultracode` key from your Claude Code settings files (managed → project local → project → user) is used as the session's starting value.
 
 ### Session Name
 

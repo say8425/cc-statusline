@@ -80,7 +80,7 @@ export const renderStatusLine = (ctx: RenderContext): string[] => {
 		let modelText = effortLevel ? `${modelName} ${effortLevel}` : modelName;
 		// ultracode는 effort와 독립이다 (CLI 2.1.284+: 어떤 effort에서도 켜진다).
 		// 판정은 src/index.ts가 transcript 표시 → settings 순으로 한다
-		if (ctx.ultracode) modelText += " ⚡ultra";
+		if (ctx.ultracode) modelText += " ultra";
 		line2 += ` | ${C.WHITE}🤖 ${modelText}${C.RESET}`;
 	}
 	// 세션 이름 — 2번째 줄 오른쪽 끝. 다른 세션이 SendMessage·@멘션에 쓰는 주소를

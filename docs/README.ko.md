@@ -54,7 +54,7 @@ Claude Code를 위한 커스텀 상태표시줄.
 - **세션 시간**: 현재 세션 경과 시간
 - **비용**: 세션 비용 (USD) — 기본은 숨김, `CC_STATUSLINE_SHOW_COST=1`로 표시 ([설정](#설정) 참조)
 - **컨텍스트**: 토큰 사용량 및 백분율 (색상 표시)
-- **모델**: 현재 사용 중인 모델명과 reasoning effort (예: `Fable 5 high`), ultracode 세션에서는 `⚡ultra` 배지 표시
+- **모델**: 현재 사용 중인 모델명과 reasoning effort (예: `Fable 5 high`), ultracode 세션에서는 뒤에 `ultra` 표시
 - **Git Diff**: 파일 수, 추가, 삭제
 - **클릭 가능한 Diff 뷰어**: `✏️`를 클릭하면 로컬 diff 뷰어가 브라우저에 열립니다 ([Diff 뷰어](#diff-뷰어) 참조)
 - **PR URL**: 클릭 가능한 OSC 8 하이퍼링크
@@ -147,7 +147,7 @@ Claude Code가 stdin JSON으로 `rate_limits`를 전달합니다 (CLI 2.1.80+). 
 
 ### 모델과 ultracode
 
-모델명과 effort는 `model.display_name`과 `effort.level`에서 옵니다 (effort는 지원 모델에서만 전달). ultracode 여부는 stdin에 없어서 Claude Code 설정 파일(managed → 프로젝트 local → 프로젝트 → 사용자 순)의 `ultracode` 키를 읽고, 세션 effort가 `xhigh`일 때만 `⚡ultra`를 표시합니다.
+모델명과 effort는 `model.display_name`과 `effort.level`에서 옵니다 (effort는 지원 모델에서만 전달). ultracode 여부는 stdin에 없어서, Claude Code가 세션 transcript(`transcript_path`)에 남기는 마지막 ultracode 켜짐/꺼짐 표시를 읽고 effort와 무관하게 `ultra`를 표시합니다. 이 표시는 다음 요청 때 기록되므로 `/effort ultracode` 뒤에는 프롬프트를 한 번 보내야 나타납니다. 표시가 아직 없으면 Claude Code 설정 파일(managed → 프로젝트 local → 프로젝트 → 사용자 순)의 `ultracode` 키를 세션 시작값으로 씁니다.
 
 ### 세션 이름
 

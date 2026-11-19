@@ -54,7 +54,7 @@ Claude Code 自定义状态栏。
 - **会话时间**: 当前会话经过时间
 - **费用**: 会话费用（美元）— 默认隐藏，设置 `CC_STATUSLINE_SHOW_COST=1` 后显示（参见[配置](#配置)）
 - **上下文**: 令牌使用量及百分比（颜色标识）
-- **模型**: 当前使用的模型名称和 reasoning effort（例如 `Fable 5 high`），在 ultracode 会话中显示 `⚡ultra` 徽章
+- **模型**: 当前使用的模型名称和 reasoning effort（例如 `Fable 5 high`），在 ultracode 会话中于其后显示 `ultra`
 - **Git Diff**: 文件数、新增、删除
 - **可点击的 Diff 查看器**：点击 `✏️` 即可在浏览器中打开本地 diff 查看器（参见 [Diff 查看器](#diff-查看器)）
 - **PR URL**: 可点击的 OSC 8 超链接
@@ -147,7 +147,7 @@ Claude Code 通过 stdin JSON 传递 `rate_limits`（CLI 2.1.80+）。只要存�
 
 ### 模型与 ultracode
 
-模型名称和 effort 来自 `model.display_name` 和 `effort.level`（effort 仅对支持的模型发送）。ultracode 不在 stdin 中，因此 statusline 会读取 Claude Code 设置文件（managed → 项目 local → 项目 → 用户）中的 `ultracode` 键，并且仅当会话 effort 为 `xhigh` 时显示 `⚡ultra`。
+模型名称和 effort 来自 `model.display_name` 和 `effort.level`（effort 仅对支持的模型发送）。ultracode 不在 stdin 中，因此 statusline 会读取 Claude Code 写入会话 transcript（`transcript_path`）的最后一条 ultracode 开启/关闭记录，并且无论 effort 为何都显示 `ultra`。该记录在下一次请求时写入，因此执行 `/effort ultracode` 后需要发送一次提示才会显示。在尚无记录时，使用 Claude Code 设置文件（managed → 项目 local → 项目 → 用户）中的 `ultracode` 键作为会话的初始值。
 
 ### 会话名称
 

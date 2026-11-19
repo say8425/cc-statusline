@@ -215,7 +215,7 @@ describe("main function (integration)", () => {
 
 	// /effort ultracode는 settings에 쓰지 않고(CLI 2.1.284+ "this session only")
 	// effort도 바꾸지 않는다 — transcript의 attachment 표시만이 세션 상태를 알려준다
-	test("main function shows ⚡ultra from the transcript marker at a non-xhigh effort", async () => {
+	test("main function shows ultra from the transcript marker at a non-xhigh effort", async () => {
 		const workDir = mkdtempSync(join(tmpdir(), "cc-statusline-ultra-"));
 		process.env.XDG_CACHE_HOME = join(workDir, "cache");
 		const transcript = join(workDir, "session.jsonl");
@@ -258,7 +258,7 @@ describe("main function (integration)", () => {
 
 		try {
 			await main();
-			expect(logs[1]).toContain("🤖 Opus 5.5 medium ⚡ultra");
+			expect(logs[1]).toContain("🤖 Opus 5.5 medium ultra");
 		} finally {
 			Bun.stdin.stream = originalStream;
 			rmSync(workDir, { recursive: true, force: true });
@@ -313,18 +313,18 @@ describe("main function (integration)", () => {
 		}
 	};
 
-	test("a transcript exit hides ⚡ultra even when settings enable it", async () => {
+	test("a transcript exit hides ultra even when settings enable it", async () => {
 		const exit = `${JSON.stringify({
 			attachment: { type: "ultra_effort_exit" },
 			type: "attachment",
 		})}\n`;
 		const line = await runUltracodeCase(exit);
 		expect(line).toContain("🤖 Opus 5.5 high");
-		expect(line).not.toContain("⚡");
+		expect(line).not.toContain("ultra");
 	});
 
 	test("falls back to settings when the transcript has no marker", async () => {
-		expect(await runUltracodeCase(null)).toContain("🤖 Opus 5.5 high ⚡ultra");
+		expect(await runUltracodeCase(null)).toContain("🤖 Opus 5.5 high ultra");
 	});
 
 	test("main function does not crash on unknown workspace fields like git_worktree", async () => {

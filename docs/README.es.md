@@ -54,7 +54,7 @@ Agrega lo siguiente a `~/.claude/settings.json`:
 - **Tiempo de sesión**: Tiempo transcurrido de la sesión actual
 - **Costo**: Costo de la sesión en USD — oculto por defecto, usa `CC_STATUSLINE_SHOW_COST=1` para mostrarlo (ver [Configuración](#configuración))
 - **Contexto**: Uso de tokens con porcentaje (codificado por colores)
-- **Modelo**: Nombre del modelo en uso y reasoning effort (p. ej., `Fable 5 high`), con una insignia `⚡ultra` en sesiones ultracode
+- **Modelo**: Nombre del modelo en uso y reasoning effort (p. ej., `Fable 5 high`), seguido de `ultra` en sesiones ultracode
 - **Git Diff**: Cantidad de archivos, inserciones, eliminaciones
 - **Visor de Diff clicable**: Haz clic en `✏️` para abrir un visor de diff local en tu navegador (ver [Visor de Diff](#visor-de-diff))
 - **PR URL**: Hipervínculo OSC 8 clickeable
@@ -147,7 +147,7 @@ Claude Code pasa `rate_limits` en el JSON de stdin (CLI 2.1.80+). La línea de u
 
 ### Modelo y Ultracode
 
-El nombre del modelo y el effort provienen de `model.display_name` y `effort.level` (el effort solo se envía en modelos compatibles). Ultracode no se expone en stdin, así que el statusline lee la clave `ultracode` de los archivos de configuración de Claude Code (managed → local del proyecto → proyecto → usuario) y muestra `⚡ultra` solo cuando la sesión también reporta effort `xhigh`.
+El nombre del modelo y el effort provienen de `model.display_name` y `effort.level` (el effort solo se envía en modelos compatibles). Ultracode no se expone en stdin, así que el statusline lee la última marca de activación o desactivación de ultracode que Claude Code escribe en el transcript de la sesión (`transcript_path`) y muestra `ultra` con cualquier nivel de effort. La marca se escribe con la siguiente solicitud, así que después de `/effort ultracode` aparece al enviar un prompt. Mientras no haya marca, se usa la clave `ultracode` de los archivos de configuración de Claude Code (managed → local del proyecto → proyecto → usuario) como valor inicial de la sesión.
 
 ### Nombre de Sesión
 
