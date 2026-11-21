@@ -1,5 +1,13 @@
 # Changelog
 
+## [6.3.2](https://github.com/say8425/cc-statusline/compare/v6.3.1...v6.3.2) (2026-11-21)
+
+
+### Bug Fixes
+
+* **deps:** bump @say8425/diffdeck from 1.7.1 to 1.9.0 ([#107](https://github.com/say8425/cc-statusline/issues/107)) ([2c366be](https://github.com/say8425/cc-statusline/commit/2c366be141927c996576f035dce83c129bd645ad))
+* detect ultracode per session from the transcript ([#108](https://github.com/say8425/cc-statusline/issues/108)) ([c8d95fb](https://github.com/say8425/cc-statusline/commit/c8d95fb17aabc5f67e3eceae9613a97d8b31801d))
+
 ## [6.3.1](https://github.com/say8425/cc-statusline/compare/v6.3.0...v6.3.1) (2026-10-21)
 
 
