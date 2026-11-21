@@ -30,10 +30,10 @@
 		"@say8425/diffdeck": "1.9.0"
 	},
 	"devDependencies": {
-		"@types/bun": "^1.4.2",
-		"oxfmt": "^0.71.0",
-		"oxlint": "^1.86.0",
-		"oxlint-tsgolint": "^7.0.2003",
+		"@types/bun": "^1.4.3",
+		"oxfmt": "^0.74.0",
+		"oxlint": "^1.89.0",
+		"oxlint-tsgolint": "^7.0.2004",
 		"typescript": "^7.0.2"
 	}
 }
